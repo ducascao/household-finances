@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Auth;
  * @property int $household_id
  * @property int $account_id
  * @property string|null $transfer_id
+ * @property int|null $recurrence_id
+ * @property Carbon|null $occurrence_date
  * @property int|null $category_id
  * @property Money $amount
  * @property TransactionStatus $status
@@ -33,7 +35,7 @@ use Illuminate\Support\Facades\Auth;
  * @property string|null $notes
  * @property list<string> $tags
  */
-#[Fillable(['transfer_id', 'account_id', 'category_id', 'amount', 'status', 'currency', 'date', 'due_date', 'competence_date', 'description', 'paid_by', 'notes', 'tags'])]
+#[Fillable(['transfer_id', 'recurrence_id', 'occurrence_date', 'account_id', 'category_id', 'amount', 'status', 'currency', 'date', 'due_date', 'competence_date', 'description', 'paid_by', 'notes', 'tags'])]
 class Transaction extends Model
 {
     /** @use HasFactory<TransactionFactory> */
@@ -61,6 +63,7 @@ class Transaction extends Model
             'status' => TransactionStatus::class,
             'date' => 'date',
             'due_date' => 'date',
+            'occurrence_date' => 'date',
             'competence_date' => 'date',
             'tags' => 'array',
         ];
@@ -80,6 +83,16 @@ class Transaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Recorrência que gerou o lançamento.
+     *
+     * @return BelongsTo<Recurrence, $this>
+     */
+    public function recurrence(): BelongsTo
+    {
+        return $this->belongsTo(Recurrence::class);
     }
 
     /**
