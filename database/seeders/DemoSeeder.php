@@ -6,6 +6,7 @@ use App\Domain\Accounts\CreateAccount;
 use App\Domain\Household\AddMember;
 use App\Domain\Household\CreateHousehold;
 use App\Domain\Transactions\CreateTransaction;
+use App\Domain\Transfers\CreateTransfer;
 use App\Enums\AccountType;
 use App\Enums\AccountVisibility;
 use App\Models\Account;
@@ -16,7 +17,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
 /**
- * Lar de exemplo com 2 usuários, contas pessoais e compartilhadas e 3 meses de lançamentos.
+ * Lar de exemplo com 2 usuários, contas pessoais e compartilhadas, 3 meses de lançamentos,
+ * contas previstas (atrasadas e a vencer) e transferências.
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -41,7 +43,7 @@ class DemoSeeder extends Seeder
         $itau = $account($maria, 'Itaú Maria', AccountType::Checking, AccountVisibility::Private, 300000);
         $joint = $account($eduardo, 'Conta conjunta', AccountType::Checking, AccountVisibility::Shared, 500000);
         $wallet = $account($maria, 'Carteira', AccountType::Cash, AccountVisibility::Shared, 20000);
-        $account($eduardo, 'Poupança', AccountType::Savings, AccountVisibility::Shared, 1500000);
+        $savings = $account($eduardo, 'Poupança', AccountType::Savings, AccountVisibility::Shared, 1500000);
 
         for ($monthsAgo = 2; $monthsAgo >= 0; $monthsAgo--) {
             $month = now()->startOfMonth()->subMonths($monthsAgo);
@@ -59,13 +61,39 @@ class DemoSeeder extends Seeder
             $this->add($household, $eduardo, $nubank, 'Assinaturas', 3, 5590, 'Streaming', $month);
             $this->add($household, $maria, $wallet, 'Restaurante', 20, random_int(8000, 20000), 'Almoço de domingo', $month, ['lazer']);
             $this->add($household, $eduardo, $joint, 'Rendimentos', 28, random_int(4000, 9000), 'Rendimento poupança', $month);
+            $this->transfer($eduardo, $nubank, $joint, 6, 200000, 'Aporte na conjunta', $month);
+            $this->transfer($maria, $itau, $joint, 6, 200000, 'Aporte na conjunta', $month);
         }
+
+        // Contas previstas: uma atrasada, algumas vencendo nos próximos dias e o mês seguinte.
+        $this->scheduled($household, $maria, $joint, 'IPTU', today()->subDays(3), 42000, 'IPTU (parcela)');
+        $this->scheduled($household, $eduardo, $nubank, 'Telefone', today()->addDays(2), 6990, 'Celular');
+        $this->scheduled($household, $maria, $joint, 'Plano de saúde', today()->addDays(5), 89000, 'Plano de saúde');
+        $this->scheduled($household, $eduardo, $joint, 'Aluguel', today()->addMonthNoOverflow()->day(10), 280000, 'Aluguel');
+        app(CreateTransfer::class)->execute($eduardo, [
+            'from_account_id' => $joint->id,
+            'to_account_id' => $savings->id,
+            'amount' => 100000,
+            'status' => 'scheduled',
+            'due_date' => today()->addDays(4)->toDateString(),
+            'description' => 'Reserva de emergência',
+        ]);
     }
 
-    /**
-     * @param  list<string>  $tags
-     */
-    private function add(Household $household, User $payer, Account $account, string $category, int $day, int $amount, string $description, Carbon $month, array $tags = []): void
+    private function scheduled(Household $household, User $payer, Account $account, string $category, Carbon $dueDate, int $amount, string $description): void
+    {
+        app(CreateTransaction::class)->execute($payer, [
+            'account_id' => $account->id,
+            'category_id' => Category::where('household_id', $household->id)->where('name', $category)->valueOrFail('id'),
+            'amount' => $amount,
+            'status' => 'scheduled',
+            'due_date' => $dueDate->toDateString(),
+            'description' => $description,
+            'paid_by' => $payer->id,
+        ]);
+    }
+
+    private function transfer(User $actor, Account $from, Account $to, int $day, int $amount, string $description, Carbon $month): void
     {
         $date = $month->copy()->day(min($day, $month->daysInMonth));
 
@@ -73,7 +101,27 @@ class DemoSeeder extends Seeder
             return;
         }
 
+        app(CreateTransfer::class)->execute($actor, [
+            'from_account_id' => $from->id,
+            'to_account_id' => $to->id,
+            'amount' => $amount,
+            'date' => $date->toDateString(),
+            'description' => $description,
+        ]);
+    }
+
+    /**
+     * Lançamentos do mês corrente com data futura entram como previstos.
+     *
+     * @param  list<string>  $tags
+     */
+    private function add(Household $household, User $payer, Account $account, string $category, int $day, int $amount, string $description, Carbon $month, array $tags = []): void
+    {
+        $date = $month->copy()->day(min($day, $month->daysInMonth));
+
         app(CreateTransaction::class)->execute($payer, [
+            'status' => $date->isFuture() ? 'scheduled' : 'paid',
+            'due_date' => $date->isFuture() ? $date->toDateString() : null,
             'account_id' => $account->id,
             'category_id' => Category::where('household_id', $household->id)->where('name', $category)->valueOrFail('id'),
             'amount' => $amount,

@@ -76,16 +76,25 @@ Notas da entrega:
 **Valor:** saber o que vence nos próximos dias.
 
 Escopo
-- [ ] `status` do lançamento (scheduled, paid) e `due_date`; saldo considera só os pagos, com saldo projetado à parte
-- [ ] Ação "marcar como pago" (individual e em massa), podendo ajustar data e valor
-- [ ] Transferências entre contas (`transfer_id` ligando o par); excluídas de relatórios de receita/despesa
-- [ ] Widget no painel: atrasados, vencendo em 7 dias, total previsto do mês
+- [x] `status` do lançamento (scheduled, paid) e `due_date`; saldo considera só os pagos, com saldo projetado à parte
+- [x] Ação "marcar como pago" (individual e em massa), podendo ajustar data e valor
+- [x] Transferências entre contas (`transfer_id` ligando o par); excluídas de relatórios de receita/despesa
+- [x] Widget no painel: atrasados, vencendo em 7 dias, total previsto do mês
 
 Critérios de aceite
-- [ ] Transferência gera exatamente 2 lançamentos de sinais opostos e editar/excluir um afeta o par (teste)
-- [ ] Lançamento vencido e não pago aparece como atrasado (teste)
+- [x] Transferência gera exatamente 2 lançamentos de sinais opostos e editar/excluir um afeta o par (teste)
+- [x] Lançamento vencido e não pago aparece como atrasado (teste)
 
 Notas da entrega:
+- **Datas:** num lançamento previsto, `date` = `due_date`; ao pagar, `date` vira a data real do pagamento e `due_date` fica como referência. A competência de um previsto sem competência informada é o mês do vencimento.
+- **Saldo projetado** = saldo atual + previstos com vencimento até o **fim do mês corrente**, incluindo atrasados. Aparece no widget de saldos e na lista de contas.
+- **Constraints no Postgres:** categoria existe se e somente se não é transferência; previsto sempre tem vencimento. Lançamentos existentes viraram `paid`.
+- **Marcar como pago:** individual com data e valor (o sinal é mantido); em massa só com a data. Numa transferência, as duas pernas são pagas juntas.
+- **Transferências:** `CreateTransfer`/`UpdateTransfer`/`DeleteTransfer` em `app/Domain/Transfers`. Sem categoria e só entre contas da mesma moeda (câmbio fica para a E12). Editar ou excluir qualquer perna, inclusive na exclusão em massa, afeta o par. O formulário de lançamento comum não edita pernas.
+- **Visibilidade de transferência entre conta privada e compartilhada:** quem não é dono da privada vê só a perna compartilhada, descrita como "Transferência de/para conta pessoal de <dono>", e não pode editar nem excluir. Só quem vê as duas contas altera o par (Policy + ações).
+- **Relatórios:** escopo `Transaction::incomeAndExpense()` exclui transferências; os widgets da E2 já o usam, e a E6 deve usá-lo.
+- **Painel:** widget "Contas a pagar e a receber" (atrasados, vencendo em 7 dias, previsto do mês a pagar/a receber) e lista "Atrasados e próximos 7 dias" com o botão "Pagar". Transferências previstas ficam fora dos números.
+- A descrição das pernas de transferência na lista faz 2 consultas por linha de transferência. É aceitável no volume de um lar; se pesar, trocar por eager loading.
 
 ### E3 — Contas fixas
 **Valor:** parar de relançar aluguel, luz e salário todo mês.
