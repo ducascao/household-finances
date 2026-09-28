@@ -2,16 +2,17 @@
 
 namespace App\Filament\Resources\Transactions\Tables;
 
+use App\Domain\Transfers\TransferLabel;
 use App\Enums\TransactionStatus;
 use App\Filament\Resources\Transactions\Actions\MarkAsPaidActions;
+use App\Filament\Resources\Transactions\Actions\TransferActions;
 use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Support\MoneyFormatter;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
@@ -39,7 +40,10 @@ class TransactionsTable
                     ->description(fn (Transaction $record): ?string => $record->tags !== [] ? implode(' · ', $record->tags) : null),
                 TextColumn::make('category.name')
                     ->label('Categoria')
-                    ->formatStateUsing(fn (Transaction $record): string => $record->category->fullName()),
+                    ->state(fn (Transaction $record): string => $record->isTransfer()
+                        ? TransferLabel::for($record, self::viewer())
+                        : (string) $record->category?->fullName())
+                    ->color(fn (Transaction $record): ?string => $record->isTransfer() ? 'gray' : null),
                 TextColumn::make('account.name')
                     ->label('Conta'),
                 TextColumn::make('payer.name')
@@ -108,6 +112,14 @@ class TransactionsTable
 
                         return $indicators;
                     }),
+                SelectFilter::make('kind')
+                    ->label('Tipo')
+                    ->options(['entries' => 'Receitas e despesas', 'transfers' => 'Transferências'])
+                    ->query(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
+                        'entries' => $query->whereNull('transfer_id'),
+                        'transfers' => $query->whereNotNull('transfer_id'),
+                        default => $query,
+                    }),
                 SelectFilter::make('status')
                     ->label('Situação')
                     ->options(TransactionStatus::options()),
@@ -124,14 +136,22 @@ class TransactionsTable
             ])
             ->recordActions([
                 MarkAsPaidActions::single(),
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()
+                    ->hidden(fn (Transaction $record): bool => $record->isTransfer()),
+                TransferActions::edit(),
+                TransferActions::delete(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     MarkAsPaidActions::bulk(),
-                    DeleteBulkAction::make(),
+                    TransferActions::bulkDelete(),
                 ]),
             ]);
+    }
+
+    private static function viewer(): User
+    {
+        /** @var User */
+        return auth()->user();
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Transactions\Pages;
 
 use App\Domain\Transactions\CreateTransaction;
+use App\Filament\Resources\Transactions\Actions\TransferActions;
 use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Filament\Resources\Transactions\TransactionResource;
 use App\Models\User;
@@ -38,6 +39,7 @@ class ListTransactions extends ListRecords
                         $action->halt();
                     }
                 }),
+            TransferActions::create(),
             CreateAction::make()
                 ->label('Novo lançamento')
                 ->color('gray'),
