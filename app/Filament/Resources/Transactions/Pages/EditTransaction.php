@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Transactions\Pages;
 
 use App\Domain\Transactions\UpdateTransaction;
+use App\Enums\CategoryType;
 use App\Filament\Concerns\RunsDomainActions;
 use App\Filament\Resources\Transactions\Actions\TransferActions;
 use App\Filament\Resources\Transactions\TransactionResource;
@@ -34,7 +35,7 @@ class EditTransaction extends EditRecord
     {
         parent::mount($record);
 
-        if ($this->record->isTransfer()) {
+        if ($this->record->isTransfer() || $this->record->installment_group_id !== null) {
             $this->redirect(static::getResource()::getUrl('index'));
         }
     }
@@ -48,6 +49,8 @@ class EditTransaction extends EditRecord
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $data['amount'] = $this->record->amount->abs()->getMinorAmount()->toInt();
+        // Despesa com valor positivo é estorno.
+        $data['is_refund'] = $this->record->category?->type === CategoryType::Expense && ! $this->record->amount->isNegative();
 
         return $data;
     }

@@ -15,6 +15,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -39,6 +40,9 @@ class TransactionForm
                     ->required(),
                 TagsInput::make('tags')
                     ->label('Tags'),
+                Toggle::make('is_refund')
+                    ->label('Estorno')
+                    ->helperText('Devolução de uma despesa (ex.: estorno no cartão): entra com valor positivo.'),
                 Textarea::make('notes')
                     ->label('Observações')
                     ->columnSpanFull(),

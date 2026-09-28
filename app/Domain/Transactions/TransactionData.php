@@ -39,6 +39,7 @@ class TransactionData
             'notes' => ['nullable', 'string'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
+            'is_refund' => ['nullable', 'boolean'],
         ], attributes: [
             'account_id' => 'conta',
             'category_id' => 'categoria',
@@ -83,6 +84,11 @@ class TransactionData
         }
 
         $absolute = abs((int) $validated['amount']);
+        $isRefund = (bool) ($data['is_refund'] ?? false);
+
+        if ($isRefund && $category->type !== CategoryType::Expense) {
+            throw ValidationException::withMessages(['is_refund' => 'Estorno só vale para categorias de despesa.']);
+        }
         $status = TransactionStatus::from($validated['status']);
         $dueDate = ($validated['due_date'] ?? null) !== null ? Carbon::parse($validated['due_date'])->startOfDay() : null;
 
@@ -96,7 +102,8 @@ class TransactionData
             'household_id' => $account->household_id,
             'account_id' => $account->id,
             'category_id' => $category->id,
-            'amount' => $category->type === CategoryType::Expense ? -$absolute : $absolute,
+            // Despesa negativa, receita positiva; estorno de despesa entra positivo.
+            'amount' => $category->type === CategoryType::Expense && ! $isRefund ? -$absolute : $absolute,
             'status' => $status,
             'currency' => $account->currency,
             'date' => $date,
