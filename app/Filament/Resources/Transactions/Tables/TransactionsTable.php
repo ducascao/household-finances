@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Transactions\Tables;
 use App\Domain\Transfers\TransferLabel;
 use App\Enums\TransactionStatus;
 use App\Filament\Resources\Recurrences\RecurrenceResource;
+use App\Filament\Resources\Transactions\Actions\InstallmentActions;
 use App\Filament\Resources\Transactions\Actions\MarkAsPaidActions;
 use App\Filament\Resources\Transactions\Actions\TransferActions;
 use App\Filament\Resources\Transactions\Schemas\TransactionForm;
@@ -155,7 +156,8 @@ class TransactionsTable
                         ->visible(fn (Transaction $record): bool => $record->recurrence_id !== null && self::viewer()->can('update', $record))
                         ->url(fn (Transaction $record): string => RecurrenceResource::getUrl('edit', ['record' => $record->recurrence_id])),
                     EditAction::make()
-                        ->hidden(fn (Transaction $record): bool => $record->isTransfer()),
+                        ->hidden(fn (Transaction $record): bool => $record->isTransfer() || $record->installment_group_id !== null),
+                    InstallmentActions::edit(),
                     TransferActions::edit(),
                     TransferActions::delete(),
                 ]),

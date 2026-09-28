@@ -62,9 +62,11 @@ class TransferActions
     public static function delete(): DeleteAction
     {
         return DeleteAction::make()
-            ->modalDescription(fn (Transaction $record): ?string => $record->isTransfer()
-                ? 'É uma transferência: os dois lançamentos (origem e destino) serão excluídos.'
-                : null)
+            ->modalDescription(fn (Transaction $record): ?string => match (true) {
+                $record->isTransfer() => 'É uma transferência: os dois lançamentos (origem e destino) serão excluídos.',
+                $record->installment_group_id !== null => 'É uma parcela: todas as parcelas da compra serão excluídas.',
+                default => null,
+            })
             ->using(function (Transaction $record, DeleteAction $action): bool {
                 self::run($action, fn () => app(DeleteTransaction::class)->execute(self::user(), $record));
 

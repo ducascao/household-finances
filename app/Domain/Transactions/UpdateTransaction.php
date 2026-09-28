@@ -16,6 +16,12 @@ class UpdateTransaction
      */
     public function execute(User $actor, Transaction $transaction, array $data): Transaction
     {
+        if ($transaction->installment_group_id !== null) {
+            throw ValidationException::withMessages([
+                'transaction' => 'Parcelas são editadas pela compra parcelada.',
+            ]);
+        }
+
         if ($transaction->isTransfer()) {
             throw ValidationException::withMessages([
                 'transaction' => 'Transferências são editadas pelo formulário de transferência.',
