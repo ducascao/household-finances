@@ -15,6 +15,12 @@ class DeleteCategory
             ]);
         }
 
+        if ($category->transactions()->withoutGlobalScopes()->exists()) {
+            throw ValidationException::withMessages([
+                'category' => 'A categoria tem lançamentos: mova-os para outra categoria antes de excluir.',
+            ]);
+        }
+
         $category->delete();
     }
 }

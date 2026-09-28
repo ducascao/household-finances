@@ -1,0 +1,109 @@
+<?php
+
+namespace App\Filament\Resources\Transactions\Tables;
+
+use App\Filament\Resources\Transactions\Schemas\TransactionForm;
+use App\Models\Account;
+use App\Models\Category;
+use App\Models\Transaction;
+use App\Support\MoneyFormatter;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
+
+class TransactionsTable
+{
+    public static function configure(Table $table): Table
+    {
+        return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['account', 'category.parent', 'payer']))
+            ->defaultSort(fn (Builder $query) => $query->orderByDesc('date')->orderByDesc('id'))
+            ->columns([
+                TextColumn::make('date')
+                    ->label('Data')
+                    ->date('d/m/Y')
+                    ->sortable(),
+                TextColumn::make('description')
+                    ->label('Descrição')
+                    ->searchable()
+                    ->description(fn (Transaction $record): ?string => $record->tags !== [] ? implode(' · ', $record->tags) : null),
+                TextColumn::make('category.name')
+                    ->label('Categoria')
+                    ->formatStateUsing(fn (Transaction $record): string => $record->category->fullName()),
+                TextColumn::make('account.name')
+                    ->label('Conta'),
+                TextColumn::make('payer.name')
+                    ->label('Pago por')
+                    ->toggleable(),
+                TextColumn::make('competence_date')
+                    ->label('Competência')
+                    ->date('m/Y')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('amount')
+                    ->label('Valor')
+                    ->alignEnd()
+                    ->sortable()
+                    ->color(fn (Transaction $record): string => $record->amount->isNegative() ? 'danger' : 'success')
+                    ->formatStateUsing(fn (Transaction $record): string => MoneyFormatter::format($record->amount)),
+            ])
+            ->filters([
+                SelectFilter::make('account_id')
+                    ->label('Conta')
+                    ->options(fn (): array => Account::query()->orderBy('name')->pluck('name', 'id')->all())
+                    ->multiple(),
+                SelectFilter::make('category_id')
+                    ->label('Categoria')
+                    ->options(fn (): array => TransactionForm::categoryOptions())
+                    // Filtrar pela categoria principal inclui as subcategorias.
+                    ->query(fn (Builder $query, array $data) => $query->when(
+                        $data['value'] ?? null,
+                        fn (Builder $query, string $categoryId) => $query->whereIn(
+                            'category_id',
+                            Category::query()->whereKey($categoryId)->orWhere('parent_id', $categoryId)->select('id'),
+                        ),
+                    )),
+                Filter::make('period')
+                    ->label('Período')
+                    ->schema([
+                        DatePicker::make('from')->label('De')->displayFormat('d/m/Y')->native(false),
+                        DatePicker::make('until')->label('Até')->displayFormat('d/m/Y')->native(false),
+                    ])
+                    ->query(fn (Builder $query, array $data) => $query
+                        ->when($data['from'] ?? null, fn (Builder $query, string $date) => $query->whereDate('date', '>=', $date))
+                        ->when($data['until'] ?? null, fn (Builder $query, string $date) => $query->whereDate('date', '<=', $date)))
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+
+                        if ($data['from'] ?? null) {
+                            $indicators[] = 'De '.Carbon::parse($data['from'])->format('d/m/Y');
+                        }
+
+                        if ($data['until'] ?? null) {
+                            $indicators[] = 'Até '.Carbon::parse($data['until'])->format('d/m/Y');
+                        }
+
+                        return $indicators;
+                    }),
+                SelectFilter::make('paid_by')
+                    ->label('Pago por')
+                    ->options(fn (): array => TransactionForm::memberOptions()),
+            ])
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+}

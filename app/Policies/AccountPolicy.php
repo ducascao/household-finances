@@ -38,8 +38,12 @@ class AccountPolicy
         return $account->owner_id === $user->id;
     }
 
+    /**
+     * Conta com lançamentos não é excluída: arquive.
+     */
     public function delete(User $user, Account $account): bool
     {
-        return $account->owner_id === $user->id;
+        return $account->owner_id === $user->id
+            && ! $account->transactions()->withoutGlobalScopes()->exists();
     }
 }

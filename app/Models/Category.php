@@ -49,6 +49,14 @@ class Category extends Model
     }
 
     /**
+     * @return HasMany<Transaction, $this>
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    /**
      * Nome com o pai, ex.: "Moradia › Aluguel".
      */
     public function fullName(): string
