@@ -100,16 +100,25 @@ Notas da entrega:
 **Valor:** parar de relançar aluguel, luz e salário todo mês.
 
 Escopo
-- [ ] `recurrences`: modelo do lançamento, frequência (mensal, semanal, anual, a cada N meses), dia, próxima data, data fim, valor fixo ou estimado
-- [ ] Job diário gera os lançamentos previstos até 60 dias à frente, sem duplicar
-- [ ] Editar recorrência pergunta se altera só os futuros ainda não pagos
-- [ ] Lançamento gerado aponta para a recorrência de origem
+- [x] `recurrences`: modelo do lançamento, frequência (mensal, semanal, anual, a cada N meses), dia, próxima data, data fim, valor fixo ou estimado
+- [x] Job diário gera os lançamentos previstos até 60 dias à frente, sem duplicar
+- [x] Editar recorrência pergunta se altera só os futuros ainda não pagos
+- [x] Lançamento gerado aponta para a recorrência de origem
 
 Critérios de aceite
-- [ ] Rodar o job duas vezes não duplica lançamentos (teste)
-- [ ] Dia 31 em meses curtos cai no último dia do mês (teste)
+- [x] Rodar o job duas vezes não duplica lançamentos (teste)
+- [x] Dia 31 em meses curtos cai no último dia do mês (teste)
 
 Notas da entrega:
+- **Tabela `recurrences`:** conta, categoria, valor com sinal (como nos lançamentos) e moeda, `amount_is_estimate`, descrição, pago por, tags, observações, `frequency` (weekly, monthly, every_n_months, yearly), `interval_months`, `day_of_month`, `start_date`, `next_date` (próxima ocorrência ainda não gerada) e `end_date`. Herda a visibilidade da conta (escopo global + Policy).
+- **Datas:** mensal, anual e a cada N meses usam o dia configurado, guardado à parte; no mês curto cai no último dia e depois volta ao dia configurado. As ocorrências ficam alinhadas ao mês da data de início; anual em 29/02 vira 28/02 fora de ano bissexto; semanal é a cada 7 dias a partir do início.
+- **Não duplicar:** o ponteiro `next_date` avança a cada geração, então um lançamento gerado e excluído à mão não volta. O índice único `(recurrence_id, occurrence_date)` em `transactions` é a garantia no banco. `occurrence_date` não muda quando o vencimento é editado ou o lançamento é pago.
+- **Geração:** job `GenerateRecurringTransactions` diário às 01:00 no container `scheduler`, mais o comando `app:generate-recurrences`. Gera previstos até hoje + 60 dias; ao criar uma recorrência, gera na hora. Início no passado gera previstos já atrasados. Conta arquivada não gera.
+- **Edição:** o formulário exige escolher o alcance: "só as próximas" ou "também os previstos já gerados, não pagos, de hoje em diante" (apaga e gera de novo). Pagos e atrasados nunca mudam. A próxima ocorrência segue no período seguinte ao último gerado (ex.: dia 10 → 15 não repete o mês).
+- **Exclusão:** pergunta se exclui também os previstos futuros não pagos; os demais lançamentos ficam, sem vínculo (`nullOnDelete`).
+- **Lançamentos:** ícone de "gerado por conta fixa", filtro por conta fixa e ação que abre a recorrência de origem.
+- **Valor estimado:** só marca o valor como estimativa ("~" na lista); o valor real é informado ao pagar.
+- **Fora do escopo:** recorrência de transferência (ex.: aporte mensal na conjunta) — pode entrar numa entrega futura.
 
 ### E4 — Cartão por fatura
 **Valor:** ver a fatura aberta e as próximas, com parcelas no mês certo.

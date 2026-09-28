@@ -3,6 +3,7 @@
 use App\Enums\AccountVisibility;
 use App\Models\Account;
 use App\Models\Household;
+use App\Models\Recurrence;
 use App\Models\Transaction;
 use App\Models\User;
 use Database\Seeders\DemoSeeder;
@@ -18,7 +19,9 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(Transaction::count())->toBeGreaterThan(20)
         ->and(Transaction::scheduled()->count())->toBeGreaterThan(0)
         ->and(Transaction::overdue()->count())->toBeGreaterThan(0)
-        ->and(Transaction::whereNotNull('transfer_id')->count() % 2)->toBe(0);
+        ->and(Transaction::whereNotNull('transfer_id')->count() % 2)->toBe(0)
+        ->and(Recurrence::count())->toBeGreaterThan(5)
+        ->and(Transaction::whereNotNull('recurrence_id')->count())->toBeGreaterThan(5);
 
     $this->actingAs($maria);
 
