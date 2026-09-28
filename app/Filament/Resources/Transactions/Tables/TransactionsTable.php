@@ -15,6 +15,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Support\MoneyFormatter;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
@@ -55,7 +56,7 @@ class TransactionsTable
                     ->label('Conta'),
                 TextColumn::make('payer.name')
                     ->label('Pago por')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('competence_date')
                     ->label('Competência')
                     ->date('m/Y')
@@ -73,7 +74,7 @@ class TransactionsTable
                     ->label('Vencimento')
                     ->date('d/m/Y')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('amount')
                     ->label('Valor')
                     ->alignEnd()
@@ -146,16 +147,18 @@ class TransactionsTable
             ])
             ->recordActions([
                 MarkAsPaidActions::single(),
-                Action::make('openRecurrence')
-                    ->label('Conta fixa')
-                    ->icon(Heroicon::OutlinedArrowPath)
-                    ->color('gray')
-                    ->visible(fn (Transaction $record): bool => $record->recurrence_id !== null && self::viewer()->can('update', $record))
-                    ->url(fn (Transaction $record): string => RecurrenceResource::getUrl('edit', ['record' => $record->recurrence_id])),
-                EditAction::make()
-                    ->hidden(fn (Transaction $record): bool => $record->isTransfer()),
-                TransferActions::edit(),
-                TransferActions::delete(),
+                ActionGroup::make([
+                    Action::make('openRecurrence')
+                        ->label('Conta fixa')
+                        ->icon(Heroicon::OutlinedArrowPath)
+                        ->color('gray')
+                        ->visible(fn (Transaction $record): bool => $record->recurrence_id !== null && self::viewer()->can('update', $record))
+                        ->url(fn (Transaction $record): string => RecurrenceResource::getUrl('edit', ['record' => $record->recurrence_id])),
+                    EditAction::make()
+                        ->hidden(fn (Transaction $record): bool => $record->isTransfer()),
+                    TransferActions::edit(),
+                    TransferActions::delete(),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
