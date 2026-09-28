@@ -37,9 +37,7 @@ class AddMemberCommand extends Command
         $name = text('Nome', required: true);
         $email = text('E-mail', required: true);
         $password = password('Senha (mínimo 8 caracteres)', required: true);
-        $role = select('Papel', collect(HouseholdRole::cases())
-            ->mapWithKeys(fn (HouseholdRole $role) => [$role->value => $role->label()])
-            ->all(), default: HouseholdRole::Member->value);
+        $role = select('Papel', HouseholdRole::options(), default: HouseholdRole::Member->value);
 
         try {
             $addMember->execute($household, $name, $email, $password, HouseholdRole::from((string) $role));

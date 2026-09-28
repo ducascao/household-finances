@@ -2,8 +2,12 @@
 
 namespace App\Enums;
 
+use App\Enums\Concerns\HasOptions;
+
 enum HouseholdRole: string
 {
+    use HasOptions;
+
     case Admin = 'admin';
     case Member = 'member';
 
