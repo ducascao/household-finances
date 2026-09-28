@@ -4,17 +4,21 @@ namespace App\Filament\Resources\Transactions\Tables;
 
 use App\Domain\Transfers\TransferLabel;
 use App\Enums\TransactionStatus;
+use App\Filament\Resources\Recurrences\RecurrenceResource;
 use App\Filament\Resources\Transactions\Actions\MarkAsPaidActions;
 use App\Filament\Resources\Transactions\Actions\TransferActions;
 use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Models\Account;
 use App\Models\Category;
+use App\Models\Recurrence;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\MoneyFormatter;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -37,6 +41,9 @@ class TransactionsTable
                 TextColumn::make('description')
                     ->label('Descrição')
                     ->searchable()
+                    ->icon(fn (Transaction $record) => $record->recurrence_id !== null ? Heroicon::OutlinedArrowPath : null)
+                    ->iconColor('gray')
+                    ->tooltip(fn (Transaction $record): ?string => $record->recurrence_id !== null ? 'Gerado por conta fixa' : null)
                     ->description(fn (Transaction $record): ?string => $record->tags !== [] ? implode(' · ', $record->tags) : null),
                 TextColumn::make('category.name')
                     ->label('Categoria')
@@ -130,12 +137,21 @@ class TransactionsTable
                         /** @var Builder<Transaction> $query */
                         $query->overdue();
                     }),
+                SelectFilter::make('recurrence_id')
+                    ->label('Conta fixa')
+                    ->options(fn (): array => Recurrence::query()->orderBy('description')->pluck('description', 'id')->all()),
                 SelectFilter::make('paid_by')
                     ->label('Pago por')
                     ->options(fn (): array => TransactionForm::memberOptions()),
             ])
             ->recordActions([
                 MarkAsPaidActions::single(),
+                Action::make('openRecurrence')
+                    ->label('Conta fixa')
+                    ->icon(Heroicon::OutlinedArrowPath)
+                    ->color('gray')
+                    ->visible(fn (Transaction $record): bool => $record->recurrence_id !== null && self::viewer()->can('update', $record))
+                    ->url(fn (Transaction $record): string => RecurrenceResource::getUrl('edit', ['record' => $record->recurrence_id])),
                 EditAction::make()
                     ->hidden(fn (Transaction $record): bool => $record->isTransfer()),
                 TransferActions::edit(),
