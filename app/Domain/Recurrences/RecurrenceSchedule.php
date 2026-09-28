@@ -46,6 +46,21 @@ class RecurrenceSchedule
     }
 
     /**
+     * Próxima ocorrência depois de uma data que pode ter sido gerada com regras antigas
+     * (ex.: o dia mudou de 10 para 15): mensais pulam para o período seguinte, para não repetir o mês.
+     */
+    public static function nextPeriodAfter(Recurrence $recurrence, Carbon $lastOccurrence): Carbon
+    {
+        $next = $recurrence->frequency === RecurrenceFrequency::Weekly
+            ? self::firstOnOrAfter($recurrence, $lastOccurrence->copy()->addDay())
+            : self::after($recurrence, $lastOccurrence);
+
+        $first = self::first($recurrence);
+
+        return $next->lt($first) ? $first : $next;
+    }
+
+    /**
      * Primeira ocorrência na data informada ou depois dela.
      */
     public static function firstOnOrAfter(Recurrence $recurrence, Carbon $date): Carbon

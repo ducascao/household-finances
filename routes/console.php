@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use App\Jobs\GenerateRecurringTransactions;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// Contas fixas: gera os previstos até hoje + 60 dias.
+Schedule::job(new GenerateRecurringTransactions)->dailyAt('01:00')->withoutOverlapping();
