@@ -76,6 +76,29 @@ class AccountBalance
     }
 
     /**
+     * Saldo na data de corte: pagos com data até ela e, se a data ainda não passou,
+     * os previstos que vencem até ela (inclusive atrasados).
+     */
+    public static function at(Account $account, Carbon $date): Money
+    {
+        $cutoff = $date->copy()->startOfDay();
+
+        $paid = (int) DB::table('transactions')
+            ->where('account_id', $account->id)
+            ->where('status', TransactionStatus::Paid->value)
+            ->whereDate('date', '<=', $cutoff)
+            ->sum('amount');
+
+        $scheduled = $cutoff->lt(today()) ? 0 : (int) DB::table('transactions')
+            ->where('account_id', $account->id)
+            ->where('status', TransactionStatus::Scheduled->value)
+            ->whereDate('due_date', '<=', $cutoff)
+            ->sum('amount');
+
+        return Money::ofMinor($account->initial_balance->getMinorAmount()->toInt() + $paid + $scheduled, $account->currency);
+    }
+
+    /**
      * Soma dos saldos atuais por moeda (não converte entre moedas).
      *
      * @param  Collection<int, Account>  $accounts
