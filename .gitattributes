@@ -9,3 +9,6 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Extratos de exemplo: manter bytes originais (CRLF, Latin-1)
+tests/Fixtures/imports/** -text
