@@ -15,7 +15,10 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
 
     expect($household->users()->count())->toBe(2)
         ->and(Account::where('visibility', AccountVisibility::Private)->count())->toBe(2)
-        ->and(Transaction::count())->toBeGreaterThan(20);
+        ->and(Transaction::count())->toBeGreaterThan(20)
+        ->and(Transaction::scheduled()->count())->toBeGreaterThan(0)
+        ->and(Transaction::overdue()->count())->toBeGreaterThan(0)
+        ->and(Transaction::whereNotNull('transfer_id')->count() % 2)->toBe(0);
 
     $this->actingAs($maria);
 
