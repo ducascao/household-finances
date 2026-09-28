@@ -4,18 +4,18 @@ namespace App\Enums;
 
 use App\Enums\Concerns\HasOptions;
 
-enum HouseholdRole: string
+enum CategoryType: string
 {
     use HasOptions;
 
-    case Admin = 'admin';
-    case Member = 'member';
+    case Income = 'income';
+    case Expense = 'expense';
 
     public function label(): string
     {
         return match ($this) {
-            self::Admin => 'Administrador',
-            self::Member => 'Membro',
+            self::Income => 'Receita',
+            self::Expense => 'Despesa',
         };
     }
 }

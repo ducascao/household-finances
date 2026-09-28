@@ -4,18 +4,18 @@ namespace App\Enums;
 
 use App\Enums\Concerns\HasOptions;
 
-enum HouseholdRole: string
+enum AccountVisibility: string
 {
     use HasOptions;
 
-    case Admin = 'admin';
-    case Member = 'member';
+    case Private = 'private';
+    case Shared = 'shared';
 
     public function label(): string
     {
         return match ($this) {
-            self::Admin => 'Administrador',
-            self::Member => 'Membro',
+            self::Private => 'Pessoal',
+            self::Shared => 'Compartilhada',
         };
     }
 }
