@@ -1,58 +1,108 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Finanças de Casa
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Intranet para controle financeiro doméstico e de investimentos de um lar.
+Plano e entregas: [`PLAN.md`](PLAN.md). Convenções: [`CLAUDE.md`](CLAUDE.md).
 
-## About Laravel
+Stack: PHP 8.5 · Laravel 13 · Filament 5 · PostgreSQL 18, tudo em Docker.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Subir o ambiente
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Pré-requisito: Docker com Compose. Não é preciso PHP nem Composer na máquina.
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+cp .env.example .env              # ajuste senhas; HOST_UID/HOST_GID = saída de `id -u` / `id -g`
+docker compose build
+docker compose up -d
+docker compose exec app composer install
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Acesse `http://localhost:8000` (porta em `APP_PORT`). Na rede de casa, use o IP da máquina.
 
-## Contributing
+Serviços do `compose.yaml`:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Serviço     | Função                                                   |
+| ----------- | -------------------------------------------------------- |
+| `app`       | PHP-FPM com a aplicação                                   |
+| `web`       | nginx, publica a porta `APP_PORT`                         |
+| `db`        | PostgreSQL 18 (volume `db-data`; cria também o banco `testing`) |
+| `queue`     | `php artisan queue:work` (fila `database`)                |
+| `scheduler` | `php artisan schedule:work`                              |
+| `backup`    | `pg_dump` diário (ver [Backup](#backup))                  |
 
-## Code of Conduct
+## Criar o lar e os usuários
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Não há registro público. Crie o lar (com o primeiro usuário, administrador) e depois os demais membros:
 
-## Security Vulnerabilities
+```bash
+docker compose exec app php artisan app:create-household
+docker compose exec app php artisan app:add-member
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+No primeiro login cada usuário é obrigado a configurar o 2FA com um app autenticador
+(Google Authenticator, 1Password, etc.) e recebe códigos de recuperação.
 
-## License
+### Dados de demonstração
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+docker compose exec app php artisan migrate:fresh --seed
+```
+
+Cria o lar "Casa Demo" com `eduardo@demo.local` e `maria@demo.local` (senha `password`),
+contas pessoais e compartilhadas e 3 meses de lançamentos. Não roda em produção.
+
+## Testes e qualidade
+
+```bash
+docker compose exec app composer test               # Pest, no banco `testing` do Postgres
+docker compose exec app vendor/bin/pint --test      # estilo
+docker compose exec app vendor/bin/phpstan analyse  # Larastan nível 6
+```
+
+## Backup
+
+O container `backup` faz um `pg_dump` em formato custom (já compactado) todos os dias às
+`BACKUP_AT` (padrão 03:00) e grava em `BACKUP_PATH` (padrão `./backups`, fora do git).
+Arquivos com mais de `BACKUP_RETENTION_DAYS` (padrão 30) dias são apagados.
+
+```bash
+docker compose logs backup            # histórico dos backups
+docker compose run --rm backup now    # backup imediato
+```
+
+> A pasta `./backups` fica na mesma máquina do banco. Copie-a periodicamente para outro lugar
+> (HD externo, nuvem) até a entrega que envia o backup ao Google Drive.
+
+### Restaurar um backup
+
+1. Escolha o arquivo em `./backups` (ex.: `household_finances_2026-09-28_0300.dump`).
+2. Pare quem escreve no banco:
+
+   ```bash
+   docker compose stop web app queue scheduler
+   ```
+
+3. Recrie o banco e restaure (troque usuário/banco se mudou no `.env`):
+
+   ```bash
+   docker compose exec db dropdb -U household household_finances
+   docker compose exec db createdb -U household household_finances
+   docker compose exec -T db pg_restore -U household -d household_finances --no-owner \
+       < backups/household_finances_2026-09-28_0300.dump
+   ```
+
+4. Suba de novo e confira:
+
+   ```bash
+   docker compose start app web queue scheduler
+   docker compose exec db psql -U household -d household_finances \
+       -c "select count(*) from transactions;"
+   ```
+
+Para só conferir um backup sem mexer no banco principal, restaure num banco à parte
+(`createdb restore_check`, `pg_restore -d restore_check ...`) e apague-o depois.
+
+**Teste de restauração realizado em 28/09/2026:** backup do banco com os dados de demonstração
+restaurado no banco `restore_check`. Contagens de lares (1), usuários (2), contas (5),
+categorias (42) e lançamentos (39), e a soma dos valores dos lançamentos, idênticas às do original.

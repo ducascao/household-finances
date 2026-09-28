@@ -27,7 +27,7 @@ Legenda: `[ ]` pendente · `[x]` feito. Ao terminar uma entrega, marque os itens
 | Anexos | Google Drive |
 | Fora do escopo | IR, Open Finance, app mobile |
 
-Versões instaladas (preencher na E1): PHP `__` · Laravel `__` · Filament `__` · PostgreSQL `__`
+Versões instaladas (E1, 28/09/2026): PHP `8.5.11` · Laravel `13.33.0` (skeleton 13.10.1) · Filament `5.9.0` · PostgreSQL `18.6` · Pest `5.2.1` · Larastan `3.12.2` · brick/money `0.15.1`
 
 ---
 
@@ -37,26 +37,40 @@ Versões instaladas (preencher na E1): PHP `__` · Laravel `__` · Filament `__`
 **Valor:** registrar receitas e despesas e ver o saldo de cada conta.
 
 Escopo
-- [ ] Projeto Laravel + Filament + PostgreSQL em Docker (app, db, queue, scheduler)
-- [ ] Pest, Pint e Larastan configurados; script `composer test`
-- [ ] Tabelas `households`, `household_user` (papel: admin, member); global scope `BelongsToHousehold`
-- [ ] Login no Filament, sem registro público; 2FA obrigatório
-- [ ] Comando `app:create-household` e `app:add-member` para criar o lar e os usuários
-- [ ] `accounts`: nome, tipo (checking, savings, cash, credit_card, brokerage), `owner_id`, `visibility` (private, shared), `currency`, `initial_balance`, `archived_at`
-- [ ] `categories`: nome, tipo (income, expense), `parent_id` (máx. 2 níveis), cor; categorias padrão criadas junto com o lar
-- [ ] `transactions`: conta, categoria, `amount` (centavos, com sinal), `date`, `competence_date`, `description`, `paid_by`, `notes`, tags
-- [ ] Resource de lançamentos com filtros (conta, categoria, período, pago por) e lançamento rápido
-- [ ] Saldo atual por conta (inicial + lançamentos) no painel
-- [ ] Backup diário do Postgres (`pg_dump` compactado, retenção de 30 dias em pasta local)
-- [ ] `DemoSeeder` com um lar, 2 usuários e dados de exemplo
+- [x] Projeto Laravel + Filament + PostgreSQL em Docker (app, db, queue, scheduler)
+- [x] Pest, Pint e Larastan configurados; script `composer test`
+- [x] Tabelas `households`, `household_user` (papel: admin, member); global scope `BelongsToHousehold`
+- [x] Login no Filament, sem registro público; 2FA obrigatório
+- [x] Comando `app:create-household` e `app:add-member` para criar o lar e os usuários
+- [x] `accounts`: nome, tipo (checking, savings, cash, credit_card, brokerage), `owner_id`, `visibility` (private, shared), `currency`, `initial_balance`, `archived_at`
+- [x] `categories`: nome, tipo (income, expense), `parent_id` (máx. 2 níveis), cor; categorias padrão criadas junto com o lar
+- [x] `transactions`: conta, categoria, `amount` (centavos, com sinal), `date`, `competence_date`, `description`, `paid_by`, `notes`, tags
+- [x] Resource de lançamentos com filtros (conta, categoria, período, pago por) e lançamento rápido
+- [x] Saldo atual por conta (inicial + lançamentos) no painel
+- [x] Backup diário do Postgres (`pg_dump` compactado, retenção de 30 dias em pasta local)
+- [x] `DemoSeeder` com um lar, 2 usuários e dados de exemplo
 
 Critérios de aceite
-- [ ] Usuário A não vê contas privadas nem lançamentos das contas privadas do usuário B (teste)
-- [ ] Ambos veem e editam contas compartilhadas (teste)
-- [ ] Saldo da conta confere com a soma dos lançamentos (teste)
-- [ ] Restauração do backup testada manualmente e documentada no README
+- [x] Usuário A não vê contas privadas nem lançamentos das contas privadas do usuário B (teste)
+- [x] Ambos veem e editam contas compartilhadas (teste)
+- [x] Saldo da conta confere com a soma dos lançamentos (teste)
+- [x] Restauração do backup testada manualmente e documentada no README
 
 Notas da entrega:
+- **Docker:** `compose.yaml` próprio (sem Sail): `app` (PHP-FPM 8.5), `web` (nginx), `db` (Postgres 18, cria também o banco `testing`), `queue`, `scheduler` e `backup`. Não há PHP/Composer no host; tudo roda via `docker compose exec app ...`.
+- **Painel** na raiz (`/`), id `app`. 2FA pelo MFA nativo do Filament (TOTP por app autenticador + códigos de recuperação), obrigatório: sem 2FA o usuário é levado à tela de configuração. Sem registro e sem recuperação de senha pública. Só entra no painel quem tem um lar.
+- **Escopos:** `BelongsToHousehold` filtra pelo `current_household_id` do usuário logado; sem usuário logado (console/jobs) não filtra, e as ações informam o `household_id` explicitamente. A visibilidade das contas também virou **global scope** (`VisibleAccountScope`, com usuário logado), em vez de só escopo local; lançamentos herdam via `whereHas('account')`. As Policies repetem a regra.
+- **Desvio:** `transactions` tem coluna `currency` (cópia da moeda da conta, gravada pela ação), para o cast `Money` não depender da relação. A moeda da conta não pode mudar depois que ela tem lançamentos.
+- **Sinal:** o usuário digita o valor sem sinal; `CreateTransaction`/`UpdateTransaction` gravam negativo se a categoria é de despesa e positivo se é de receita. Por isso `category_id` é obrigatório (NOT NULL); transferências (E2) vão precisar rever isso.
+- `competence_date` é gravada sempre no dia 1 do mês; em branco, vale o mês da data.
+- **Tags** em coluna `jsonb` (índice GIN) no próprio lançamento, sem tabela de tags.
+- **Categorias:** padrão criadas pelo `CreateHousehold` (3 de receita; 10 de despesa com subcategorias). Não é possível excluir categoria com filhas ou lançamentos, nem mudar o tipo nesses casos. Conta com lançamentos não pode ser excluída (arquivar).
+- **Saldo:** `AccountBalance` (inicial + soma dos lançamentos numa subquery). Aparece na lista de contas e no widget "Saldos das contas" do painel, com total por moeda (sem conversão).
+- **Lançamento rápido:** ação no topo da lista (atalho `Ctrl/Cmd+Shift+L`) com conta, categoria, valor, data e descrição; tem "criar e criar outro".
+- **Backup:** `pg_dump --format=custom --compress=9` (já compactado, sem gzip adicional), diário às 03:00, retenção de 30 dias, em `./backups`. Restauração testada em 28/09/2026 num banco à parte; o procedimento está no README.
+- `Model::shouldBeStrict()` ligado fora de produção.
+- Traduções pt_BR via `laravel-lang/common` (dev) publicadas em `lang/`.
+- O skeleton do Laravel 13 vem com `CLAUDE.md`/`AGENTS.md` do Laravel Boost; foram descartados (o nosso `CLAUDE.md` foi mantido).
 
 ### E2 — Contas a pagar
 **Valor:** saber o que vence nos próximos dias.
