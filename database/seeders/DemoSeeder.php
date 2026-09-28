@@ -27,7 +27,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
 /**
- * Lar de exemplo com 2 usuários, contas pessoais e compartilhadas, 3 meses de lançamentos,
+ * Lar de exemplo com 2 usuários, contas pessoais e compartilhadas, 6 meses de lançamentos,
  * contas previstas (atrasadas e a vencer), transferências, contas fixas, cartões de crédito com faturas
  * e importação (regras, perfil de CSV e um lote em revisão).
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
@@ -56,7 +56,7 @@ class DemoSeeder extends Seeder
         $wallet = $account($maria, 'Carteira', AccountType::Cash, AccountVisibility::Shared, 20000);
         $savings = $account($eduardo, 'Poupança', AccountType::Savings, AccountVisibility::Shared, 1500000);
 
-        for ($monthsAgo = 2; $monthsAgo >= 0; $monthsAgo--) {
+        for ($monthsAgo = 5; $monthsAgo >= 0; $monthsAgo--) {
             $month = now()->startOfMonth()->subMonths($monthsAgo);
 
             $this->add($household, $eduardo, $nubank, 'Salário', 5, 850000, 'Salário', $month);

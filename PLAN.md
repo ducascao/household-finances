@@ -186,16 +186,23 @@ Notas da entrega:
 **Valor:** entender para onde foi o dinheiro.
 
 Escopo
-- [ ] Seletor de mês; entradas × saídas por competência (sem transferências)
-- [ ] Gastos por categoria (pai e filha)
-- [ ] Evolução dos últimos 12 meses
-- [ ] Projeção de saldo das contas até o fim do mês com base nos previstos
-- [ ] Todos os números respeitam a visibilidade do usuário
+- [x] Seletor de mês; entradas × saídas por competência (sem transferências)
+- [x] Gastos por categoria (pai e filha)
+- [x] Evolução dos últimos 12 meses
+- [x] Projeção de saldo das contas até o fim do mês com base nos previstos
+- [x] Todos os números respeitam a visibilidade do usuário
 
 Critérios de aceite
-- [ ] Totais do painel batem com a soma dos lançamentos filtrados (teste)
+- [x] Totais do painel batem com a soma dos lançamentos filtrados (teste)
 
 Notas da entrega:
+- **Página própria "Resumo do mês"** (`/resumo-do-mes`), um segundo dashboard do Filament com filtro de mês (lista + botões anterior/atual/próximo). O "Painel de Controle" continua sendo o do dia a dia. Os widgets do resumo ficam em `app/Filament/Monthly`, fora da descoberta automática, para não aparecerem no painel principal.
+- **Cálculos** em `Domain/Reports/MonthlySummary`, por competência e sem transferências (`incomeAndExpense()`). Receita e despesa vêm do **tipo da categoria**, não do sinal, então o estorno abate a despesa. Totais separados em realizado e previsto (os previstos entram no total).
+- **Moeda:** só lançamentos em BRL entram nos totais; se houver outra moeda no mês, uma nota avisa que fica de fora até a E12.
+- **Desvio de forma:** gastos por categoria em **barras horizontais de uma cor**, do maior para o menor (acima de 8 categorias o resto vira "Outras"), em vez de rosca. É a forma certa para comparar valores próximos (guia de visualização de dados). Mais uma tabela principal → subcategorias com %; clicar abre os lançamentos filtrados por categoria + competência (novo filtro "Competência" nos lançamentos).
+- **Evolução de 12 meses:** barras entradas (azul) × saídas (laranja) e o resultado como linha no mesmo eixo (mesma unidade, R$). Paleta validada para daltonismo nos modos claro e escuro. Limitação: as cores do Chart.js são fixas (as do modo claro também no modo escuro).
+- **Saldo no fim do mês:** `AccountBalance::at()` = inicial + pagos até a data + (se a data não passou) previstos que vencem até ela, inclusive atrasados. Mês encerrado mostra o saldo real no último dia; parcelas futuras do cartão aparecem no mês delas.
+- `DemoSeeder` passou a ter 6 meses de histórico para a evolução ficar legível.
 
 ### E7 — Orçamento
 **Valor:** saber se está gastando além do combinado.
