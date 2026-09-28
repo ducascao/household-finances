@@ -53,5 +53,25 @@ services:
       retries: 10
     restart: unless-stopped
 
+  backup:
+    image: postgres:18
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    entrypoint: ["/usr/local/bin/backup.sh"]
+    environment:
+      PGHOST: db
+      PGDATABASE: ${DB_DATABASE:-household_finances}
+      PGUSER: ${DB_USERNAME:-household}
+      PGPASSWORD: ${DB_PASSWORD:-secret}
+      BACKUP_AT: ${BACKUP_AT:-03:00}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      TZ: America/Sao_Paulo
+    volumes:
+      - ./docker/backup/backup.sh:/usr/local/bin/backup.sh:ro
+      - ${BACKUP_PATH:-./backups}:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   db-data:
