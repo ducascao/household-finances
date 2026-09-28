@@ -327,3 +327,4 @@ Notas da entrega:
 - [ ] Bancos e cartões usados e formato de exportação (antes da E5)
 - [ ] Destino do backup além da pasta local (proposta: Google Drive na E8)
 - [ ] Modelo de progresso das metas (antes da E15)
+- [ ] Layout: conteúdo usa largura máxima fixa e centralizada, deixando muito espaço entre o menu e a tabela e à direita. Proposta: `->maxContentWidth(Width::Full)` no `AppPanelProvider` (ou `ScreenTwoExtraLarge`). Aproveitar para revisar a lista de lançamentos, que hoje precisa de rolagem horizontal (ações da linha cortadas): agrupar ações em menu e ocultar colunas secundárias por padrão.
