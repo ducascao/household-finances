@@ -49,6 +49,11 @@ class AccountsTable
                     ->alignEnd()
                     ->color(fn (Account $record): string => AccountBalance::of($record)->isNegative() ? 'danger' : 'success')
                     ->formatStateUsing(fn (Account $record): string => MoneyFormatter::format(AccountBalance::of($record))),
+                TextColumn::make('projected_balance')
+                    ->label('Projetado (fim do mês)')
+                    ->alignEnd()
+                    ->color(fn (Account $record): string => AccountBalance::projectedOf($record)->isNegative() ? 'danger' : 'gray')
+                    ->formatStateUsing(fn (Account $record): string => MoneyFormatter::format(AccountBalance::projectedOf($record))),
                 TextColumn::make('archived_at')
                     ->label('Arquivada em')
                     ->date('d/m/Y')
