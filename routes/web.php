@@ -1,7 +1,3 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
-Route::get('/', function () {
-    return view('welcome');
-});
+// As telas ficam no painel Filament, servido na raiz (ver AppPanelProvider).
