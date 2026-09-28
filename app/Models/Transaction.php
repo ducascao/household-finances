@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\Auth;
  * @property int $account_id
  * @property string|null $transfer_id
  * @property int|null $recurrence_id
+ * @property int|null $invoice_id
+ * @property int|null $installment_group_id
+ * @property int|null $installment_number
  * @property Carbon|null $occurrence_date
  * @property int|null $category_id
  * @property Money $amount
@@ -35,7 +38,7 @@ use Illuminate\Support\Facades\Auth;
  * @property string|null $notes
  * @property list<string> $tags
  */
-#[Fillable(['transfer_id', 'recurrence_id', 'occurrence_date', 'account_id', 'category_id', 'amount', 'status', 'currency', 'date', 'due_date', 'competence_date', 'description', 'paid_by', 'notes', 'tags'])]
+#[Fillable(['transfer_id', 'recurrence_id', 'occurrence_date', 'invoice_id', 'installment_group_id', 'installment_number', 'account_id', 'category_id', 'amount', 'status', 'currency', 'date', 'due_date', 'competence_date', 'description', 'paid_by', 'notes', 'tags'])]
 class Transaction extends Model
 {
     /** @use HasFactory<TransactionFactory> */
@@ -93,6 +96,22 @@ class Transaction extends Model
     public function recurrence(): BelongsTo
     {
         return $this->belongsTo(Recurrence::class);
+    }
+
+    /**
+     * @return BelongsTo<Invoice, $this>
+     */
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
+    /**
+     * @return BelongsTo<InstallmentGroup, $this>
+     */
+    public function installmentGroup(): BelongsTo
+    {
+        return $this->belongsTo(InstallmentGroup::class);
     }
 
     /**

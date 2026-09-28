@@ -2,8 +2,10 @@
 
 namespace App\Domain\Accounts;
 
+use App\Domain\CreditCard\SaveCreditCard;
 use App\Models\Account;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class CreateAccount
 {
@@ -19,8 +21,12 @@ class CreateAccount
         $account = new Account($validated);
         $account->household_id = (int) $owner->current_household_id;
         $account->owner_id = $owner->id;
-        $account->save();
 
-        return $account;
+        return DB::transaction(function () use ($account, $data): Account {
+            $account->save();
+            app(SaveCreditCard::class)->execute($account, $data);
+
+            return $account;
+        });
     }
 }

@@ -2,8 +2,10 @@
 
 namespace App\Domain\Accounts;
 
+use App\Domain\CreditCard\SaveCreditCard;
 use App\Models\Account;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class UpdateAccount
@@ -27,7 +29,10 @@ class UpdateAccount
             ]);
         }
 
-        $account->fill($validated)->save();
+        DB::transaction(function () use ($account, $validated, $data): void {
+            $account->fill($validated)->save();
+            app(SaveCreditCard::class)->execute($account, $data);
+        });
 
         return $account;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Recurrences;
 
+use App\Domain\CreditCard\AssignTransactionToInvoice;
 use App\Enums\TransactionStatus;
 use App\Models\Account;
 use App\Models\Recurrence;
@@ -100,7 +101,9 @@ class GenerateOccurrences
             'paid_by' => $recurrence->paid_by,
             'notes' => $recurrence->notes,
             'tags' => $recurrence->tags,
-        ])->save();
+        ]);
+        app(AssignTransactionToInvoice::class)->execute($transaction);
+        $transaction->save();
 
         return true;
     }

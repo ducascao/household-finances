@@ -8,6 +8,8 @@ use App\Filament\Forms\MoneyInput;
 use App\Models\Account;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,6 +27,7 @@ class AccountForm
                     ->label('Tipo')
                     ->options(AccountType::options())
                     ->default(AccountType::Checking->value)
+                    ->live()
                     ->required(),
                 Select::make('visibility')
                     ->label('Visibilidade')
@@ -43,6 +46,34 @@ class AccountForm
                     ->label('Saldo inicial')
                     ->default(0)
                     ->required(),
+                Section::make('Cartão de crédito')
+                    ->description('Compras antes do dia de fechamento caem na fatura que fecha no mês; no dia do fechamento ou depois, na seguinte.')
+                    ->columns(3)
+                    ->columnSpanFull()
+                    ->visible(fn (Get $get): bool => self::isCreditCard($get))
+                    ->schema([
+                        TextInput::make('card_closing_day')
+                            ->label('Dia de fechamento')
+                            ->integer()
+                            ->minValue(1)
+                            ->maxValue(31)
+                            ->required(fn (Get $get): bool => self::isCreditCard($get)),
+                        TextInput::make('card_due_day')
+                            ->label('Dia de vencimento')
+                            ->integer()
+                            ->minValue(1)
+                            ->maxValue(31)
+                            ->required(fn (Get $get): bool => self::isCreditCard($get)),
+                        MoneyInput::make('card_limit')
+                            ->label('Limite'),
+                    ]),
             ]);
+    }
+
+    private static function isCreditCard(Get $get): bool
+    {
+        $type = $get('type');
+
+        return ($type instanceof AccountType ? $type->value : $type) === AccountType::CreditCard->value;
     }
 }

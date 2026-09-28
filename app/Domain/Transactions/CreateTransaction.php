@@ -2,6 +2,7 @@
 
 namespace App\Domain\Transactions;
 
+use App\Domain\CreditCard\AssignTransactionToInvoice;
 use App\Models\Transaction;
 use App\Models\User;
 
@@ -20,7 +21,9 @@ class CreateTransaction
         $transaction = new Transaction;
         $transaction->household_id = $attributes['household_id'];
         unset($attributes['household_id']);
-        $transaction->fill($attributes)->save();
+        $transaction->fill($attributes);
+        app(AssignTransactionToInvoice::class)->execute($transaction);
+        $transaction->save();
 
         return $transaction;
     }

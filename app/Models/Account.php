@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -64,6 +65,19 @@ class Account extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * @return HasOne<CreditCard, $this>
+     */
+    public function creditCard(): HasOne
+    {
+        return $this->hasOne(CreditCard::class);
+    }
+
+    public function isCreditCard(): bool
+    {
+        return $this->type === AccountType::CreditCard;
     }
 
     public function isVisibleTo(User $user): bool
