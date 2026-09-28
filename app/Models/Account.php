@@ -75,6 +75,14 @@ class Account extends Model
         return $this->hasOne(CreditCard::class);
     }
 
+    /**
+     * @return HasOne<ImportProfile, $this>
+     */
+    public function importProfile(): HasOne
+    {
+        return $this->hasOne(ImportProfile::class);
+    }
+
     public function isCreditCard(): bool
     {
         return $this->type === AccountType::CreditCard;
