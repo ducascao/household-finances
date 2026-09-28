@@ -7,11 +7,16 @@ use App\Domain\CreditCard\CreateInstallmentPurchase;
 use App\Domain\CreditCard\PayInvoice;
 use App\Domain\Household\AddMember;
 use App\Domain\Household\CreateHousehold;
+use App\Domain\Import\BankPresets;
+use App\Domain\Import\ImportStatement;
+use App\Domain\Import\SaveImportProfile;
+use App\Domain\Import\SaveImportRule;
 use App\Domain\Recurrences\CreateRecurrence;
 use App\Domain\Transactions\CreateTransaction;
 use App\Domain\Transfers\CreateTransfer;
 use App\Enums\AccountType;
 use App\Enums\AccountVisibility;
+use App\Enums\ImportFormat;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\CreditCard;
@@ -23,7 +28,8 @@ use Illuminate\Support\Carbon;
 
 /**
  * Lar de exemplo com 2 usuários, contas pessoais e compartilhadas, 3 meses de lançamentos,
- * contas previstas (atrasadas e a vencer), transferências, contas fixas e cartões de crédito com faturas.
+ * contas previstas (atrasadas e a vencer), transferências, contas fixas, cartões de crédito com faturas
+ * e importação (regras, perfil de CSV e um lote em revisão).
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -86,6 +92,8 @@ class DemoSeeder extends Seeder
         $this->recurrence($household, $maria, $itau, 'Salário', 720000, 'monthly', 5, $nextMonth);
         $this->recurrence($household, $eduardo, $joint, 'IPVA', 180000, 'yearly', 20, today()->addMonthsNoOverflow(1)->day(20));
         $this->recurrence($household, $maria, $joint, 'Serviços domésticos', 18000, 'weekly', null, today()->next(Carbon::FRIDAY), description: 'Diarista');
+        $this->imports($household, $eduardo, $joint);
+
         app(CreateTransfer::class)->execute($eduardo, [
             'from_account_id' => $joint->id,
             'to_account_id' => $savings->id,
@@ -161,6 +169,41 @@ class DemoSeeder extends Seeder
                 ->get()
                 ->each(fn (Invoice $invoice) => app(PayInvoice::class)->execute($payer, $invoice, $from->id, $invoice->due_date));
         }
+    }
+
+    /**
+     * Regras de importação, perfil de CSV da conta conjunta e um extrato em revisão
+     * (com uma linha que corresponde ao IPTU previsto e atrasado).
+     */
+    private function imports(Household $household, User $eduardo, Account $joint): void
+    {
+        $category = fn (string $name): int => Category::where('household_id', $household->id)->where('name', $name)->valueOrFail('id');
+
+        foreach ([
+            ['pattern' => 'pagamento recebido', 'ignore' => true],
+            ['pattern' => 'salario', 'category_id' => $category('Salário')],
+            ['pattern' => 'ifood', 'category_id' => $category('Delivery'), 'description' => 'iFood'],
+            ['pattern' => 'posto', 'category_id' => $category('Combustível')],
+            ['pattern' => 'drogaria', 'category_id' => $category('Farmácia')],
+            ['pattern' => 'padaria', 'category_id' => $category('Mercado'), 'description' => 'Padaria'],
+        ] as $rule) {
+            app(SaveImportRule::class)->execute($household->id, $rule);
+        }
+
+        app(SaveImportProfile::class)->execute($eduardo, [
+            ...BankPresets::PRESETS['nubank_account']['profile'], 'account_id' => $joint->id, 'name' => 'Nubank — conta',
+        ]);
+
+        $day = fn (int $daysAgo): string => today()->subDays($daysAgo)->format('d/m/Y');
+        $csv = implode("\n", [
+            'Data,Valor,Identificador,Descrição',
+            "{$day(2)},-420.00,demo-1,Pagamento de boleto efetuado - PREFEITURA IPTU",
+            "{$day(2)},-23.50,demo-2,Compra no débito - PADARIA CENTRAL",
+            "{$day(1)},-64.90,demo-3,Compra no débito - IFOOD",
+            "{$day(1)},-150.00,demo-4,Transferência enviada pelo Pix - FULANO",
+        ]);
+
+        app(ImportStatement::class)->execute($eduardo, $joint->id, $csv, 'extrato-conjunta.csv', ImportFormat::Csv);
     }
 
     private function recurrence(Household $household, User $payer, Account $account, string $category, int $amount, string $frequency, ?int $day, Carbon $start, bool $estimate = false, ?string $description = null): void

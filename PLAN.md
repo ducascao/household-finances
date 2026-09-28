@@ -154,20 +154,29 @@ Notas da entrega:
 **Valor:** trazer o mês do banco em minutos, sem digitar.
 
 Escopo
-- [ ] Upload de OFX e CSV associado a uma conta (ou cartão)
-- [ ] Mapeamento de colunas do CSV salvo por banco/conta (data, descrição, valor, formato de data e decimal)
-- [ ] `import_batches` e hash por linha (conta + data + valor + descrição normalizada) para deduplicação
-- [ ] `import_rules`: "descrição contém X" → categoria (e opcionalmente descrição amigável)
-- [ ] Tela de revisão antes de gravar: nova, duplicada, possível correspondência com lançamento previsto (mesmo valor ± 3 dias)
-- [ ] Ao confirmar correspondência, o previsto vira pago em vez de criar outro lançamento
-- [ ] Criar regra a partir de uma linha na revisão
+- [x] Upload de OFX e CSV associado a uma conta (ou cartão)
+- [x] Mapeamento de colunas do CSV salvo por banco/conta (data, descrição, valor, formato de data e decimal)
+- [x] `import_batches` e hash por linha (conta + data + valor + descrição normalizada) para deduplicação
+- [x] `import_rules`: "descrição contém X" → categoria (e opcionalmente descrição amigável)
+- [x] Tela de revisão antes de gravar: nova, duplicada, possível correspondência com lançamento previsto (mesmo valor ± 3 dias)
+- [x] Ao confirmar correspondência, o previsto vira pago em vez de criar outro lançamento
+- [x] Criar regra a partir de uma linha na revisão
 
 Critérios de aceite
-- [ ] Importar o mesmo arquivo duas vezes não duplica nada (teste)
-- [ ] Previsto correspondente é baixado, não duplicado (teste)
-- [ ] Testes com arquivos OFX/CSV de exemplo em `tests/Fixtures`
+- [x] Importar o mesmo arquivo duas vezes não duplica nada (teste)
+- [x] Previsto correspondente é baixado, não duplicado (teste)
+- [x] Testes com arquivos OFX/CSV de exemplo em `tests/Fixtures`
 
 Notas da entrega:
+- **Bancos do lar:** Bradesco, PicPay, Nubank e Mercado Pago. Perfis de CSV prontos em `Domain/Import/BankPresets`: Nubank conta, Nubank cartão (inverte sinal), Bradesco conta (crédito/débito separados), Mercado Pago e PicPay. **Bradesco, Mercado Pago e PicPay estão "a conferir":** foram montados pelo formato conhecido e precisam ser validados com um arquivo real (o perfil pode ser ajustado na tela). Quando houver OFX, é o formato recomendado.
+- **Leitores:** `OfxParser` próprio (SGML sem fechamento e XML, Windows-1252 → UTF-8, `MEMO` ou `NAME`) e `CsvParser` guiado pelo perfil (colunas a partir de 1, valor ou débito/crédito, formatos de data com ou sem hora, decimal/milhar, inverter sinal). Linhas sem data ou valor válidos (saldo anterior, totais) são ignoradas.
+- **Hash** = conta + data + valor + descrição normalizada + nº da ocorrência entre linhas idênticas do mesmo arquivo (dois cafés iguais no mesmo dia viram 2 lançamentos). Gravado em `transactions.import_hash`, com índice único `(account_id, import_hash)`. A duplicidade é checada na leitura e de novo na confirmação (dois lotes do mesmo arquivo).
+- **Revisão:** cada linha é "nova", "duplicada" (só pode ser ignorada) ou "corresponde a previsto" (mesmo valor, vencimento a ±3 dias, o mais próximo; padrão "baixar previsto"). Ação, categoria e descrição são editáveis na linha. Sem regra, a categoria é "Outras despesas"/"Outras receitas" pelo sinal.
+- **Regras:** "descrição contém" (sem diferenciar maiúsculas e acentos) → categoria + descrição amigável, ou **ignorar** (ex.: "Pagamento recebido" no cartão). A primeira pela ordem vence, e a ordem é arrastável. "Criar regra" na revisão já reaplica às linhas novas do lote sem regra.
+- **Confirmação:** tudo numa transação. Cria por `CreateTransaction` (no cartão cai na fatura certa; valor positivo com categoria de despesa vira estorno) e baixa previstos por `MarkAsPaid` com data e valor do extrato. Valor negativo com categoria de receita bloqueia a confirmação, indicando a linha.
+- **Arquivo enviado é apagado depois de lido;** ficam só as linhas. Lote descartado apaga as linhas.
+- Lotes, linhas e perfis herdam a visibilidade da conta; regras são do lar.
+- **Teste de tela:** com `Carbon::setTestNow` o upload falso do Livewire quebra (JSON inválido), então os testes de tela de importação rodam sem relógio congelado. As regras de data estão cobertas nos testes de domínio.
 
 ---
 
@@ -334,7 +343,7 @@ Notas da entrega:
 ## Pontos em aberto
 
 - [ ] Fornecedor de cotações do exterior (decidir na E12)
-- [ ] Bancos e cartões usados e formato de exportação (antes da E5)
+- [x] Bancos e cartões usados e formato de exportação (antes da E5): Bradesco, PicPay, Nubank e Mercado Pago — ver notas da E5; falta validar os perfis "a conferir" com arquivos reais
 - [ ] Destino do backup além da pasta local (proposta: Google Drive na E8)
 - [ ] Modelo de progresso das metas (antes da E15)
 - [x] Layout: conteúdo usa largura máxima fixa e centralizada, deixando muito espaço entre o menu e a tabela e à direita. Proposta: `->maxContentWidth(Width::Full)` no `AppPanelProvider` (ou `ScreenTwoExtraLarge`). Aproveitar para revisar a lista de lançamentos, que hoje precisa de rolagem horizontal (ações da linha cortadas): agrupar ações em menu e ocultar colunas secundárias por padrão. **Feito após a E3:** `Width::Full`; na lista de lançamentos, só "Pagar" fica visível e o resto vai para o menu ⋯; "Pago por" e "Vencimento" ficam ocultas por padrão (dá para exibir pelo seletor de colunas).
