@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Auth;
  * @property int|null $invoice_id
  * @property int|null $installment_group_id
  * @property int|null $installment_number
+ * @property string|null $import_hash
  * @property Carbon|null $occurrence_date
  * @property int|null $category_id
  * @property Money $amount
@@ -38,7 +39,7 @@ use Illuminate\Support\Facades\Auth;
  * @property string|null $notes
  * @property list<string> $tags
  */
-#[Fillable(['transfer_id', 'recurrence_id', 'occurrence_date', 'invoice_id', 'installment_group_id', 'installment_number', 'account_id', 'category_id', 'amount', 'status', 'currency', 'date', 'due_date', 'competence_date', 'description', 'paid_by', 'notes', 'tags'])]
+#[Fillable(['transfer_id', 'recurrence_id', 'occurrence_date', 'invoice_id', 'installment_group_id', 'installment_number', 'import_hash', 'account_id', 'category_id', 'amount', 'status', 'currency', 'date', 'due_date', 'competence_date', 'description', 'paid_by', 'notes', 'tags'])]
 class Transaction extends Model
 {
     /** @use HasFactory<TransactionFactory> */

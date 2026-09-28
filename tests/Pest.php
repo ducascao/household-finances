@@ -9,3 +9,11 @@ pest()->extend(TestCase::class)
 
 pest()->extend(TestCase::class)
     ->in('Unit');
+
+/**
+ * Conteúdo de um extrato de exemplo em tests/Fixtures/imports.
+ */
+function importFixture(string $name): string
+{
+    return (string) file_get_contents(__DIR__."/Fixtures/imports/{$name}");
+}
