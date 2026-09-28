@@ -3,6 +3,8 @@
 use App\Enums\AccountVisibility;
 use App\Models\Account;
 use App\Models\Household;
+use App\Models\ImportLine;
+use App\Models\ImportRule;
 use App\Models\InstallmentGroup;
 use App\Models\Invoice;
 use App\Models\Recurrence;
@@ -25,7 +27,9 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(Recurrence::count())->toBeGreaterThan(5)
         ->and(Transaction::whereNotNull('recurrence_id')->count())->toBeGreaterThan(5)
         ->and(Invoice::whereNotNull('paid_at')->count())->toBeGreaterThan(0)
-        ->and(InstallmentGroup::count())->toBe(2);
+        ->and(InstallmentGroup::count())->toBe(2)
+        ->and(ImportRule::count())->toBeGreaterThan(3)
+        ->and(ImportLine::where('status', 'match')->count())->toBe(1);
 
     $this->actingAs($maria);
 
