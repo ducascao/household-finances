@@ -22,10 +22,13 @@ class AccountBalancesWidget extends TableWidget
     {
         return $table
             ->heading('Saldos das contas')
-            ->description(fn (): string => 'Total: '.implode(' · ', array_map(
-                MoneyFormatter::format(...),
-                AccountBalance::totalsByCurrency(AccountBalance::addToQuery(Account::query()->active())->get()),
-            )))
+            ->description(function (): string {
+                $accounts = AccountBalance::addToQuery(Account::query()->active())->get();
+                $format = fn (array $totals): string => implode(' · ', array_map(MoneyFormatter::format(...), $totals));
+
+                return 'Total atual: '.$format(AccountBalance::totalsByCurrency($accounts))
+                    .' — projetado até o fim do mês: '.$format(AccountBalance::totalsByCurrency($accounts, projected: true));
+            })
             ->query(fn (): Builder => AccountBalance::addToQuery(Account::query()->active()->orderBy('name')))
             ->paginated(false)
             ->columns([
@@ -45,6 +48,11 @@ class AccountBalancesWidget extends TableWidget
                     ->weight('bold')
                     ->color(fn (Account $record): string => AccountBalance::of($record)->isNegative() ? 'danger' : 'success')
                     ->formatStateUsing(fn (Account $record): string => MoneyFormatter::format(AccountBalance::of($record))),
+                TextColumn::make('projected_balance')
+                    ->label('Projetado (fim do mês)')
+                    ->alignEnd()
+                    ->color(fn (Account $record): string => AccountBalance::projectedOf($record)->isNegative() ? 'danger' : 'gray')
+                    ->formatStateUsing(fn (Account $record): string => MoneyFormatter::format(AccountBalance::projectedOf($record))),
             ]);
     }
 }

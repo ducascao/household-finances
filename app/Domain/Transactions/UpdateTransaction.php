@@ -5,6 +5,7 @@ namespace App\Domain\Transactions;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 class UpdateTransaction
 {
@@ -13,6 +14,12 @@ class UpdateTransaction
      */
     public function execute(User $actor, Transaction $transaction, array $data): Transaction
     {
+        if ($transaction->isTransfer()) {
+            throw ValidationException::withMessages([
+                'transaction' => 'Transferências são editadas pelo formulário de transferência.',
+            ]);
+        }
+
         $currentAccount = Account::withoutGlobalScopes()->find($transaction->account_id);
         $attributes = TransactionData::resolve($actor, $data, $currentAccount);
 
