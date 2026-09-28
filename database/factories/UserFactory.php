@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\HouseholdRole;
+use App\Models\Household;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -41,5 +43,13 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Cria o usuário já como membro do lar (e com ele como lar atual).
+     */
+    public function inHousehold(Household $household, HouseholdRole $role = HouseholdRole::Member): static
+    {
+        return $this->afterCreating(fn (User $user) => $household->addUser($user, $role));
     }
 }
