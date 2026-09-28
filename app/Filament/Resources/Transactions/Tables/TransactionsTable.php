@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Transactions\Tables;
 
+use App\Domain\Reports\MonthlySummary;
 use App\Domain\Transfers\TransferLabel;
 use App\Enums\TransactionStatus;
 use App\Filament\Resources\Recurrences\RecurrenceResource;
@@ -98,6 +99,15 @@ class TransactionsTable
                             'category_id',
                             Category::query()->whereKey($categoryId)->orWhere('parent_id', $categoryId)->select('id'),
                         ),
+                    )),
+                SelectFilter::make('competence')
+                    ->label('Competência')
+                    ->options(fn (): array => MonthlySummary::monthOptions()
+                        ->mapWithKeys(fn (Carbon $month): array => [$month->format('Y-m') => ucfirst($month->locale('pt_BR')->translatedFormat('F/Y'))])
+                        ->all())
+                    ->query(fn (Builder $query, array $data) => $query->when(
+                        $data['value'] ?? null,
+                        fn (Builder $query, string $month) => $query->whereDate('competence_date', $month.'-01'),
                     )),
                 Filter::make('period')
                     ->label('Período')
