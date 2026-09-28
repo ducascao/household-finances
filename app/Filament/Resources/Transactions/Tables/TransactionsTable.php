@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Transactions\Tables;
 
+use App\Enums\TransactionStatus;
+use App\Filament\Resources\Transactions\Actions\MarkAsPaidActions;
 use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Models\Account;
 use App\Models\Category;
@@ -47,6 +49,20 @@ class TransactionsTable
                     ->label('Competência')
                     ->date('m/Y')
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('status')
+                    ->label('Situação')
+                    ->badge()
+                    ->state(fn (Transaction $record): string => $record->isOverdue() ? 'Atrasado' : $record->status->label())
+                    ->color(fn (Transaction $record): string => match (true) {
+                        $record->isOverdue() => 'danger',
+                        $record->isScheduled() => 'warning',
+                        default => 'success',
+                    }),
+                TextColumn::make('due_date')
+                    ->label('Vencimento')
+                    ->date('d/m/Y')
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('amount')
                     ->label('Valor')
                     ->alignEnd()
@@ -92,16 +108,28 @@ class TransactionsTable
 
                         return $indicators;
                     }),
+                SelectFilter::make('status')
+                    ->label('Situação')
+                    ->options(TransactionStatus::options()),
+                Filter::make('overdue')
+                    ->label('Só atrasados')
+                    ->toggle()
+                    ->query(function (Builder $query): void {
+                        /** @var Builder<Transaction> $query */
+                        $query->overdue();
+                    }),
                 SelectFilter::make('paid_by')
                     ->label('Pago por')
                     ->options(fn (): array => TransactionForm::memberOptions()),
             ])
             ->recordActions([
+                MarkAsPaidActions::single(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    MarkAsPaidActions::bulk(),
                     DeleteBulkAction::make(),
                 ]),
             ]);

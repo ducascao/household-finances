@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Transactions\Schemas;
 
 use App\Enums\CategoryType;
+use App\Enums\TransactionStatus;
 use App\Filament\Forms\MoneyInput;
 use App\Models\Account;
 use App\Models\Category;
@@ -14,6 +15,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 
@@ -64,17 +67,39 @@ class TransactionForm
             MoneyInput::make('amount')
                 ->label('Valor')
                 ->required(),
+            ToggleButtons::make('status')
+                ->label('Situação')
+                ->options(TransactionStatus::options())
+                ->colors([TransactionStatus::Scheduled->value => 'warning', TransactionStatus::Paid->value => 'success'])
+                ->default(TransactionStatus::Paid->value)
+                ->inline()
+                ->live()
+                ->required(),
             DatePicker::make('date')
                 ->label('Data')
                 ->displayFormat('d/m/Y')
                 ->native(false)
                 ->default(now())
-                ->required(),
+                ->visible(fn (Get $get): bool => self::isPaid($get))
+                ->required(fn (Get $get): bool => self::isPaid($get)),
+            DatePicker::make('due_date')
+                ->label('Vencimento')
+                ->displayFormat('d/m/Y')
+                ->native(false)
+                ->visible(fn (Get $get): bool => ! self::isPaid($get))
+                ->required(fn (Get $get): bool => ! self::isPaid($get)),
             TextInput::make('description')
                 ->label('Descrição')
                 ->required()
                 ->maxLength(255),
         ];
+    }
+
+    private static function isPaid(Get $get): bool
+    {
+        $status = $get('status');
+
+        return ($status instanceof TransactionStatus ? $status->value : $status) !== TransactionStatus::Scheduled->value;
     }
 
     /**
