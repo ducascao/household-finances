@@ -2,12 +2,13 @@
 
 namespace App\Policies;
 
+use App\Domain\Transfers\TransferLegs;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
 
 /**
- * Lançamento herda a visibilidade da conta.
+ * Lançamento herda a visibilidade da conta. Transferência só é alterada por quem vê as duas contas.
  */
 class TransactionPolicy
 {
@@ -28,17 +29,26 @@ class TransactionPolicy
 
     public function update(User $user, Transaction $transaction): bool
     {
-        return $this->canSeeAccount($user, $transaction);
+        return $this->canManage($user, $transaction);
     }
 
     public function delete(User $user, Transaction $transaction): bool
     {
-        return $this->canSeeAccount($user, $transaction);
+        return $this->canManage($user, $transaction);
     }
 
     public function deleteAny(User $user): bool
     {
         return $user->current_household_id !== null;
+    }
+
+    private function canManage(User $user, Transaction $transaction): bool
+    {
+        if ($transaction->isTransfer()) {
+            return TransferLegs::of($transaction)->isManageableBy($user);
+        }
+
+        return $this->canSeeAccount($user, $transaction);
     }
 
     private function canSeeAccount(User $user, Transaction $transaction): bool

@@ -4,10 +4,10 @@ namespace App\Filament\Resources\Transactions\Pages;
 
 use App\Domain\Transactions\UpdateTransaction;
 use App\Filament\Concerns\RunsDomainActions;
+use App\Filament\Resources\Transactions\Actions\TransferActions;
 use App\Filament\Resources\Transactions\TransactionResource;
 use App\Models\Transaction;
 use App\Models\User;
-use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,8 +23,20 @@ class EditTransaction extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            TransferActions::delete(),
         ];
+    }
+
+    /**
+     * Transferência é editada pelo modal de transferência na lista.
+     */
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+
+        if ($this->record->isTransfer()) {
+            $this->redirect(static::getResource()::getUrl('index'));
+        }
     }
 
     /**
