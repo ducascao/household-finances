@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Domain\Accounts\CreateAccount;
 use App\Domain\Household\AddMember;
 use App\Domain\Household\CreateHousehold;
+use App\Domain\Recurrences\CreateRecurrence;
 use App\Domain\Transactions\CreateTransaction;
 use App\Domain\Transfers\CreateTransfer;
 use App\Enums\AccountType;
@@ -18,7 +19,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * Lar de exemplo com 2 usuários, contas pessoais e compartilhadas, 3 meses de lançamentos,
- * contas previstas (atrasadas e a vencer) e transferências.
+ * contas previstas (atrasadas e a vencer), transferências e contas fixas (recorrências).
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -69,7 +70,16 @@ class DemoSeeder extends Seeder
         $this->scheduled($household, $maria, $joint, 'IPTU', today()->subDays(3), 42000, 'IPTU (parcela)');
         $this->scheduled($household, $eduardo, $nubank, 'Telefone', today()->addDays(2), 6990, 'Celular');
         $this->scheduled($household, $maria, $joint, 'Plano de saúde', today()->addDays(5), 89000, 'Plano de saúde');
-        $this->scheduled($household, $eduardo, $joint, 'Aluguel', today()->addMonthNoOverflow()->day(10), 280000, 'Aluguel');
+        // Contas fixas a partir do mês que vem (os meses anteriores já estão lançados acima).
+        $nextMonth = today()->addMonthNoOverflow()->startOfMonth();
+        $this->recurrence($household, $eduardo, $joint, 'Aluguel', 280000, 'monthly', 10, $nextMonth);
+        $this->recurrence($household, $maria, $joint, 'Condomínio', 65000, 'monthly', 10, $nextMonth);
+        $this->recurrence($household, $maria, $joint, 'Internet', 11990, 'monthly', 15, $nextMonth);
+        $this->recurrence($household, $eduardo, $joint, 'Luz', 22000, 'monthly', 15, $nextMonth, estimate: true);
+        $this->recurrence($household, $eduardo, $nubank, 'Salário', 850000, 'monthly', 5, $nextMonth);
+        $this->recurrence($household, $maria, $itau, 'Salário', 720000, 'monthly', 5, $nextMonth);
+        $this->recurrence($household, $eduardo, $joint, 'IPVA', 180000, 'yearly', 20, today()->addMonthsNoOverflow(1)->day(20));
+        $this->recurrence($household, $maria, $joint, 'Serviços domésticos', 18000, 'weekly', null, today()->next(Carbon::FRIDAY), description: 'Diarista');
         app(CreateTransfer::class)->execute($eduardo, [
             'from_account_id' => $joint->id,
             'to_account_id' => $savings->id,
@@ -90,6 +100,21 @@ class DemoSeeder extends Seeder
             'due_date' => $dueDate->toDateString(),
             'description' => $description,
             'paid_by' => $payer->id,
+        ]);
+    }
+
+    private function recurrence(Household $household, User $payer, Account $account, string $category, int $amount, string $frequency, ?int $day, Carbon $start, bool $estimate = false, ?string $description = null): void
+    {
+        app(CreateRecurrence::class)->execute($payer, [
+            'account_id' => $account->id,
+            'category_id' => Category::where('household_id', $household->id)->where('name', $category)->valueOrFail('id'),
+            'amount' => $amount,
+            'amount_is_estimate' => $estimate,
+            'description' => $description ?? $category,
+            'paid_by' => $payer->id,
+            'frequency' => $frequency,
+            'day_of_month' => $day,
+            'start_date' => $start->toDateString(),
         ]);
     }
 
