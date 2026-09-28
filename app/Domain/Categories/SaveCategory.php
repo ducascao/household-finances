@@ -45,10 +45,16 @@ class SaveCategory
             $this->ensureValidParent($category, (int) $validated['parent_id'], $validated['type'], $householdId ?? $category->household_id);
         }
 
-        if ($category->exists && $category->type->value !== $validated['type'] && $category->children()->exists()) {
-            throw ValidationException::withMessages([
-                'type' => 'Não é possível mudar o tipo de uma categoria que tem subcategorias.',
-            ]);
+        if ($category->exists && $category->type->value !== $validated['type']) {
+            $error = match (true) {
+                $category->children()->exists() => 'Não é possível mudar o tipo de uma categoria que tem subcategorias.',
+                $category->transactions()->withoutGlobalScopes()->exists() => 'Não é possível mudar o tipo de uma categoria com lançamentos.',
+                default => null,
+            };
+
+            if ($error !== null) {
+                throw ValidationException::withMessages(['type' => $error]);
+            }
         }
 
         $category->fill($validated)->save();

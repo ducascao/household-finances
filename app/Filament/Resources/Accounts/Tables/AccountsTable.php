@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Accounts\Tables;
 
+use App\Domain\Accounts\AccountBalance;
 use App\Domain\Accounts\ArchiveAccount;
 use App\Enums\AccountType;
 use App\Enums\AccountVisibility;
@@ -21,7 +22,7 @@ class AccountsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with('owner'))
+            ->modifyQueryUsing(fn (Builder $query) => AccountBalance::addToQuery($query->with('owner')))
             ->defaultSort('name')
             ->columns([
                 TextColumn::make('name')
@@ -41,7 +42,13 @@ class AccountsTable
                 TextColumn::make('initial_balance')
                     ->label('Saldo inicial')
                     ->alignEnd()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(fn (Account $record): string => MoneyFormatter::format($record->initial_balance)),
+                TextColumn::make('current_balance')
+                    ->label('Saldo atual')
+                    ->alignEnd()
+                    ->color(fn (Account $record): string => AccountBalance::of($record)->isNegative() ? 'danger' : 'success')
+                    ->formatStateUsing(fn (Account $record): string => MoneyFormatter::format(AccountBalance::of($record))),
                 TextColumn::make('archived_at')
                     ->label('Arquivada em')
                     ->date('d/m/Y')

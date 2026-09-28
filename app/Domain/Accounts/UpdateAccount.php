@@ -21,6 +21,12 @@ class UpdateAccount
             ]);
         }
 
+        if ($validated['currency'] !== $account->currency && $account->transactions()->withoutGlobalScopes()->exists()) {
+            throw ValidationException::withMessages([
+                'currency' => 'Não é possível mudar a moeda de uma conta com lançamentos.',
+            ]);
+        }
+
         $account->fill($validated)->save();
 
         return $account;
