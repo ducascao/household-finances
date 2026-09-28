@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Domain\Accounts\CreateAccount;
+use App\Domain\CreditCard\CreateInstallmentPurchase;
+use App\Domain\CreditCard\PayInvoice;
 use App\Domain\Household\AddMember;
 use App\Domain\Household\CreateHousehold;
 use App\Domain\Recurrences\CreateRecurrence;
@@ -12,14 +14,16 @@ use App\Enums\AccountType;
 use App\Enums\AccountVisibility;
 use App\Models\Account;
 use App\Models\Category;
+use App\Models\CreditCard;
 use App\Models\Household;
+use App\Models\Invoice;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
 /**
  * Lar de exemplo com 2 usuários, contas pessoais e compartilhadas, 3 meses de lançamentos,
- * contas previstas (atrasadas e a vencer), transferências e contas fixas (recorrências).
+ * contas previstas (atrasadas e a vencer), transferências, contas fixas e cartões de crédito com faturas.
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -70,6 +74,8 @@ class DemoSeeder extends Seeder
         $this->scheduled($household, $maria, $joint, 'IPTU', today()->subDays(3), 42000, 'IPTU (parcela)');
         $this->scheduled($household, $eduardo, $nubank, 'Telefone', today()->addDays(2), 6990, 'Celular');
         $this->scheduled($household, $maria, $joint, 'Plano de saúde', today()->addDays(5), 89000, 'Plano de saúde');
+        $this->cards($household, $eduardo, $maria, $joint);
+
         // Contas fixas a partir do mês que vem (os meses anteriores já estão lançados acima).
         $nextMonth = today()->addMonthNoOverflow()->startOfMonth();
         $this->recurrence($household, $eduardo, $joint, 'Aluguel', 280000, 'monthly', 10, $nextMonth);
@@ -101,6 +107,60 @@ class DemoSeeder extends Seeder
             'description' => $description,
             'paid_by' => $payer->id,
         ]);
+    }
+
+    /**
+     * Cartão compartilhado e cartão pessoal da Maria, com compras à vista, parcelada, estorno e faturas passadas pagas.
+     */
+    private function cards(Household $household, User $eduardo, User $maria, Account $joint): void
+    {
+        $sharedCard = app(CreateAccount::class)->execute($eduardo, [
+            'name' => 'Cartão conjunto', 'type' => AccountType::CreditCard, 'visibility' => AccountVisibility::Shared,
+            'currency' => 'BRL', 'card_closing_day' => 25, 'card_due_day' => 5, 'card_limit' => 1500000,
+        ]);
+        $mariaCard = app(CreateAccount::class)->execute($maria, [
+            'name' => 'Cartão Maria', 'type' => AccountType::CreditCard, 'visibility' => AccountVisibility::Private,
+            'currency' => 'BRL', 'card_closing_day' => 3, 'card_due_day' => 10, 'card_limit' => 600000,
+        ]);
+
+        $category = fn (string $name): int => Category::where('household_id', $household->id)->where('name', $name)->valueOrFail('id');
+        $buy = fn (User $payer, Account $card, string $categoryName, int $daysAgo, int $amount, string $description, bool $refund = false) => app(CreateTransaction::class)->execute($payer, [
+            'account_id' => $card->id, 'category_id' => $category($categoryName), 'amount' => $amount,
+            'date' => today()->subDays($daysAgo)->toDateString(), 'description' => $description, 'paid_by' => $payer->id,
+            'is_refund' => $refund,
+        ]);
+
+        $buy($eduardo, $sharedCard, 'Mercado', 55, 42350, 'Atacadão');
+        $buy($maria, $sharedCard, 'Restaurante', 48, 18700, 'Jantar');
+        $buy($eduardo, $sharedCard, 'Combustível', 34, 25000, 'Posto');
+        $buy($maria, $sharedCard, 'Farmácia', 20, 8990, 'Drogaria');
+        $buy($eduardo, $sharedCard, 'Eletrônicos', 12, 29900, 'Fone de ouvido');
+        $buy($eduardo, $sharedCard, 'Eletrônicos', 9, 29900, 'Estorno fone de ouvido', refund: true);
+        $buy($maria, $sharedCard, 'Delivery', 2, 6450, 'Pizza');
+        $buy($maria, $mariaCard, 'Roupas', 30, 35990, 'Loja de roupas');
+        $buy($maria, $mariaCard, 'Cursos', 6, 19900, 'Curso online');
+
+        app(CreateInstallmentPurchase::class)->execute($eduardo, [
+            'account_id' => $sharedCard->id, 'category_id' => $category('Casa'), 'amount' => 360000, 'installments' => 10,
+            'date' => today()->subDays(40)->toDateString(), 'description' => 'Geladeira', 'paid_by' => $eduardo->id,
+        ]);
+        app(CreateInstallmentPurchase::class)->execute($maria, [
+            'account_id' => $mariaCard->id, 'category_id' => $category('Eletrônicos'), 'amount' => 100000, 'installments' => 3,
+            'date' => today()->subDays(25)->toDateString(), 'description' => 'Celular', 'paid_by' => $maria->id,
+        ]);
+
+        // Faturas já vencidas foram pagas pela conta conjunta (a da Maria, pela conta dela).
+        foreach ([[$sharedCard, $eduardo, $joint], [$mariaCard, $maria, null]] as [$card, $payer, $from]) {
+            $creditCard = CreditCard::where('account_id', $card->id)->sole();
+            $from ??= Account::where('owner_id', $payer->id)->where('type', AccountType::Checking->value)->firstOrFail();
+
+            Invoice::where('credit_card_id', $creditCard->id)
+                ->whereDate('due_date', '<', today())
+                ->whereNull('paid_at')
+                ->orderBy('due_date')
+                ->get()
+                ->each(fn (Invoice $invoice) => app(PayInvoice::class)->execute($payer, $invoice, $from->id, $invoice->due_date));
+        }
     }
 
     private function recurrence(Household $household, User $payer, Account $account, string $category, int $amount, string $frequency, ?int $day, Carbon $start, bool $estimate = false, ?string $description = null): void

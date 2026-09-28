@@ -124,21 +124,31 @@ Notas da entrega:
 **Valor:** ver a fatura aberta e as próximas, com parcelas no mês certo.
 
 Escopo
-- [ ] `credit_cards` (1:1 com conta do tipo credit_card): dia de fechamento, dia de vencimento, limite
-- [ ] `invoices`: cartão, mês de referência, data de fechamento, vencimento, status (open, closed, paid); criadas sob demanda
-- [ ] Regra: compra em data ≥ fechamento cai na fatura seguinte; `competence_date` = mês da fatura
-- [ ] `installment_groups`: compra parcelada gera N lançamentos, um por fatura seguinte, com "3/10" na descrição; última parcela absorve o arredondamento
-- [ ] Estornos (valor positivo) na fatura
-- [ ] Pagamento de fatura = transferência da conta corrente para o cartão; marca a fatura como paga
-- [ ] Tela da fatura: itens, total, limite disponível, próximas faturas com parcelas já comprometidas
-- [ ] Vencimento da fatura aparece no widget de contas a pagar
+- [x] `credit_cards` (1:1 com conta do tipo credit_card): dia de fechamento, dia de vencimento, limite
+- [x] `invoices`: cartão, mês de referência, data de fechamento, vencimento, status (open, closed, paid); criadas sob demanda
+- [x] Regra: compra em data ≥ fechamento cai na fatura seguinte; `competence_date` = mês da fatura
+- [x] `installment_groups`: compra parcelada gera N lançamentos, um por fatura seguinte, com "3/10" na descrição; última parcela absorve o arredondamento
+- [x] Estornos (valor positivo) na fatura
+- [x] Pagamento de fatura = transferência da conta corrente para o cartão; marca a fatura como paga
+- [x] Tela da fatura: itens, total, limite disponível, próximas faturas com parcelas já comprometidas
+- [x] Vencimento da fatura aparece no widget de contas a pagar
 
 Critérios de aceite
-- [ ] Compra no dia do fechamento cai na fatura correta (teste com várias combinações de dias)
-- [ ] 1000,00 em 3x gera 333,33 + 333,33 + 333,34 (teste)
-- [ ] Soma das parcelas futuras reduz o limite disponível (teste)
+- [x] Compra no dia do fechamento cai na fatura correta (teste com várias combinações de dias)
+- [x] 1000,00 em 3x gera 333,33 + 333,33 + 333,34 (teste)
+- [x] Soma das parcelas futuras reduz o limite disponível (teste)
 
 Notas da entrega:
+- **Desvio (aprovado):** `invoices` não tem coluna `status`. "Paga" é gravado (`paid_at`, `payment_transfer_id`); "aberta" e "fechada" vêm da data (fechada quando hoje ≥ fechamento). O enum `InvoiceStatus` tem os três valores, e `Invoice::status()` os calcula.
+- **Mês da fatura** = mês do vencimento, e é a `competence_date` das compras. Vencimento no mesmo mês do fechamento quando o dia de vencimento é maior que o de fechamento; senão, no mês seguinte (inclusive dias iguais). Dias 29–31 caem no último dia do mês.
+- **Regra de fechamento** em `Domain/CreditCard/InvoiceSchedule` + `AssignTransactionToInvoice`, chamada por `CreateTransaction`, `UpdateTransaction` e pela geração de contas fixas. Compra que cairia em fatura já paga vai para a seguinte. Lançamento em fatura paga não pode ter conta, valor ou data alterados, nem ser excluído.
+- **Cartão:** `credit_cards` guarda `currency` (cópia da conta) para o cast do limite. É configurado na própria tela de contas quando o tipo é cartão. Mudar os dias vale para as faturas ainda não criadas.
+- **Compras no cartão são "pagas":** a dívida já existe, inclusive a das parcelas futuras. O saldo da conta do cartão é a dívida total. Limite disponível = limite − compras e parcelas em faturas não pagas.
+- **Parcelas:** `installment_groups` + `installment_group_id`/`installment_number` nos lançamentos. A data de cada parcela é a da compra + (k−1) meses; a fatura é a da compra + (k−1) meses. Editar vale para o grupo (descrição e categoria); excluir uma parcela exclui a compra, bloqueado se alguma parcela está em fatura paga. Valor/nº de parcelas: excluir e lançar de novo.
+- **Estorno:** opção no lançamento de despesa que grava valor positivo (vale para qualquer conta, não só cartão).
+- **Pagamento:** `PayInvoice` cria uma transferência da conta escolhida para o cartão (a perna do cartão não entra em fatura) e marca a fatura como paga; excluir essa transferência reabre a fatura. Pagamento parcial/rotativo fora do escopo: pagar sempre marca como paga.
+- **Tela "Faturas":** lista (cartão, mês, fechamento, vencimento, total, situação) e tela da fatura com itens, total, limite total/disponível, próximas faturas com parcelas comprometidas e o botão "Pagar fatura".
+- **Painel:** faturas não pagas com valor entram em atrasados, vencendo em 7 dias e previsto do mês (a pagar), mais a lista "Faturas de cartão…" com "Pagar". Itens do cartão (inclusive contas fixas no cartão) entram só pela fatura, para não contar em dobro.
 
 ### E5 — Importação de extratos
 **Valor:** trazer o mês do banco em minutos, sem digitar.
