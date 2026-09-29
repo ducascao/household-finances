@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Contracts\AttachmentStorage;
 use App\Contracts\GoogleOAuth;
+use App\Contracts\QuoteProvider;
 use App\Services\Google\FilesystemAttachmentStorage;
 use App\Services\Google\GoogleClientOAuth;
+use App\Services\Quotes\BrapiQuoteProvider;
 use Google\Service\Drive;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Filesystem\FilesystemAdapter;
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(GoogleOAuth::class, GoogleClientOAuth::class);
         $this->app->bind(AttachmentStorage::class, FilesystemAttachmentStorage::class);
+        $this->app->bind(QuoteProvider::class, BrapiQuoteProvider::class);
     }
 
     /**
