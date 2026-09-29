@@ -42,7 +42,7 @@ class FilesystemAttachmentStorage implements AttachmentStorage
 
     public function readStream(Attachment $attachment)
     {
-        $stream = $this->disk($attachment->disk, $attachment->household_id)->readStream($attachment->path);
+        $stream = $this->namedDisk($attachment->disk, $attachment->household_id)->readStream($attachment->path);
 
         if (! is_resource($stream)) {
             throw new RuntimeException('Arquivo não encontrado no armazenamento.');
@@ -53,7 +53,12 @@ class FilesystemAttachmentStorage implements AttachmentStorage
 
     public function delete(string $disk, string $path, int $householdId): void
     {
-        $this->disk($disk, $householdId)->delete($path);
+        $this->namedDisk($disk, $householdId)->delete($path);
+    }
+
+    public function disk(Household $household): Filesystem
+    {
+        return $this->diskForNewFile($household->id)[1];
     }
 
     /**
@@ -63,10 +68,10 @@ class FilesystemAttachmentStorage implements AttachmentStorage
     {
         $name = config('attachments.disk') ?? self::GOOGLE;
 
-        return [$name, $this->disk($name, $householdId)];
+        return [$name, $this->namedDisk($name, $householdId)];
     }
 
-    private function disk(string $name, int $householdId): Filesystem
+    private function namedDisk(string $name, int $householdId): Filesystem
     {
         // Disco configurado (ou "google" falso nos testes): usa o disco nomeado do Laravel.
         if ($name !== self::GOOGLE || config('attachments.disk') === self::GOOGLE) {

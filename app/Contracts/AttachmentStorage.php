@@ -2,9 +2,11 @@
 
 namespace App\Contracts;
 
+use App\Domain\Attachments\AttachmentStorageUnavailable;
 use App\Domain\Attachments\StoredFile;
 use App\Models\Attachment;
 use App\Models\Household;
+use Illuminate\Contracts\Filesystem\Filesystem;
 
 /**
  * Onde os comprovantes ficam guardados (Google Drive do lar, ou outro disco em desenvolvimento/testes).
@@ -29,4 +31,11 @@ interface AttachmentStorage
     public function readStream(Attachment $attachment);
 
     public function delete(string $disk, string $path, int $householdId): void;
+
+    /**
+     * Disco do lar para novos arquivos (usado também pela cópia do backup).
+     *
+     * @throws AttachmentStorageUnavailable
+     */
+    public function disk(Household $household): Filesystem;
 }
