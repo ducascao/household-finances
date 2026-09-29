@@ -16,7 +16,7 @@ class CreateDefaultCategories
     public const DEFAULTS = [
         CategoryType::Income->value => [
             'Salário' => ['#16a34a', []],
-            'Rendimentos' => ['#0d9488', []],
+            'Rendimentos' => ['#0d9488', ['Dividendos', 'JCP', 'Rendimentos de FII']],
             'Outras receitas' => ['#65a30d', []],
         ],
         CategoryType::Expense->value => [

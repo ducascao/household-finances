@@ -16,9 +16,9 @@ class UpdateTransaction
      */
     public function execute(User $actor, Transaction $transaction, array $data): Transaction
     {
-        if ($transaction->asset_operation_id !== null) {
+        if ($transaction->asset_operation_id !== null || $transaction->asset_income_id !== null) {
             throw ValidationException::withMessages([
-                'transaction' => 'Compras e vendas de ativos são editadas pela operação, na Carteira.',
+                'transaction' => 'Compras, vendas e proventos de ativos são editados pela tela do ativo, na Carteira.',
             ]);
         }
 

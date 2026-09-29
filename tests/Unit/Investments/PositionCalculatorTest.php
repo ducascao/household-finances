@@ -87,3 +87,21 @@ it('lê e formata quantidades no padrão brasileiro', function () {
         ->and(Quantity::format('1234.50000000'))->toBe('1.234,5')
         ->and(Quantity::format('55.775', 2))->toBe('55,775');
 });
+
+it('registra o resultado realizado de cada venda, com taxas e depois de desdobramento', function () {
+    $history = (new PositionCalculator)->history([
+        // 100 × 10 + 5 = 1.005 → PM 10,05
+        op(1, '2026-01-10', AssetOperationType::Buy, '100', '10', 500),
+        // venda de 40 × 12 − 2 = 478; custo 40 × 10,05 = 402 → +76,00
+        op(2, '2026-02-10', AssetOperationType::Sell, '40', '12', 200),
+        // desdobramento 1→2: 120 ações, PM 5,025
+        op(3, '2026-03-10', AssetOperationType::Split, factor: '2'),
+        // venda de 20 × 4,50 − 1 = 89; custo 20 × 5,025 = 100,50 → −11,50
+        op(4, '2026-04-10', AssetOperationType::Sell, '20', '4.5', 100),
+    ]);
+
+    expect(array_map(fn ($sale) => [(string) $sale->proceeds, (string) $sale->costBasis, $sale->resultMinor()], $history['sales']))->toBe([
+        ['478.00000000', '402.00000000', 7600],
+        ['89.00000000', '100.50000000', -1150],
+    ])->and((string) $history['position']->quantity)->toBe('100.00000000');
+});
