@@ -2,34 +2,25 @@
 
 namespace App\Models;
 
-use App\Enums\AssetOperationType;
 use App\Models\Concerns\BelongsToHousehold;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Compra, venda, desdobramento ou grupamento. Quantidade e preço em decimal(20,8) (lidos como string);
- * taxas em centavos. Compra e venda geram um lançamento na conta da corretora.
+ * Saldo informado de um ativo de renda fixa ou previdência numa data (centavos).
  *
  * @property int $id
  * @property int $household_id
  * @property int $asset_id
- * @property AssetOperationType $type
  * @property Carbon $date
- * @property string|null $quantity
- * @property string|null $unit_price
- * @property int $fees
- * @property string|null $factor
- * @property int|null $amount
- * @property string|null $notes
+ * @property int $balance
  */
-#[Fillable(['asset_id', 'type', 'date', 'quantity', 'unit_price', 'fees', 'factor', 'amount', 'notes'])]
-class AssetOperation extends Model
+#[Fillable(['asset_id', 'date', 'balance'])]
+class ManualValuation extends Model
 {
     use BelongsToHousehold;
 
@@ -45,10 +36,8 @@ class AssetOperation extends Model
     protected function casts(): array
     {
         return [
-            'type' => AssetOperationType::class,
             'date' => 'date',
-            'fees' => 'integer',
-            'amount' => 'integer',
+            'balance' => 'integer',
         ];
     }
 
@@ -58,13 +47,5 @@ class AssetOperation extends Model
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class);
-    }
-
-    /**
-     * @return HasOne<Transaction, $this>
-     */
-    public function transaction(): HasOne
-    {
-        return $this->hasOne(Transaction::class);
     }
 }
