@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Domain\Accounts\CreateAccount;
+use App\Domain\Attachments\AttachFile;
 use App\Domain\Budgets\CopyPreviousMonth;
 use App\Domain\Budgets\SaveBudget;
 use App\Domain\CreditCard\CreateInstallmentPurchase;
@@ -24,6 +25,7 @@ use App\Models\Category;
 use App\Models\CreditCard;
 use App\Models\Household;
 use App\Models\Invoice;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -31,7 +33,8 @@ use Illuminate\Support\Carbon;
 /**
  * Lar de exemplo com 2 usuários, contas pessoais e compartilhadas, 6 meses de lançamentos,
  * contas previstas (atrasadas e a vencer), transferências, contas fixas, cartões de crédito com faturas
- * importação (regras, perfil de CSV e um lote em revisão) e orçamentos dos últimos meses.
+ * importação (regras, perfil de CSV e um lote em revisão), orçamentos dos últimos meses e comprovantes
+ * (no disco local, já que os dados de exemplo não têm Google Drive conectado).
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -96,6 +99,7 @@ class DemoSeeder extends Seeder
         $this->recurrence($household, $maria, $joint, 'Serviços domésticos', 18000, 'weekly', null, today()->next(Carbon::FRIDAY), description: 'Diarista');
         $this->imports($household, $eduardo, $joint);
         $this->budgets($household);
+        $this->attachments($eduardo);
 
         app(CreateTransfer::class)->execute($eduardo, [
             'from_account_id' => $joint->id,
@@ -228,6 +232,19 @@ class DemoSeeder extends Seeder
         for ($month = $first->copy()->addMonthNoOverflow(); $month->lte(today()); $month->addMonthNoOverflow()) {
             app(CopyPreviousMonth::class)->execute($household->id, $month);
         }
+    }
+
+    private function attachments(User $eduardo): void
+    {
+        $previous = config('attachments.disk');
+        config(['attachments.disk' => 'local']);
+
+        $pdf = "%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [] /Count 0 >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n";
+
+        Transaction::where('description', 'Aluguel')->where('status', 'paid')->orderByDesc('date')->limit(2)->get()
+            ->each(fn (Transaction $rent) => app(AttachFile::class)->execute($eduardo, $rent, $pdf, 'recibo-aluguel.pdf', 'application/pdf'));
+
+        config(['attachments.disk' => $previous]);
     }
 
     private function recurrence(Household $household, User $payer, Account $account, string $category, int $amount, string $frequency, ?int $day, Carbon $start, bool $estimate = false, ?string $description = null): void

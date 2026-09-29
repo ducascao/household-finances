@@ -52,6 +52,31 @@ docker compose exec app php artisan migrate:fresh --seed
 Cria o lar "Casa Demo" com `eduardo@demo.local` e `maria@demo.local` (senha `password`),
 contas pessoais e compartilhadas e 3 meses de lançamentos. Não roda em produção.
 
+## Google Drive (comprovantes e cópia do backup)
+
+Os comprovantes dos lançamentos ficam no Google Drive do lar. O app usa o escopo `drive.file`:
+só enxerga os arquivos e pastas que ele mesmo cria (nada do resto do seu Drive).
+
+1. No [Google Cloud Console](https://console.cloud.google.com/), crie um projeto e ative a **Google Drive API**
+   (APIs e serviços → Biblioteca).
+2. Em **Tela de permissão OAuth**, escolha "Externo", preencha nome e e-mail e adicione os escopos
+   `.../auth/drive.file`, `openid` e `email`. Depois **publique o app ("Em produção")**: em "Teste" o Google
+   expira a conexão a cada 7 dias. Com esses escopos não é preciso verificação.
+3. Em **Credenciais → Criar credenciais → ID do cliente OAuth → Aplicativo da Web**, adicione o URI de
+   redirecionamento `http://localhost:8000/google/callback`.
+4. Coloque o ID e a chave no `.env` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) e rode
+   `docker compose exec app php artisan config:clear`.
+5. **No próprio computador** (endereço `localhost`; o Google não aceita o IP da rede de casa como retorno),
+   entre como administrador do lar, abra **Configurações → Google Drive** e clique em **Conectar Google Drive**.
+   Depois de conectado, os comprovantes funcionam de qualquer aparelho da rede.
+
+Os arquivos ficam em `Finanças de Casa/ano/mês` (a pasta raiz pode ser renomeada na mesma tela) e são abertos
+sempre pelo app, que confere quem pode ver cada um. Todo dia às 04:00 o backup mais recente de `./backups`
+também é copiado para `Finanças de Casa/Backups` (mantidos 30 dias). Com mais de um lar, defina
+`GOOGLE_BACKUP_HOUSEHOLD_ID`, já que o dump contém o banco inteiro.
+
+Para desenvolver sem conta Google, use `ATTACHMENTS_DISK=local` no `.env`.
+
 ## Testes e qualidade
 
 ```bash

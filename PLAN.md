@@ -229,17 +229,26 @@ Notas da entrega:
 **Valor:** achar a nota ou o boleto de qualquer lançamento.
 
 Escopo
-- [ ] Conexão OAuth com a conta Google do lar; pasta raiz configurável
-- [ ] Disco `google` via adapter Flysystem; arquivos organizados em `ano/mês`
-- [ ] `attachments`: lançamento, id do arquivo no Drive, nome, tipo, tamanho
-- [ ] Upload e visualização a partir do lançamento; indicador de anexo na listagem
-- [ ] Opcional: backup diário da E1 também enviado ao Drive
+- [x] Conexão OAuth com a conta Google do lar; pasta raiz configurável
+- [x] Disco `google` via adapter Flysystem; arquivos organizados em `ano/mês`
+- [x] `attachments`: lançamento, id do arquivo no Drive, nome, tipo, tamanho
+- [x] Upload e visualização a partir do lançamento; indicador de anexo na listagem
+- [x] Opcional: backup diário da E1 também enviado ao Drive
 
 Critérios de aceite
-- [ ] Anexo de lançamento em conta privada só é acessível ao dono (teste)
-- [ ] Integração testada com fake do disco
+- [x] Anexo de lançamento em conta privada só é acessível ao dono (teste)
+- [x] Integração testada com fake do disco
 
 Notas da entrega:
+- **Pacotes:** `google/apiclient` 2.20 (só o serviço Drive, via `Google\Task\Composer::cleanup`) e `masbug/flysystem-google-drive-ext` 2.5. **Desvio:** o adapter exige Guzzle 6/7, então o Guzzle desceu de 8.2 para 7.15.5; o Laravel 13 aceita `^7.8.2 || ^8.0`.
+- **Conexão:** tabela `google_connections`, uma por lar, com o refresh token criptografado. Tela "Configurações → Google Drive" só para admin: conectar, renomear a pasta raiz, desconectar (revoga o token). O callback em `/google/callback` confere o `state` da sessão (CSRF). Escopos `drive.file` + `openid email`: o app só vê o que criou. O fluxo OAuth fica atrás de `App\Contracts\GoogleOAuth`, com fake nos testes.
+- **Armazenamento** atrás de `App\Contracts\AttachmentStorage` (`FilesystemAttachmentStorage`). O disco `google` é registrado com `Storage::extend` e montado por lar com o token da conexão. `ATTACHMENTS_DISK` troca por outro disco (ex.: `local` em desenvolvimento); nos testes, `Storage::fake('google')`. Cada anexo grava em qual disco está.
+- **Anexos:** tabela `attachments` (lançamento, disco, caminho, id do arquivo no Drive, nome, tipo, tamanho, quem enviou). Ficam em `<pasta raiz>/<ano>/<mês>` pela data do lançamento, com nome `AAAA-MM-DD descrição - arquivo`, sem sobrescrever. Aceita PDF/JPG/PNG/WEBP/HEIC até 10 MB, com o tipo detectado pelo conteúdo; o envio é síncrono.
+- **Acesso:** o arquivo é servido pelo app em `/anexos/{id}` (inline para PDF/imagem, `?download=1` para baixar), com a Policy herdando a visibilidade da conta; nunca por link público do Drive.
+- **Limpeza:** excluir o anexo, o lançamento, a compra parcelada ou previstos de recorrência remove os arquivos por job (`DeleteStoredAttachment`, na fila). Para isso, as exclusões em massa de lançamentos passaram a ser feitas uma a uma.
+- **Telas:** coluna com clipe e quantidade na lista de lançamentos; ação "Comprovantes" (lista com abrir/baixar/excluir + envio de vários arquivos) na linha e na edição do lançamento.
+- **Backup:** `app:backup-to-drive` às 04:00 envia o dump mais recente para `<pasta raiz>/Backups`, sem reenviar o mesmo arquivo, e remove do Drive o que tem mais de 30 dias. Como o dump contém o banco inteiro, só envia para um lar (`GOOGLE_BACKUP_HOUSEHOLD_ID` ou o único conectado).
+- `DemoSeeder` cria 2 recibos de aluguel no disco local (os dados de exemplo não têm Drive).
 
 ---
 
@@ -358,6 +367,6 @@ Notas da entrega:
 
 - [ ] Fornecedor de cotações do exterior (decidir na E12)
 - [x] Bancos e cartões usados e formato de exportação (antes da E5): Bradesco, PicPay, Nubank e Mercado Pago — ver notas da E5; falta validar os perfis "a conferir" com arquivos reais
-- [ ] Destino do backup além da pasta local (proposta: Google Drive na E8)
+- [x] Destino do backup além da pasta local: Google Drive, pasta Backups, 30 dias (E8)
 - [ ] Modelo de progresso das metas (antes da E15)
 - [x] Layout: conteúdo usa largura máxima fixa e centralizada, deixando muito espaço entre o menu e a tabela e à direita. Proposta: `->maxContentWidth(Width::Full)` no `AppPanelProvider` (ou `ScreenTwoExtraLarge`). Aproveitar para revisar a lista de lançamentos, que hoje precisa de rolagem horizontal (ações da linha cortadas): agrupar ações em menu e ocultar colunas secundárias por padrão. **Feito após a E3:** `Width::Full`; na lista de lançamentos, só "Pagar" fica visível e o resto vai para o menu ⋯; "Pago por" e "Vencimento" ficam ocultas por padrão (dá para exibir pelo seletor de colunas).
