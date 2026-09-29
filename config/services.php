@@ -43,4 +43,9 @@ return [
         'backup_household_id' => env('GOOGLE_BACKUP_HOUSEHOLD_ID'),
     ],
 
+    'brapi' => [
+        'url' => env('BRAPI_URL', 'https://brapi.dev'),
+        'token' => env('BRAPI_TOKEN'),
+    ],
+
 ];
