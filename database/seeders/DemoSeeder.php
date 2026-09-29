@@ -14,6 +14,7 @@ use App\Domain\Import\BankPresets;
 use App\Domain\Import\ImportStatement;
 use App\Domain\Import\SaveImportProfile;
 use App\Domain\Import\SaveImportRule;
+use App\Domain\Investments\ManageIncomes;
 use App\Domain\Investments\ManageOperations;
 use App\Domain\Investments\SaveAsset;
 use App\Domain\Recurrences\CreateRecurrence;
@@ -24,10 +25,12 @@ use App\Enums\AccountVisibility;
 use App\Enums\ImportFormat;
 use App\Enums\PriceSource;
 use App\Models\Account;
+use App\Models\Asset;
 use App\Models\AssetPrice;
 use App\Models\Category;
 use App\Models\CreditCard;
 use App\Models\Household;
+use App\Models\InterestRate;
 use App\Models\Invoice;
 use App\Models\Transaction;
 use App\Models\User;
@@ -307,6 +310,52 @@ class DemoSeeder extends Seeder
             }
 
             $i++;
+        }
+
+        $this->portfolioHistory($eduardo, $assets, $base);
+    }
+
+    /**
+     * Cotações de fim de mês (6 meses), proventos e série do CDI fictícios, para a rentabilidade.
+     *
+     * @param  array<string, Asset>  $assets
+     * @param  array<string, float>  $base
+     */
+    private function portfolioHistory(User $eduardo, array $assets, array $base): void
+    {
+        // BBAS3 teve desdobramento 1→2 há 100 dias: antes disso a cotação era o dobro.
+        $splitDate = today()->subDays(100);
+
+        for ($monthsAgo = 6; $monthsAgo >= 1; $monthsAgo--) {
+            $date = today()->startOfMonth()->subMonthsNoOverflow($monthsAgo)->endOfMonth()->startOfDay();
+            $drift = 1 - $monthsAgo * 0.015;
+
+            foreach ($assets as $ticker => $asset) {
+                $value = $base[$ticker] * $drift * ($ticker === 'BBAS3' && $date->lt($splitDate) ? 2 : 1);
+                $price = new AssetPrice(['asset_id' => $asset->id, 'date' => $date, 'source' => PriceSource::Api]);
+                $price->household_id = $asset->household_id;
+                $price->price = number_format($value, 2, '.', '');
+                $price->save();
+            }
+        }
+
+        $incomes = app(ManageIncomes::class);
+        $incomes->register($eduardo, $assets['PETR4'], ['type' => 'dividend', 'date' => today()->subDays(75)->toDateString(), 'gross_amount' => 21400]);
+        $incomes->register($eduardo, $assets['BBAS3'], ['type' => 'jcp', 'date' => today()->subDays(45)->toDateString(), 'gross_amount' => 9800, 'withheld_tax' => 1470]);
+
+        for ($monthsAgo = 3; $monthsAgo >= 0; $monthsAgo--) {
+            $payment = today()->startOfMonth()->subMonthsNoOverflow($monthsAgo)->addDays(14);
+
+            if ($payment->lte(today())) {
+                $incomes->register($eduardo, $assets['HGLG11'], ['type' => 'fund_income', 'date' => $payment->toDateString(), 'gross_amount' => $monthsAgo >= 2 ? 2200 : 3850]);
+            }
+        }
+
+        // CDI fictício (~14% ao ano); em produção vem do Banco Central (app:fetch-cdi).
+        for ($date = today()->subMonthsNoOverflow(7); $date->lte(today()); $date->addDay()) {
+            if (! $date->isWeekend()) {
+                InterestRate::updateOrCreate(['series' => InterestRate::CDI, 'date' => $date->toDateString()], ['rate' => '0.05213']);
+            }
         }
     }
 

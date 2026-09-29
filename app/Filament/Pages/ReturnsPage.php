@@ -103,6 +103,13 @@ class ReturnsPage extends Page implements HasActions, HasSchemas, HasTable
         return app(Cdi::class)->accumulated($from, $to);
     }
 
+    public function cdiMissingUntil(): ?Carbon
+    {
+        [$from, $to] = $this->range();
+
+        return app(Cdi::class)->missingUntil($from, $to);
+    }
+
     public function periodLabel(): string
     {
         [$from, $to] = $this->range();

@@ -284,15 +284,22 @@ Notas da entrega:
 **Valor:** saber quanto a carteira rende de verdade.
 
 Escopo
-- [ ] `asset_incomes`: dividendo, JCP, rendimento; gera receita na conta da corretora
-- [ ] Resultado realizado nas vendas
-- [ ] Rentabilidade por ativo e total (valorização + proventos) por período
-- [ ] Série diária do CDI (API SGS do Banco Central) para comparação
+- [x] `asset_incomes`: dividendo, JCP, rendimento; gera receita na conta da corretora
+- [x] Resultado realizado nas vendas
+- [x] Rentabilidade por ativo e total (valorização + proventos) por período
+- [x] Série diária do CDI (API SGS do Banco Central) para comparação
 
 Critérios de aceite
-- [ ] Rentabilidade confere com cálculo manual em cenário de teste
+- [x] Rentabilidade confere com cálculo manual em cenário de teste
 
 Notas da entrega:
+- **Proventos:** tabela `asset_incomes` (tipo dividendo/JCP/rendimento de FII, data de pagamento, bruto, IR retido). Cada provento gera **receita pelo líquido** na corretora (`asset_income_id`), que entra no Resumo do mês e no orçamento. "Rendimentos" ganhou as subcategorias Dividendos, JCP e Rendimentos de FII (padrão para lares novos + migration para os existentes); a categoria é escolhida automaticamente pelo tipo, podendo trocar. O lançamento só é editado pelo provento; excluí-lo exclui o provento.
+- **Resultado realizado:** `PositionCalculator::history()` devolve, para cada venda, valor líquido − quantidade × PM na data. Aparece na coluna "Resultado realizado" das operações e nos totais (Carteira e Rentabilidade).
+- **CDI:** tabela `interest_rates` (série, data, taxa diária em %). **Exceção consciente à regra do `household_id`:** é dado público de mercado, igual para todos os lares. Contrato `App\Contracts\InterestRateProvider` + `BcbSgsProvider` (SGS série 12, blocos de até 10 anos). Job diário às 09:00 (últimos 30 dias, sem duplicar), comando `app:fetch-cdi --from=` para o histórico; falha só é registrada no log. Acumulado = ∏(1 + taxa/100) − 1. A página avisa quando a série não cobre o início do período.
+- **Rentabilidade (Dietz modificado)** em `Domain/Investments/ReturnCalculator`: valor inicial (posição no dia anterior × última cotação até lá, ou PM), valor final, compras e vendas do período ponderadas por (dias do período − dias até o fluxo) ÷ dias do período, proventos líquidos no resultado. Resultado = valorização + proventos; % = resultado ÷ (valor inicial + fluxos ponderados). Conferido com cálculo manual no teste (41,85% no cenário do critério de aceite).
+- **Tela "Investimentos → Rentabilidade":** períodos (mês atual, 12 meses, ano, desde o início, datas à escolha), cards carteira %, CDI %, % do CDI e composição do resultado (valorização, proventos, realizado), e tabela por ativo. A Carteira ganhou o card "Proventos em 12 meses" (com o realizado em vendas); a tela do ativo ganhou a aba "Proventos".
+- **Limitação conhecida:** o valor de períodos antigos usa a última cotação conhecida até a data (ou o PM), pois o app só guarda cotações desde que começou a buscá-las; dá para melhorar com "Ajustar cotação" em datas passadas.
+- `DemoSeeder`: cotações de fim de mês dos últimos 6 meses, dividendo de PETR4, JCP de BBAS3, rendimentos mensais de HGLG11 e CDI fictício dos últimos 7 meses.
 
 ### E11 — Renda fixa e previdência
 **Valor:** ter toda a carteira brasileira num lugar.
