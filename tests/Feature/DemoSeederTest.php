@@ -2,6 +2,7 @@
 
 use App\Enums\AccountVisibility;
 use App\Models\Account;
+use App\Models\Budget;
 use App\Models\Household;
 use App\Models\ImportLine;
 use App\Models\ImportRule;
@@ -29,7 +30,8 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(Invoice::whereNotNull('paid_at')->count())->toBeGreaterThan(0)
         ->and(InstallmentGroup::count())->toBe(2)
         ->and(ImportRule::count())->toBeGreaterThan(3)
-        ->and(ImportLine::where('status', 'match')->count())->toBe(1);
+        ->and(ImportLine::where('status', 'match')->count())->toBe(1)
+        ->and(Budget::whereDate('month', today()->startOfMonth())->count())->toBe(10);
 
     $this->actingAs($maria);
 

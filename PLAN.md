@@ -208,15 +208,22 @@ Notas da entrega:
 **Valor:** saber se está gastando além do combinado.
 
 Escopo
-- [ ] `budgets`: categoria, mês, valor; orçamento na categoria pai soma as filhas
-- [ ] Copiar orçamento do mês anterior
-- [ ] Tela orçado × realizado com barra de progresso; destaque a partir de 80% e acima de 100%
-- [ ] Widget no painel com as categorias estouradas
+- [x] `budgets`: categoria, mês, valor; orçamento na categoria pai soma as filhas
+- [x] Copiar orçamento do mês anterior
+- [x] Tela orçado × realizado com barra de progresso; destaque a partir de 80% e acima de 100%
+- [x] Widget no painel com as categorias estouradas
 
 Critérios de aceite
-- [ ] Realizado usa `competence_date` (compra no cartão conta no mês da fatura) (teste)
+- [x] Realizado usa `competence_date` (compra no cartão conta no mês da fatura) (teste)
 
 Notas da entrega:
+- **Tabela `budgets`** (categoria de despesa, mês, valor em centavos, BRL), única por categoria e mês. `SaveBudget` cria, altera ou remove (vazio/zero remove). `CopyPreviousMonth` só preenche categorias sem valor no mês (não sobrescreve, pode repetir).
+- **Cálculo** em `Domain/Budgets/BudgetReport`, na mesma base do Resumo do mês: por competência, sem transferências, líquido de estornos. A principal soma o gasto das subcategorias. O orçado da principal é o próprio ou, sem valor, a soma dos orçados das subcategorias, com aviso quando as subcategorias passam do orçado da principal.
+- **Situação** pelo comprometido (realizado + previsto), para antecipar estouros: < 80% dentro, 80–100% atenção, > 100% estourado. A barra mostra a situação escrita (selo), não só a cor.
+- **Orçamento é do lar; o realizado respeita a visibilidade** de quem vê (gasto em conta pessoal do outro não aparece).
+- **Tela "Orçamento"** (`/orcamento`): mês anterior/próximo, "Copiar do mês anterior", "Definir orçamento", orçado editável na própria linha (formato 1.234,56). Clicar na linha abre os lançamentos da categoria no mês.
+- **Painel de Controle:** widget "Orçamento estourado neste mês", que só aparece quando há estouro, com a quantidade de categorias em atenção.
+- **Ponto a observar no uso:** conta fixa com orçado exatamente igual ao valor (ex.: aluguel) fica em "Atenção" (100%) quando lançada. Se incomodar, dá para tratar 100% exato como "dentro".
 
 ### E8 — Comprovantes
 **Valor:** achar a nota ou o boleto de qualquer lançamento.

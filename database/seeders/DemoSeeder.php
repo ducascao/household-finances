@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Domain\Accounts\CreateAccount;
+use App\Domain\Budgets\CopyPreviousMonth;
+use App\Domain\Budgets\SaveBudget;
 use App\Domain\CreditCard\CreateInstallmentPurchase;
 use App\Domain\CreditCard\PayInvoice;
 use App\Domain\Household\AddMember;
@@ -29,7 +31,7 @@ use Illuminate\Support\Carbon;
 /**
  * Lar de exemplo com 2 usuários, contas pessoais e compartilhadas, 6 meses de lançamentos,
  * contas previstas (atrasadas e a vencer), transferências, contas fixas, cartões de crédito com faturas
- * e importação (regras, perfil de CSV e um lote em revisão).
+ * importação (regras, perfil de CSV e um lote em revisão) e orçamentos dos últimos meses.
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -93,6 +95,7 @@ class DemoSeeder extends Seeder
         $this->recurrence($household, $eduardo, $joint, 'IPVA', 180000, 'yearly', 20, today()->addMonthsNoOverflow(1)->day(20));
         $this->recurrence($household, $maria, $joint, 'Serviços domésticos', 18000, 'weekly', null, today()->next(Carbon::FRIDAY), description: 'Diarista');
         $this->imports($household, $eduardo, $joint);
+        $this->budgets($household);
 
         app(CreateTransfer::class)->execute($eduardo, [
             'from_account_id' => $joint->id,
@@ -204,6 +207,27 @@ class DemoSeeder extends Seeder
         ]);
 
         app(ImportStatement::class)->execute($eduardo, $joint->id, $csv, 'extrato-conjunta.csv', ImportFormat::Csv);
+    }
+
+    /**
+     * Orçamento dos últimos 3 meses e do mês corrente (copiado mês a mês), com categorias estouradas e em atenção.
+     */
+    private function budgets(Household $household): void
+    {
+        $first = today()->startOfMonth()->subMonthsNoOverflow(3);
+        $category = fn (string $name): int => Category::where('household_id', $household->id)->where('name', $name)->valueOrFail('id');
+
+        foreach ([
+            'Aluguel' => 280000, 'Condomínio' => 65000, 'Luz' => 20000, 'Internet' => 12000,
+            'Mercado' => 150000, 'Restaurante' => 40000, 'Combustível' => 25000, 'Farmácia' => 8000,
+            'Assinaturas' => 6000, 'Lazer' => 30000,
+        ] as $name => $amount) {
+            app(SaveBudget::class)->execute($household->id, $category($name), $first, $amount);
+        }
+
+        for ($month = $first->copy()->addMonthNoOverflow(); $month->lte(today()); $month->addMonthNoOverflow()) {
+            app(CopyPreviousMonth::class)->execute($household->id, $month);
+        }
     }
 
     private function recurrence(Household $household, User $payer, Account $account, string $category, int $amount, string $frequency, ?int $day, Carbon $start, bool $estimate = false, ?string $description = null): void
