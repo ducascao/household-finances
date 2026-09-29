@@ -2,6 +2,8 @@
 
 use App\Enums\AccountVisibility;
 use App\Models\Account;
+use App\Models\Asset;
+use App\Models\AssetPrice;
 use App\Models\Attachment;
 use App\Models\Budget;
 use App\Models\Household;
@@ -35,7 +37,9 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(ImportRule::count())->toBeGreaterThan(3)
         ->and(ImportLine::where('status', 'match')->count())->toBe(1)
         ->and(Budget::whereDate('month', today()->startOfMonth())->count())->toBe(10)
-        ->and(Attachment::where('disk', 'local')->count())->toBe(2);
+        ->and(Attachment::where('disk', 'local')->count())->toBe(2)
+        ->and(Asset::count())->toBe(4)
+        ->and(AssetPrice::count())->toBe(20);
 
     $this->actingAs($maria);
 

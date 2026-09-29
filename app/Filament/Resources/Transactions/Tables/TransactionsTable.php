@@ -51,10 +51,12 @@ class TransactionsTable
                     ->description(fn (Transaction $record): ?string => $record->tags !== [] ? implode(' · ', $record->tags) : null),
                 TextColumn::make('category.name')
                     ->label('Categoria')
-                    ->state(fn (Transaction $record): string => $record->isTransfer()
-                        ? TransferLabel::for($record, self::viewer())
-                        : (string) $record->category?->fullName())
-                    ->color(fn (Transaction $record): ?string => $record->isTransfer() ? 'gray' : null),
+                    ->state(fn (Transaction $record): string => match (true) {
+                        $record->isTransfer() => TransferLabel::for($record, self::viewer()),
+                        $record->isAssetTrade() => 'Carteira (compra/venda de ativo)',
+                        default => (string) $record->category?->fullName(),
+                    })
+                    ->color(fn (Transaction $record): ?string => $record->isTransfer() || $record->isAssetTrade() ? 'gray' : null),
                 TextColumn::make('account.name')
                     ->label('Conta'),
                 TextColumn::make('payer.name')
@@ -174,7 +176,7 @@ class TransactionsTable
                         ->visible(fn (Transaction $record): bool => $record->recurrence_id !== null && self::viewer()->can('update', $record))
                         ->url(fn (Transaction $record): string => RecurrenceResource::getUrl('edit', ['record' => $record->recurrence_id])),
                     EditAction::make()
-                        ->hidden(fn (Transaction $record): bool => $record->isTransfer() || $record->installment_group_id !== null),
+                        ->hidden(fn (Transaction $record): bool => $record->isTransfer() || $record->installment_group_id !== null || $record->isAssetTrade()),
                     InstallmentActions::edit(),
                     TransferActions::edit(),
                     TransferActions::delete(),

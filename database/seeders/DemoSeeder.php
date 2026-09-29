@@ -10,6 +10,8 @@ use App\Domain\CreditCard\CreateInstallmentPurchase;
 use App\Domain\CreditCard\PayInvoice;
 use App\Domain\Household\AddMember;
 use App\Domain\Household\CreateHousehold;
+use App\Domain\Investments\ManageOperations;
+use App\Domain\Investments\SaveAsset;
 use App\Domain\Import\BankPresets;
 use App\Domain\Import\ImportStatement;
 use App\Domain\Import\SaveImportProfile;
@@ -20,7 +22,9 @@ use App\Domain\Transfers\CreateTransfer;
 use App\Enums\AccountType;
 use App\Enums\AccountVisibility;
 use App\Enums\ImportFormat;
+use App\Enums\PriceSource;
 use App\Models\Account;
+use App\Models\AssetPrice;
 use App\Models\Category;
 use App\Models\CreditCard;
 use App\Models\Household;
@@ -34,7 +38,7 @@ use Illuminate\Support\Carbon;
  * Lar de exemplo com 2 usuários, contas pessoais e compartilhadas, 6 meses de lançamentos,
  * contas previstas (atrasadas e a vencer), transferências, contas fixas, cartões de crédito com faturas
  * importação (regras, perfil de CSV e um lote em revisão), orçamentos dos últimos meses e comprovantes
- * (no disco local, já que os dados de exemplo não têm Google Drive conectado).
+ * (no disco local, já que os dados de exemplo não têm Google Drive conectado) e uma carteira B3.
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -100,6 +104,7 @@ class DemoSeeder extends Seeder
         $this->imports($household, $eduardo, $joint);
         $this->budgets($household);
         $this->attachments($eduardo);
+        $this->portfolio($eduardo, $joint);
 
         app(CreateTransfer::class)->execute($eduardo, [
             'from_account_id' => $joint->id,
@@ -245,6 +250,64 @@ class DemoSeeder extends Seeder
             ->each(fn (Transaction $rent) => app(AttachFile::class)->execute($eduardo, $rent, $pdf, 'recibo-aluguel.pdf', 'application/pdf'));
 
         config(['attachments.disk' => $previous]);
+    }
+
+    /**
+     * Corretora compartilhada com aporte da conta conjunta, ações, FII e ETF, uma venda parcial,
+     * um desdobramento e cotações dos últimos dias úteis.
+     */
+    private function portfolio(User $eduardo, Account $joint): void
+    {
+        $broker = app(CreateAccount::class)->execute($eduardo, [
+            'name' => 'XP Investimentos', 'type' => AccountType::Brokerage, 'visibility' => AccountVisibility::Shared,
+            'currency' => 'BRL', 'initial_balance' => 0,
+        ]);
+
+        app(CreateTransfer::class)->execute($eduardo, [
+            'from_account_id' => $joint->id, 'to_account_id' => $broker->id, 'amount' => 2000000,
+            'date' => today()->subMonthsNoOverflow(5)->toDateString(), 'description' => 'Aporte na corretora',
+        ]);
+
+        $operations = app(ManageOperations::class);
+        $day = fn (int $daysAgo): string => today()->subDays($daysAgo)->toDateString();
+        $asset = fn (string $ticker, string $name, string $type) => app(SaveAsset::class)->execute($eduardo, [
+            'account_id' => $broker->id, 'type' => $type, 'ticker' => $ticker, 'name' => $name,
+        ]);
+
+        $petr = $asset('PETR4', 'Petrobras PN', 'stock');
+        $operations->register($eduardo, $petr, ['type' => 'buy', 'date' => $day(150), 'quantity' => '200', 'unit_price' => '36,20', 'fees' => 490]);
+        $operations->register($eduardo, $petr, ['type' => 'buy', 'date' => $day(90), 'quantity' => '100', 'unit_price' => '38,90', 'fees' => 250]);
+        $operations->register($eduardo, $petr, ['type' => 'sell', 'date' => $day(30), 'quantity' => '120', 'unit_price' => '41,15', 'fees' => 310]);
+
+        $bbas = $asset('BBAS3', 'Banco do Brasil ON', 'stock');
+        $operations->register($eduardo, $bbas, ['type' => 'buy', 'date' => $day(140), 'quantity' => '100', 'unit_price' => '54,80', 'fees' => 300]);
+        $operations->register($eduardo, $bbas, ['type' => 'split', 'date' => $day(100), 'factor' => '2']);
+
+        $hglg = $asset('HGLG11', 'CSHG Logística FII', 'fii');
+        $operations->register($eduardo, $hglg, ['type' => 'buy', 'date' => $day(120), 'quantity' => '20', 'unit_price' => '158,40', 'fees' => 120]);
+        $operations->register($eduardo, $hglg, ['type' => 'buy', 'date' => $day(60), 'quantity' => '15', 'unit_price' => '161,10', 'fees' => 90]);
+
+        $bova = $asset('BOVA11', 'iShares Ibovespa ETF', 'etf');
+        $operations->register($eduardo, $bova, ['type' => 'buy', 'date' => $day(80), 'quantity' => '30', 'unit_price' => '124,50', 'fees' => 150]);
+
+        // Cotações fictícias dos últimos 5 dias úteis (em produção vêm da brapi).
+        $base = ['PETR4' => 39.80, 'BBAS3' => 28.10, 'HGLG11' => 163.25, 'BOVA11' => 131.40];
+        $assets = ['PETR4' => $petr, 'BBAS3' => $bbas, 'HGLG11' => $hglg, 'BOVA11' => $bova];
+
+        for ($i = 0, $date = today()->subDay(); $i < 5; $date->subDay()) {
+            if ($date->isWeekend()) {
+                continue;
+            }
+
+            foreach ($assets as $ticker => $model) {
+                $price = new AssetPrice(['asset_id' => $model->id, 'date' => $date->copy(), 'source' => PriceSource::Api]);
+                $price->household_id = $model->household_id;
+                $price->price = number_format($base[$ticker] * (1 - $i * 0.004), 2, '.', '');
+                $price->save();
+            }
+
+            $i++;
+        }
     }
 
     private function recurrence(Household $household, User $payer, Account $account, string $category, int $amount, string $frequency, ?int $day, Carbon $start, bool $estimate = false, ?string $description = null): void
