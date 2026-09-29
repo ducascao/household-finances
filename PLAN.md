@@ -258,19 +258,27 @@ Notas da entrega:
 **Valor:** ver posição e preço médio de ações, FIIs, ETFs e BDRs.
 
 Escopo
-- [ ] `assets`: tipo, ticker, nome, moeda, conta da corretora
-- [ ] `asset_operations`: compra/venda, quantidade, preço, taxas, data; gera lançamento na conta da corretora
-- [ ] Serviço de posição: quantidade, preço médio (inclui taxas; venda não altera o PM), custo total
-- [ ] Desdobramentos e grupamentos como operação especial que ajusta quantidade e PM
-- [ ] Contrato `QuoteProvider` + implementação para B3 (avaliar brapi) + job diário de cotações em `asset_prices`
-- [ ] Ajuste manual de cotação
-- [ ] Tela da carteira: posição, valor de mercado, resultado não realizado, distribuição por tipo
+- [x] `assets`: tipo, ticker, nome, moeda, conta da corretora
+- [x] `asset_operations`: compra/venda, quantidade, preço, taxas, data; gera lançamento na conta da corretora
+- [x] Serviço de posição: quantidade, preço médio (inclui taxas; venda não altera o PM), custo total
+- [x] Desdobramentos e grupamentos como operação especial que ajusta quantidade e PM
+- [x] Contrato `QuoteProvider` + implementação para B3 (avaliar brapi) + job diário de cotações em `asset_prices`
+- [x] Ajuste manual de cotação
+- [x] Tela da carteira: posição, valor de mercado, resultado não realizado, distribuição por tipo
 
 Critérios de aceite
-- [ ] Preço médio correto em sequência de compras, vendas parciais e desdobramento (testes)
-- [ ] Falha da API não quebra o job; posição usa a última cotação disponível (teste)
+- [x] Preço médio correto em sequência de compras, vendas parciais e desdobramento (testes)
+- [x] Falha da API não quebra o job; posição usa a última cotação disponível (teste)
 
 Notas da entrega:
+- **Tabelas:** `assets` (corretora, tipo, ticker, nome, moeda), `asset_operations` (compra, venda, desdobramento, grupamento; quantidade, preço e proporção em `decimal(20,8)`, taxas em centavos) e `asset_prices` (data, preço, fonte `api`/`manual`). Ativo, operação e cotação herdam a visibilidade da conta da corretora; o ativo só pode ficar em conta do tipo **corretora**.
+- **Compra e venda geram lançamento na corretora** com `asset_operation_id` e **sem categoria**: compra = −(qtd × preço + taxas), venda = qtd × preço − taxas. Ficam fora de receita/despesa (`incomeAndExpense()` exclui) e, portanto, do Resumo do mês e do orçamento, mas entram no saldo da corretora. A constraint do Postgres passou a ser "tem categoria ⇔ não é transferência nem operação de ativo". Esse lançamento não é editado como lançamento comum; excluí-lo exclui a operação.
+- **Preço médio** em `Domain/Investments/PositionCalculator` com `brick/math` (8 casas, sem float), em ordem de data: taxas entram no PM; a venda não muda o PM; zerar a posição zera o custo; desdobramento 1→N (qtd × N, PM ÷ N) e grupamento N→1 (qtd ÷ N, PM × N) mantêm o custo. `ManageOperations` recalcula a história inteira ao lançar, editar ou excluir e recusa qualquer mudança que deixe a quantidade negativa em algum ponto.
+- **Cotações:** `App\Contracts\QuoteProvider` + `BrapiQuoteProvider` (uma requisição por ticker, timeout de 10 s com 2 tentativas, token em `BRAPI_TOKEN`). Job `FetchQuotes` em dias úteis às 19:00 e comando `app:fetch-quotes`. Erro da API é registrado no log sem interromper; a posição usa a última cotação gravada e, sem nenhuma, o preço médio (o app avisa quando a cotação falta ou tem mais de 7 dias). Cotação manual prevalece sobre a automática na mesma data.
+- **Telas:** "Investimentos → Carteira" (custo, valor de mercado, resultado não realizado; distribuição por tipo em barras com %; posições com PM, cotação e data, resultado e % da carteira; botão "Atualizar cotações") e "Investimentos → Ativos" (cadastro; tela do ativo com a posição, as operações — lançar/editar/excluir — e as cotações com "Ajustar cotação").
+- **Fornecedor de cotações definido: brapi** (precisa de token gratuito em brapi.dev; sem ele só alguns tickers de teste respondem).
+- Totais da carteira em BRL; ativos em outra moeda entram na E12.
+- `DemoSeeder`: corretora compartilhada "XP Investimentos" com aporte da conta conjunta, PETR4 (com venda parcial), BBAS3 (com desdobramento 1→2), HGLG11 e BOVA11, e cotações fictícias dos últimos 5 dias úteis.
 
 ### E10 — Proventos e rentabilidade
 **Valor:** saber quanto a carteira rende de verdade.
