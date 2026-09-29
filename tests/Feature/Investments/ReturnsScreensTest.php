@@ -56,7 +56,8 @@ it('mostra o resultado realizado de cada venda', function () {
 });
 
 it('página de rentabilidade compara com o CDI e troca o período', function () {
-    $this->get(ReturnsPage::getUrl())->assertSuccessful();
+    // Estilos próprios (fc-*) injetados no painel: os cards ficam lado a lado com espaço entre eles.
+    $this->get(ReturnsPage::getUrl())->assertSuccessful()->assertSee('.fc-cards { display: grid; gap: 1rem;', false)->assertSee('class="fc-cards"', false);
 
     // Mês atual: valor inicial 0; compra 1.000 no dia 1 (peso 1) e venda 600 no dia 15 (peso 16/30)
     // resultado = 550 − 0 − 1.000 + 600 = 150; base = 1.000 − 600 × 16/30 = 680 → 22,06%
