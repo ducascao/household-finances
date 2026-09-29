@@ -48,4 +48,8 @@ return [
         'token' => env('BRAPI_TOKEN'),
     ],
 
+    'bcb' => [
+        'url' => env('BCB_SGS_URL', 'https://api.bcb.gov.br'),
+    ],
+
 ];
