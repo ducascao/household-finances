@@ -6,6 +6,7 @@ use App\Filament\Resources\Assets\Pages\CreateAsset;
 use App\Filament\Resources\Assets\Pages\EditAsset;
 use App\Filament\Resources\Assets\Pages\ListAssets;
 use App\Filament\Resources\Assets\Pages\ViewAsset;
+use App\Filament\Resources\Assets\RelationManagers\IncomesRelationManager;
 use App\Filament\Resources\Assets\RelationManagers\OperationsRelationManager;
 use App\Filament\Resources\Assets\RelationManagers\PricesRelationManager;
 use App\Filament\Resources\Assets\Schemas\AssetForm;
@@ -54,6 +55,7 @@ class AssetResource extends Resource
     {
         return [
             OperationsRelationManager::class,
+            IncomesRelationManager::class,
             PricesRelationManager::class,
         ];
     }

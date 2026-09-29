@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Assets\RelationManagers;
 
 use App\Domain\Investments\ManageOperations;
+use App\Domain\Investments\PositionCalculator;
 use App\Domain\Investments\Quantity;
 use App\Enums\AssetOperationType;
 use App\Filament\Resources\Assets\Schemas\OperationForm;
@@ -61,6 +62,9 @@ class OperationsRelationManager extends RelationManager
                     ->formatStateUsing(fn (int $state): string => $state === 0 ? '—' : MoneyFormatter::formatMinor($state)),
                 TextColumn::make('total')->label('Valor na conta')->alignEnd()
                     ->state(fn (AssetOperation $record): string => $record->type->isTrade() ? MoneyFormatter::formatMinor(ManageOperations::cashAmount($record)) : '—'),
+                TextColumn::make('realized')->label('Resultado realizado')->alignEnd()
+                    ->state(fn (AssetOperation $record): string => ($result = $this->realized()[$record->id] ?? null) !== null ? MoneyFormatter::formatMinor($result) : '—')
+                    ->color(fn (AssetOperation $record): ?string => ($result = $this->realized()[$record->id] ?? null) === null ? null : ($result < 0 ? 'danger' : 'success')),
             ])
             ->headerActions([
                 CreateAction::make()
@@ -103,6 +107,25 @@ class OperationsRelationManager extends RelationManager
 
             throw $e; // halt() já interrompe; não chega aqui.
         }
+    }
+
+    /** @var array<int, int>|null */
+    private ?array $realizedCache = null;
+
+    /**
+     * Resultado realizado (centavos) de cada venda, por id da operação.
+     *
+     * @return array<int, int>
+     */
+    private function realized(): array
+    {
+        if ($this->realizedCache !== null) {
+            return $this->realizedCache;
+        }
+
+        $sales = app(PositionCalculator::class)->history(AssetOperation::where('asset_id', $this->asset()->id)->get())['sales'];
+
+        return $this->realizedCache = collect($sales)->mapWithKeys(fn ($sale): array => [$sale->operation->id => $sale->resultMinor()])->all();
     }
 
     private function asset(): Asset

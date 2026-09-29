@@ -3,6 +3,7 @@
 namespace App\Filament\Portfolio;
 
 use App\Domain\Investments\Portfolio;
+use App\Domain\Investments\ReturnCalculator;
 use App\Support\MoneyFormatter;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -16,6 +17,7 @@ class PortfolioTotalsWidget extends StatsOverviewWidget
         $portfolio = app(Portfolio::class);
         $totals = $portfolio->totals($portfolio->rows());
         $positive = ! $totals['result']->isNegative();
+        $year = app(ReturnCalculator::class)->forPeriod(today()->subYear()->addDay(), today());
 
         return [
             Stat::make('Custo total', MoneyFormatter::format($totals['cost']))
@@ -26,6 +28,8 @@ class PortfolioTotalsWidget extends StatsOverviewWidget
                 ->description($totals['percent'] !== null ? number_format($totals['percent'], 2, ',', '.').'% sobre o custo' : '—')
                 ->descriptionIcon($positive ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
                 ->color($positive ? 'success' : 'danger'),
+            Stat::make('Proventos em 12 meses', MoneyFormatter::formatMinor($year['total']->incomes))
+                ->description('Realizado em vendas: '.MoneyFormatter::formatMinor($year['total']->realized)),
         ];
     }
 }
