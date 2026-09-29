@@ -32,7 +32,8 @@ class DeleteInstallmentPurchase
         }
 
         DB::transaction(function () use ($group): void {
-            Transaction::withoutGlobalScopes()->where('installment_group_id', $group->id)->delete();
+            // Um a um, para disparar a limpeza dos comprovantes.
+            Transaction::withoutGlobalScopes()->where('installment_group_id', $group->id)->get()->each->delete();
             $group->delete();
         });
     }

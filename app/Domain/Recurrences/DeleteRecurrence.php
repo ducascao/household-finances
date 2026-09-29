@@ -30,7 +30,8 @@ class DeleteRecurrence
                     ->where('recurrence_id', $recurrence->id)
                     ->where('status', TransactionStatus::Scheduled->value)
                     ->whereDate('occurrence_date', '>=', today())
-                    ->delete();
+                    ->get()
+                    ->each->delete();
             }
 
             $recurrence->delete();

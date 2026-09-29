@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Transactions\Pages;
 use App\Domain\Transactions\CreateTransaction;
 use App\Filament\Resources\Transactions\Actions\InstallmentActions;
 use App\Filament\Resources\Transactions\Actions\TransferActions;
+use App\Filament\Resources\Transactions\Concerns\ManagesAttachments;
 use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Filament\Resources\Transactions\TransactionResource;
 use App\Models\User;
@@ -18,6 +19,8 @@ use Illuminate\Validation\ValidationException;
 
 class ListTransactions extends ListRecords
 {
+    use ManagesAttachments;
+
     protected static string $resource = TransactionResource::class;
 
     protected function getHeaderActions(): array
