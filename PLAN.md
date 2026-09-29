@@ -305,15 +305,22 @@ Notas da entrega:
 **Valor:** ter toda a carteira brasileira num lugar.
 
 Escopo
-- [ ] Ativos dos tipos fixed_income e pension sem ticker; campos informativos (emissor, indexador, vencimento)
-- [ ] Aportes e resgates como operações por valor
-- [ ] `manual_valuations`: saldo informado por data; lembrete no painel se o último saldo tiver mais de 30 dias
-- [ ] Rendimento = último saldo − (aportes − resgates)
+- [x] Ativos dos tipos fixed_income e pension sem ticker; campos informativos (emissor, indexador, vencimento)
+- [x] Aportes e resgates como operações por valor
+- [x] `manual_valuations`: saldo informado por data; lembrete no painel se o último saldo tiver mais de 30 dias
+- [x] Rendimento = último saldo − (aportes − resgates)
 
 Critérios de aceite
-- [ ] Posição total da carteira inclui renda fixa e previdência pelo último saldo (teste)
+- [x] Posição total da carteira inclui renda fixa e previdência pelo último saldo (teste)
 
 Notas da entrega:
+- **Tipos novos** `fixed_income` (Renda fixa) e `pension` (Previdência) em `AssetType`, sem ticker, com campos informativos `issuer`, `indexer` (CDI, Selic, IPCA, Prefixado, Outro), `rate` (texto: "110% do CDI") e `maturity_date`. Ficam em **corretora, conta corrente ou poupança** (de onde saem os aportes); ativos da B3 continuam exigindo corretora.
+- **Aporte e resgate** (`contribution`/`withdrawal`) por valor em `asset_operations.amount`: geram lançamento na conta do ativo, sem categoria, fora de receita/despesa (aporte −, resgate + valor líquido). Resgate maior que o valor do ativo na data é recusado. Compra/venda não valem para renda fixa, nem aporte/resgate para ativos da B3.
+- **`manual_valuations`:** saldo informado por data (um por data; informar de novo substitui). `ValuationCalculator`: investido = aportes − resgates; valor = último saldo + aportes − resgates depois dele (marcado "estimado"); **rendimento = valor − investido**.
+- **Integração:** `PortfolioRow` passou a aceitar a posição por saldo, então Carteira (totais, distribuição por tipo, posições com "saldo informado em dd/mm") e Rentabilidade (valor inicial e final pelo saldo até cada data, aportes/resgates como fluxos do Dietz) incluem renda fixa e previdência. Cotações da brapi só são buscadas para ativos com ticker.
+- **Telas:** o cadastro do ativo muda conforme o tipo; a tela do ativo mostra investido, valor atual, rendimento e o último saldo, com as abas "Aportes e resgates" e "Saldos" ("Informar saldo"); proventos e cotações só aparecem para ativos da B3.
+- **Lembrete** no Painel de Controle: renda fixa/previdência com dinheiro aplicado e último saldo com mais de 30 dias (ou nenhum), com "Informar saldo" na própria linha.
+- `DemoSeeder`: CDB 110% do CDI (com resgate parcial) e Tesouro IPCA+ 2035 na XP, com saldos; VGBL debitado da conta do Eduardo (privada) com o último saldo há 40 dias, para o lembrete aparecer.
 
 ### E12 — Exterior
 **Valor:** incluir ativos em dólar na carteira.
