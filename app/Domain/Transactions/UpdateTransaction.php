@@ -16,6 +16,12 @@ class UpdateTransaction
      */
     public function execute(User $actor, Transaction $transaction, array $data): Transaction
     {
+        if ($transaction->asset_operation_id !== null) {
+            throw ValidationException::withMessages([
+                'transaction' => 'Compras e vendas de ativos são editadas pela operação, na Carteira.',
+            ]);
+        }
+
         if ($transaction->installment_group_id !== null) {
             throw ValidationException::withMessages([
                 'transaction' => 'Parcelas são editadas pela compra parcelada.',
