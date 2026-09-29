@@ -45,8 +45,10 @@ class BudgetReport
 
         foreach ($categories->whereNull('parent_id') as $root) {
             $children = [];
+            $root->setRelation('parent', null);
 
             foreach ($categories->where('parent_id', $root->id) as $child) {
+                $child->setRelation('parent', $root);
                 $row = $this->row($child, $budgets->get($child->id), $spending, []);
 
                 if ($row->budget !== null || $row->committed() !== 0) {
