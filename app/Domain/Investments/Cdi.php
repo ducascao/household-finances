@@ -52,6 +52,26 @@ class Cdi
     }
 
     /**
+     * Primeira data com taxa do CDI no período, quando a série não cobre o início (null se cobre).
+     */
+    public function missingUntil(Carbon $from, Carbon $to): ?Carbon
+    {
+        $first = InterestRate::query()
+            ->where('series', InterestRate::CDI)
+            ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
+            ->min('date');
+
+        if ($first === null) {
+            return null;
+        }
+
+        $first = Carbon::parse($first);
+
+        // Até 5 dias de folga cobrem fins de semana e feriados no começo do período.
+        return $first->gt($from->copy()->addDays(5)) ? $first : null;
+    }
+
+    /**
      * CDI acumulado entre as datas (inclusive), em %: (∏(1 + taxa/100) − 1) × 100.
      */
     public function accumulated(Carbon $from, Carbon $to): ?float

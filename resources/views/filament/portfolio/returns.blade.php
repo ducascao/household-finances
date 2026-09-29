@@ -21,7 +21,15 @@
         <x-filament::section>
             <p class="text-sm text-gray-500 dark:text-gray-400">CDI no período</p>
             <p class="text-2xl font-semibold tabular-nums">{{ $fmt($cdi) }}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400">{{ $cdi === null ? 'sem dados do CDI (rode app:fetch-cdi)' : 'acumulado diário' }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                @if ($cdi === null)
+                    sem dados do CDI (rode app:fetch-cdi)
+                @elseif ($missing = $this->cdiMissingUntil())
+                    <span style="color: var(--warning-600)">só a partir de {{ $missing->format('d/m/Y') }} — carregue o histórico com app:fetch-cdi --from=…</span>
+                @else
+                    acumulado diário
+                @endif
+            </p>
         </x-filament::section>
         <x-filament::section>
             <p class="text-sm text-gray-500 dark:text-gray-400">% do CDI</p>

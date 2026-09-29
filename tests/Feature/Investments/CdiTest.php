@@ -59,3 +59,10 @@ it('está agendado diariamente às 09:00', function () {
 
     expect($event?->expression)->toBe('0 9 * * *');
 });
+
+it('avisa quando a série não cobre o início do período', function () {
+    InterestRate::create(['series' => 'cdi', 'date' => '2026-09-10', 'rate' => '0.05']);
+
+    expect(app(Cdi::class)->missingUntil(Carbon::parse('2026-09-01'), Carbon::parse('2026-09-30'))?->toDateString())->toBe('2026-09-10')
+        ->and(app(Cdi::class)->missingUntil(Carbon::parse('2026-09-07'), Carbon::parse('2026-09-30')))->toBeNull();
+});

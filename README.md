@@ -77,6 +77,18 @@ também é copiado para `Finanças de Casa/Backups` (mantidos 30 dias). Com mais
 
 Para desenvolver sem conta Google, use `ATTACHMENTS_DISK=local` no `.env`.
 
+## Investimentos (cotações e CDI)
+
+- **Cotações da B3:** crie um token gratuito em [brapi.dev](https://brapi.dev) e coloque em `BRAPI_TOKEN` no `.env`.
+  As cotações são buscadas nos dias úteis às 19:00 (ou pelo botão "Atualizar cotações" na Carteira, ou
+  `docker compose exec app php artisan app:fetch-quotes`). Sem cotação, o app usa a última disponível e avisa.
+- **CDI (Banco Central, sem token):** atualizado todo dia às 09:00 com os últimos 30 dias. Na primeira vez,
+  carregue o histórico desde o início dos seus investimentos:
+
+  ```bash
+  docker compose exec app php artisan app:fetch-cdi --from=2020-01-01
+  ```
+
 ## Testes e qualidade
 
 ```bash
