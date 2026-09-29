@@ -88,19 +88,22 @@ class PriceBook
     }
 
     /**
-     * Última cotação de cada ativo (manual prevalece na mesma data).
+     * Última cotação de cada ativo até a data informada (padrão: qualquer data). Manual prevalece na mesma data.
      *
      * @param  list<int>  $assetIds
      * @return Collection<int, AssetPrice> por asset_id
      */
-    public function latestFor(array $assetIds): Collection
+    public function latestFor(array $assetIds, ?Carbon $until = null): Collection
     {
         if ($assetIds === []) {
             return collect();
         }
 
+        $ids = implode(',', array_map('intval', $assetIds));
+        $until = $until !== null ? " and date <= '".$until->toDateString()."'" : '';
+
         return AssetPrice::withoutGlobalScopes()
-            ->fromRaw('(select distinct on (asset_id) * from asset_prices where asset_id in ('.implode(',', array_map('intval', $assetIds)).")
+            ->fromRaw("(select distinct on (asset_id) * from asset_prices where asset_id in ({$ids}){$until}
                 order by asset_id, date desc, (source = 'manual') desc, id desc) as asset_prices")
             ->get()
             ->keyBy('asset_id');
