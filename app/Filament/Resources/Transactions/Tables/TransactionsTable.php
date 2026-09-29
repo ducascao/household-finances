@@ -6,6 +6,7 @@ use App\Domain\Reports\MonthlySummary;
 use App\Domain\Transfers\TransferLabel;
 use App\Enums\TransactionStatus;
 use App\Filament\Resources\Recurrences\RecurrenceResource;
+use App\Filament\Resources\Transactions\Actions\AttachmentActions;
 use App\Filament\Resources\Transactions\Actions\InstallmentActions;
 use App\Filament\Resources\Transactions\Actions\MarkAsPaidActions;
 use App\Filament\Resources\Transactions\Actions\TransferActions;
@@ -34,7 +35,7 @@ class TransactionsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['account', 'category.parent', 'payer']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['account', 'category.parent', 'payer'])->withCount('attachments'))
             ->defaultSort(fn (Builder $query) => $query->orderByDesc('date')->orderByDesc('id'))
             ->columns([
                 TextColumn::make('date')
@@ -77,6 +78,12 @@ class TransactionsTable
                     ->date('d/m/Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('attachments_count')
+                    ->label('')
+                    ->tooltip('Comprovantes')
+                    ->icon(fn (int $state) => $state > 0 ? Heroicon::OutlinedPaperClip : null)
+                    ->formatStateUsing(fn (int $state): string => $state > 0 ? (string) $state : '')
+                    ->color('gray'),
                 TextColumn::make('amount')
                     ->label('Valor')
                     ->alignEnd()
@@ -159,6 +166,7 @@ class TransactionsTable
             ->recordActions([
                 MarkAsPaidActions::single(),
                 ActionGroup::make([
+                    AttachmentActions::manage(),
                     Action::make('openRecurrence')
                         ->label('Conta fixa')
                         ->icon(Heroicon::OutlinedArrowPath)

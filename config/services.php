@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect_uri' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/google/callback'),
+        // Lar cujo Drive recebe a cópia do backup (opcional quando só existe um lar conectado).
+        'backup_household_id' => env('GOOGLE_BACKUP_HOUSEHOLD_ID'),
+    ],
+
 ];

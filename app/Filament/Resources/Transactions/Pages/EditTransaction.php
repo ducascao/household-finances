@@ -5,7 +5,9 @@ namespace App\Filament\Resources\Transactions\Pages;
 use App\Domain\Transactions\UpdateTransaction;
 use App\Enums\CategoryType;
 use App\Filament\Concerns\RunsDomainActions;
+use App\Filament\Resources\Transactions\Actions\AttachmentActions;
 use App\Filament\Resources\Transactions\Actions\TransferActions;
+use App\Filament\Resources\Transactions\Concerns\ManagesAttachments;
 use App\Filament\Resources\Transactions\TransactionResource;
 use App\Models\Transaction;
 use App\Models\User;
@@ -17,13 +19,14 @@ use Illuminate\Database\Eloquent\Model;
  */
 class EditTransaction extends EditRecord
 {
-    use RunsDomainActions;
+    use ManagesAttachments, RunsDomainActions;
 
     protected static string $resource = TransactionResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            AttachmentActions::manage($this->record),
             TransferActions::delete(),
         ];
     }

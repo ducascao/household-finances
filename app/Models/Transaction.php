@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Casts\MoneyCast;
 use App\Enums\TransactionStatus;
+use App\Jobs\DeleteStoredAttachment;
 use App\Models\Concerns\BelongsToHousehold;
 use Brick\Money\Money;
 use Database\Factories\TransactionFactory;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -52,6 +54,14 @@ class Transaction extends Model
 
     protected static function booted(): void
     {
+        // Excluir o lançamento remove os comprovantes: as linhas caem em cascata e os arquivos vão por job.
+        static::deleting(function (Transaction $transaction): void {
+            Attachment::withoutGlobalScopes()
+                ->where('transaction_id', $transaction->id)
+                ->get()
+                ->each(fn (Attachment $attachment) => DeleteStoredAttachment::dispatch($attachment->disk, $attachment->path, $attachment->household_id));
+        });
+
         // Lançamento herda a visibilidade da conta: whereHas aplica o escopo de visibilidade de Account.
         static::addGlobalScope('visible_account', function (Builder $query): void {
             if (Auth::user() instanceof User) {
@@ -97,6 +107,14 @@ class Transaction extends Model
     public function recurrence(): BelongsTo
     {
         return $this->belongsTo(Recurrence::class);
+    }
+
+    /**
+     * @return HasMany<Attachment, $this>
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(Attachment::class);
     }
 
     /**

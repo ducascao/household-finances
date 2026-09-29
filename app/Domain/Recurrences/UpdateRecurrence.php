@@ -34,7 +34,8 @@ class UpdateRecurrence
                 $this->generated($recurrence)
                     ->where('status', TransactionStatus::Scheduled->value)
                     ->whereDate('occurrence_date', '>=', today())
-                    ->delete();
+                    ->get()
+                    ->each->delete();
             }
 
             unset($attributes['household_id']);
