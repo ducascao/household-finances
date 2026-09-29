@@ -14,6 +14,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
@@ -22,6 +23,14 @@ class PricesRelationManager extends RelationManager
     protected static string $relationship = 'prices';
 
     protected static ?string $title = 'Cotações';
+
+    /**
+     * Só para ativos da B3 (renda fixa e previdência usam saldos informados).
+     */
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        return $ownerRecord instanceof Asset && ! $ownerRecord->type->isValuedByBalance();
+    }
 
     public function isReadOnly(): bool
     {

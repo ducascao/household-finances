@@ -9,6 +9,7 @@ use App\Filament\Resources\Assets\Pages\ViewAsset;
 use App\Filament\Resources\Assets\RelationManagers\IncomesRelationManager;
 use App\Filament\Resources\Assets\RelationManagers\OperationsRelationManager;
 use App\Filament\Resources\Assets\RelationManagers\PricesRelationManager;
+use App\Filament\Resources\Assets\RelationManagers\ValuationsRelationManager;
 use App\Filament\Resources\Assets\Schemas\AssetForm;
 use App\Filament\Resources\Assets\Schemas\AssetInfolist;
 use App\Filament\Resources\Assets\Tables\AssetsTable;
@@ -34,7 +35,7 @@ class AssetResource extends Resource
 
     protected static ?int $navigationSort = 62;
 
-    protected static ?string $recordTitleAttribute = 'ticker';
+    protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema
     {
@@ -57,6 +58,7 @@ class AssetResource extends Resource
             OperationsRelationManager::class,
             IncomesRelationManager::class,
             PricesRelationManager::class,
+            ValuationsRelationManager::class,
         ];
     }
 

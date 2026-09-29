@@ -77,11 +77,11 @@ class PortfolioPage extends Page implements HasActions, HasSchemas, HasTable
                 TextColumn::make('quantity')->label('Quantidade')->alignEnd(),
                 TextColumn::make('average')->label('Preço médio')->alignEnd(),
                 TextColumn::make('cost')->label('Custo')->alignEnd(),
-                TextColumn::make('price')->label('Cotação')->alignEnd()
+                TextColumn::make('price')->label('Cotação / saldo')->alignEnd()
                     ->description(fn (array $record): ?string => $record['price_date'])
                     ->icon(fn (array $record): ?string => $record['stale'] ? 'heroicon-m-exclamation-triangle' : null)
                     ->iconColor('warning')
-                    ->tooltip(fn (array $record): ?string => $record['stale'] ? 'Cotação ausente ou com mais de 7 dias' : null),
+                    ->tooltip(fn (array $record): ?string => $record['stale'] ? 'Cotação com mais de 7 dias ou saldo com mais de 30 dias' : null),
                 TextColumn::make('market')->label('Valor de mercado')->alignEnd()->weight('bold'),
                 TextColumn::make('result')->label('Resultado')->alignEnd()
                     ->description(fn (array $record): ?string => $record['result_percent'])
@@ -123,13 +123,17 @@ class PortfolioPage extends Page implements HasActions, HasSchemas, HasTable
 
         return [
             'asset_id' => $row->asset->id,
-            'ticker' => $row->asset->ticker,
+            'ticker' => $row->asset->label(),
             'type' => $row->asset->type->label().' · '.$row->asset->account->name,
-            'quantity' => Quantity::format((string) $row->position->quantity),
-            'average' => 'R$ '.Quantity::format((string) $row->position->averagePrice, 2),
+            'quantity' => $row->isValuedByBalance() ? '—' : Quantity::format((string) $row->position->quantity),
+            'average' => $row->isValuedByBalance() ? '—' : 'R$ '.Quantity::format((string) $row->position->averagePrice, 2),
             'cost' => MoneyFormatter::format($row->cost()),
-            'price' => $row->lastPrice !== null ? 'R$ '.Quantity::format($row->lastPrice->price, 2) : 'sem cotação',
-            'price_date' => $row->lastPrice?->date->format('d/m/Y'),
+            'price' => match (true) {
+                $row->isValuedByBalance() => $row->valuation?->lastValuation !== null ? ($row->valuation->estimated ? 'saldo + aportes' : 'saldo informado') : 'sem saldo',
+                $row->lastPrice !== null => 'R$ '.Quantity::format($row->lastPrice->price, 2),
+                default => 'sem cotação',
+            },
+            'price_date' => $row->isValuedByBalance() ? $row->valuation?->lastValuation?->date->format('d/m/Y') : $row->lastPrice?->date->format('d/m/Y'),
             'stale' => $row->isPriceStale(),
             'market' => MoneyFormatter::format($market),
             'result' => MoneyFormatter::format($row->result()),

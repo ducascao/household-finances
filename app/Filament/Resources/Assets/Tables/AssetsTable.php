@@ -18,10 +18,10 @@ class AssetsTable
             ->modifyQueryUsing(fn (Builder $query) => $query->with('account')->withCount('operations'))
             ->defaultSort('ticker')
             ->columns([
-                TextColumn::make('ticker')->label('Ticker')->searchable()->sortable()->weight('bold'),
+                TextColumn::make('ticker')->label('Ticker')->searchable()->sortable()->weight('bold')->placeholder('—'),
                 TextColumn::make('name')->label('Nome')->searchable(),
                 TextColumn::make('type')->label('Tipo')->badge()->formatStateUsing(fn (AssetType $state): string => $state->label()),
-                TextColumn::make('account.name')->label('Corretora'),
+                TextColumn::make('account.name')->label('Conta'),
                 TextColumn::make('operations_count')->label('Operações'),
             ])
             ->filters([

@@ -33,6 +33,14 @@ class IncomesRelationManager extends RelationManager
 
     protected static ?string $title = 'Proventos';
 
+    /**
+     * Só para ativos da B3 (renda fixa e previdência usam saldos informados).
+     */
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        return $ownerRecord instanceof Asset && ! $ownerRecord->type->isValuedByBalance();
+    }
+
     public function isReadOnly(): bool
     {
         return false;

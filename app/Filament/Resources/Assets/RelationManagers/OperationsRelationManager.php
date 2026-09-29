@@ -29,6 +29,11 @@ class OperationsRelationManager extends RelationManager
 
     protected static ?string $title = 'Operações';
 
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return $ownerRecord instanceof Asset && $ownerRecord->type->isValuedByBalance() ? 'Aportes e resgates' : 'Operações';
+    }
+
     public function isReadOnly(): bool
     {
         return false;
@@ -36,7 +41,7 @@ class OperationsRelationManager extends RelationManager
 
     public function form(Schema $schema): Schema
     {
-        return $schema->components(OperationForm::fields())->columns(2);
+        return $schema->components(OperationForm::fields($this->asset()->type))->columns(2);
     }
 
     public function table(Table $table): Table
@@ -49,20 +54,25 @@ class OperationsRelationManager extends RelationManager
                     ->formatStateUsing(fn (AssetOperationType $state): string => $state->label())
                     ->color(fn (AssetOperationType $state): string => match ($state) {
                         AssetOperationType::Buy => 'info',
-                        AssetOperationType::Sell => 'warning',
+                        AssetOperationType::Sell, AssetOperationType::Withdrawal => 'warning',
+                        AssetOperationType::Contribution => 'info',
                         default => 'gray',
                     }),
                 TextColumn::make('quantity')->label('Quantidade')->alignEnd()
+                    ->visible(fn (): bool => ! $this->asset()->type->isValuedByBalance())
                     ->formatStateUsing(fn (AssetOperation $record): string => $record->type->isTrade()
                         ? Quantity::format((string) $record->quantity)
                         : ($record->type === AssetOperationType::Split ? '1 → ' : '').Quantity::format((string) $record->factor).($record->type === AssetOperationType::ReverseSplit ? ' → 1' : '')),
                 TextColumn::make('unit_price')->label('Preço')->alignEnd()
+                    ->visible(fn (): bool => ! $this->asset()->type->isValuedByBalance())
                     ->formatStateUsing(fn (?string $state): string => $state === null ? '—' : 'R$ '.Quantity::format($state, 2)),
                 TextColumn::make('fees')->label('Taxas')->alignEnd()
+                    ->visible(fn (): bool => ! $this->asset()->type->isValuedByBalance())
                     ->formatStateUsing(fn (int $state): string => $state === 0 ? '—' : MoneyFormatter::formatMinor($state)),
                 TextColumn::make('total')->label('Valor na conta')->alignEnd()
-                    ->state(fn (AssetOperation $record): string => $record->type->isTrade() ? MoneyFormatter::formatMinor(ManageOperations::cashAmount($record)) : '—'),
+                    ->state(fn (AssetOperation $record): string => $record->type->isTrade() || $record->type->isCashFlow() ? MoneyFormatter::formatMinor(ManageOperations::cashAmount($record)) : '—'),
                 TextColumn::make('realized')->label('Resultado realizado')->alignEnd()
+                    ->visible(fn (): bool => ! $this->asset()->type->isValuedByBalance())
                     ->state(fn (AssetOperation $record): string => ($result = $this->realized()[$record->id] ?? null) !== null ? MoneyFormatter::formatMinor($result) : '—')
                     ->color(fn (AssetOperation $record): ?string => ($result = $this->realized()[$record->id] ?? null) === null ? null : ($result < 0 ? 'danger' : 'success')),
             ])
@@ -121,6 +131,10 @@ class OperationsRelationManager extends RelationManager
     {
         if ($this->realizedCache !== null) {
             return $this->realizedCache;
+        }
+
+        if ($this->asset()->type->isValuedByBalance()) {
+            return $this->realizedCache = [];
         }
 
         $sales = app(PositionCalculator::class)->history(AssetOperation::where('asset_id', $this->asset()->id)->get())['sales'];

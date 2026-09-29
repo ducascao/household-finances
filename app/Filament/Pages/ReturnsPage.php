@@ -189,7 +189,7 @@ class ReturnsPage extends Page implements HasActions, HasSchemas, HasTable
 
         return [
             'asset_id' => $row->asset?->id,
-            'ticker' => $row->asset?->ticker,
+            'ticker' => $row->asset?->label(),
             'start' => $this->money($row->startValue),
             'buys' => $row->buys > 0 ? $this->money($row->buys) : '—',
             'sells' => $row->sells > 0 ? $this->money($row->sells) : '—',
