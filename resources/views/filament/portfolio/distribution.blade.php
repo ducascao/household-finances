@@ -2,18 +2,17 @@
     <x-filament::section heading="Distribuição por tipo">
         @php($items = $this->distribution())
         @if ($items === [])
-            <p class="text-sm text-gray-500 dark:text-gray-400">Nenhuma posição aberta.</p>
+            <p class="fc-label">Nenhuma posição aberta.</p>
         @else
-            <div class="grid gap-3">
+            <div class="fc-stack">
                 @foreach ($items as $item)
-                    <div class="grid items-center gap-3" style="grid-template-columns: 5rem 1fr 9rem 4rem;">
-                        <span class="text-sm font-medium">{{ $item['label'] }}</span>
-                        <div role="img" aria-label="{{ $item['label'] }}: {{ number_format($item['percent'], 1, ',', '.') }}%"
-                             style="height: 0.75rem; border-radius: 9999px; background: var(--gray-200); overflow: hidden;">
-                            <div style="height: 100%; width: {{ $item['percent'] }}%; background: #2a78d6; border-radius: 9999px;"></div>
+                    <div style="display: grid; align-items: center; gap: 0.75rem; grid-template-columns: 5rem 1fr 9rem 4rem;">
+                        <span class="fc-text fc-strong">{{ $item['label'] }}</span>
+                        <div class="fc-track fc-track-lg" role="img" aria-label="{{ $item['label'] }}: {{ number_format($item['percent'], 1, ',', '.') }}%">
+                            <div class="fc-bar" style="width: {{ $item['percent'] }}%; background: #2a78d6;"></div>
                         </div>
-                        <span class="text-sm tabular-nums text-right">{{ $item['value'] }}</span>
-                        <span class="text-sm tabular-nums text-right text-gray-500 dark:text-gray-400">{{ number_format($item['percent'], 1, ',', '.') }}%</span>
+                        <span class="fc-text fc-num fc-right">{{ $item['value'] }}</span>
+                        <span class="fc-label fc-num fc-right">{{ number_format($item['percent'], 1, ',', '.') }}%</span>
                     </div>
                 @endforeach
             </div>
