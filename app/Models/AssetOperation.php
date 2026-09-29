@@ -25,9 +25,10 @@ use Illuminate\Support\Facades\Auth;
  * @property string|null $unit_price
  * @property int $fees
  * @property string|null $factor
+ * @property int|null $amount
  * @property string|null $notes
  */
-#[Fillable(['asset_id', 'type', 'date', 'quantity', 'unit_price', 'fees', 'factor', 'notes'])]
+#[Fillable(['asset_id', 'type', 'date', 'quantity', 'unit_price', 'fees', 'factor', 'amount', 'notes'])]
 class AssetOperation extends Model
 {
     use BelongsToHousehold;
@@ -47,6 +48,7 @@ class AssetOperation extends Model
             'type' => AssetOperationType::class,
             'date' => 'date',
             'fees' => 'integer',
+            'amount' => 'integer',
         ];
     }
 

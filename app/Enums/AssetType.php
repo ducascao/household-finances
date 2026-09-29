@@ -12,6 +12,8 @@ enum AssetType: string
     case RealEstateFund = 'fii';
     case Etf = 'etf';
     case Bdr = 'bdr';
+    case FixedIncome = 'fixed_income';
+    case Pension = 'pension';
 
     public function label(): string
     {
@@ -20,6 +22,16 @@ enum AssetType: string
             self::RealEstateFund => 'FII',
             self::Etf => 'ETF',
             self::Bdr => 'BDR',
+            self::FixedIncome => 'Renda fixa',
+            self::Pension => 'Previdência',
         };
+    }
+
+    /**
+     * Renda fixa e previdência: sem ticker nem cotação; valor pelo saldo informado.
+     */
+    public function isValuedByBalance(): bool
+    {
+        return $this === self::FixedIncome || $this === self::Pension;
     }
 }

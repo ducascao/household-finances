@@ -17,7 +17,7 @@ class OperationData
 {
     /**
      * @param  array<string, mixed>  $data
-     * @return array{type: AssetOperationType, date: Carbon, quantity: string|null, unit_price: string|null, fees: int, factor: string|null, notes: string|null}
+     * @return array{type: AssetOperationType, date: Carbon, quantity: string|null, unit_price: string|null, fees: int, factor: string|null, amount: int|null, notes: string|null}
      */
     public static function resolve(array $data): array
     {
@@ -43,7 +43,11 @@ class OperationData
         $fees = (int) ($data['fees'] ?? 0);
         $positive = fn (?string $value): bool => $value !== null && BigDecimal::of($value)->isPositive();
 
-        $errors = $type->isTrade()
+        $amount = isset($data['amount']) && $data['amount'] !== '' ? (int) $data['amount'] : null;
+
+        $errors = $type->isCashFlow()
+            ? array_filter(['amount' => $amount !== null && $amount > 0 ? null : 'Informe o valor.'])
+            : ($type->isTrade()
             ? array_filter([
                 'quantity' => $positive($quantity) ? null : 'Informe a quantidade.',
                 'unit_price' => $positive($price) ? null : 'Informe o preço unitário.',
@@ -53,7 +57,7 @@ class OperationData
                 'factor' => $positive($factor) && ! BigDecimal::of((string) $factor)->isEqualTo(1)
                     ? null
                     : 'Informe a proporção (ex.: 2 para desdobramento 1→2, 10 para grupamento 10→1).',
-            ]);
+            ]));
 
         if ($errors !== []) {
             throw ValidationException::withMessages($errors);
@@ -65,7 +69,8 @@ class OperationData
             'quantity' => $type->isTrade() ? $quantity : null,
             'unit_price' => $type->isTrade() ? $price : null,
             'fees' => $type->isTrade() ? $fees : 0,
-            'factor' => $type->isTrade() ? null : $factor,
+            'factor' => $type->isTrade() || $type->isCashFlow() ? null : $factor,
+            'amount' => $type->isCashFlow() ? $amount : null,
             'notes' => ($validated['notes'] ?? null) ?: null,
         ];
     }

@@ -7,10 +7,13 @@ use App\Enums\TransactionStatus;
 use App\Models\Account;
 use App\Models\Asset;
 use App\Models\AssetOperation;
+use App\Models\ManualValuation;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Support\MoneyFormatter;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -83,6 +86,10 @@ class ManageOperations
      */
     public static function cashAmount(AssetOperation $operation): int
     {
+        if ($operation->type->isCashFlow()) {
+            return -ValuationCalculator::signed($operation);
+        }
+
         $gross = BigDecimal::of((string) $operation->quantity)
             ->multipliedBy((string) $operation->unit_price)
             ->multipliedBy(100)
@@ -96,11 +103,15 @@ class ManageOperations
     {
         $existing = Transaction::withoutGlobalScopes()->where('asset_operation_id', $operation->id)->first();
 
-        if (! $operation->type->isTrade()) {
+        if (! $operation->type->isTrade() && ! $operation->type->isCashFlow()) {
             $existing?->delete();
 
             return;
         }
+
+        $description = $operation->type->isCashFlow()
+            ? $operation->type->label().($operation->type === AssetOperationType::Contribution ? ' em ' : ' de ').$asset->label()
+            : $operation->type->label().' de '.Quantity::format((string) $operation->quantity).' '.$asset->label();
 
         $transaction = $existing ?? new Transaction;
         $transaction->household_id = $asset->household_id;
@@ -113,13 +124,19 @@ class ManageOperations
             'status' => TransactionStatus::Paid,
             'date' => $operation->date,
             'competence_date' => $operation->date->copy()->startOfMonth(),
-            'description' => $operation->type->label().' de '.Quantity::format((string) $operation->quantity).' '.$asset->ticker,
+            'description' => $description,
             'paid_by' => $existing->paid_by ?? $actor->id,
         ])->save();
     }
 
     private function ensureValid(Asset $asset, ?AssetOperation $candidate, ?AssetOperation $replacing = null): void
     {
+        if ($candidate !== null && ! array_key_exists($candidate->type->value, AssetOperationType::optionsFor($asset->type))) {
+            throw ValidationException::withMessages(['type' => $asset->type->isValuedByBalance()
+                ? 'Renda fixa e previdência usam aporte e resgate.'
+                : 'Ativos da B3 usam compra, venda, desdobramento e grupamento.']);
+        }
+
         $operations = AssetOperation::withoutGlobalScopes()
             ->where('asset_id', $asset->id)
             ->when($replacing?->exists, fn ($query) => $query->whereKeyNot($replacing->id))
@@ -129,10 +146,40 @@ class ManageOperations
             $operations->push($candidate);
         }
 
+        if ($asset->type->isValuedByBalance()) {
+            $this->ensureWithdrawalsCovered($asset, $operations);
+
+            return;
+        }
+
         try {
             $this->calculator->calculate($operations);
         } catch (InvalidPosition $e) {
             throw ValidationException::withMessages(['quantity' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Nenhum resgate pode passar do valor do ativo na data (saldo informado + aportes − resgates até ali).
+     *
+     * @param  Collection<int, AssetOperation>  $operations
+     */
+    private function ensureWithdrawalsCovered(Asset $asset, Collection $operations): void
+    {
+        $valuations = ManualValuation::withoutGlobalScopes()->where('asset_id', $asset->id)->get();
+        $calculator = new ValuationCalculator;
+
+        foreach ($operations->where('type', AssetOperationType::Withdrawal) as $withdrawal) {
+            $before = $operations->reject(fn (AssetOperation $op): bool => $op === $withdrawal
+                || ($op->type === AssetOperationType::Withdrawal && $op->date->gt($withdrawal->date)));
+            $available = $calculator->at($before, $valuations, $withdrawal->date)->value;
+
+            if ((int) $withdrawal->amount > $available) {
+                throw ValidationException::withMessages([
+                    'amount' => sprintf('O resgate de %s em %s é maior que o valor do ativo na data (%s).',
+                        MoneyFormatter::formatMinor((int) $withdrawal->amount), $withdrawal->date->format('d/m/Y'), MoneyFormatter::formatMinor($available)),
+                ]);
+            }
         }
     }
 

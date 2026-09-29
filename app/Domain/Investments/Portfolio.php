@@ -5,6 +5,7 @@ namespace App\Domain\Investments;
 use App\Enums\AssetType;
 use App\Models\Asset;
 use App\Models\AssetOperation;
+use App\Models\ManualValuation;
 use Brick\Money\Money;
 
 /**
@@ -16,6 +17,7 @@ class Portfolio
     public function __construct(
         private readonly PositionCalculator $calculator,
         private readonly PriceBook $prices,
+        private readonly ValuationCalculator $valuations,
     ) {}
 
     /**
@@ -23,13 +25,24 @@ class Portfolio
      */
     public function rows(bool $onlyOpen = true): array
     {
-        $assets = Asset::query()->with('account')->orderBy('ticker')->get();
+        $assets = Asset::query()->with('account')->orderBy('type')->orderBy('name')->get();
         $operations = AssetOperation::query()->whereIn('asset_id', $assets->modelKeys())->get()->groupBy('asset_id');
         $prices = $this->prices->latestFor($assets->modelKeys());
+        $valuations = ManualValuation::query()->whereIn('asset_id', $assets->modelKeys())->get()->groupBy('asset_id');
 
         $rows = [];
 
         foreach ($assets as $asset) {
+            if ($asset->type->isValuedByBalance()) {
+                $valuation = $this->valuations->at($operations->get($asset->id, collect()), $valuations->get($asset->id, collect()));
+
+                if (! $onlyOpen || $valuation->value > 0) {
+                    $rows[] = new PortfolioRow($asset, Position::empty(), null, $valuation);
+                }
+
+                continue;
+            }
+
             $position = $this->calculator->calculate($operations->get($asset->id, collect()));
 
             if ($onlyOpen && ! $position->isOpen()) {

@@ -33,7 +33,7 @@ class PriceBook
      */
     public function fetchAll(): array
     {
-        $assets = Asset::withoutGlobalScopes()->get();
+        $assets = Asset::withoutGlobalScopes()->whereNotNull('ticker')->get();
 
         if ($assets->isEmpty()) {
             return ['updated' => 0, 'missing' => []];

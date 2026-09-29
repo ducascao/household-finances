@@ -115,7 +115,7 @@ class ManageIncomes
             throw ValidationException::withMessages(['category_id' => 'Escolha uma categoria de receita.']);
         }
 
-        $description = $income->type->label().' '.$asset->ticker;
+        $description = $income->type->label().' '.$asset->label();
         $data = [
             'account_id' => $asset->account_id,
             'category_id' => $category->id,

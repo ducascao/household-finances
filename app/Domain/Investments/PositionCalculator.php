@@ -74,6 +74,8 @@ class PositionCalculator
                 $this->divide($position->averagePrice, $factor),
                 $position->totalCost,
             ),
+            // Aporte e resgate (renda fixa/previdência) não mexem em quantidade de cotas.
+            AssetOperationType::Contribution, AssetOperationType::Withdrawal => $position,
             AssetOperationType::ReverseSplit => new Position(
                 $this->divide($position->quantity, $factor),
                 $this->scale($position->averagePrice->multipliedBy($factor)),

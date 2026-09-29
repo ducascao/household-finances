@@ -9,7 +9,8 @@ use Brick\Math\RoundingMode;
 use Brick\Money\Money;
 
 /**
- * Posição de um ativo com a última cotação disponível. Sem cotação, o valor de mercado usa o preço médio.
+ * Linha da carteira. Ativos da B3: posição em cotas × última cotação (sem cotação, o PM).
+ * Renda fixa/previdência: valor pelo saldo informado (ValuationPosition).
  */
 final readonly class PortfolioRow
 {
@@ -17,7 +18,13 @@ final readonly class PortfolioRow
         public Asset $asset,
         public Position $position,
         public ?AssetPrice $lastPrice,
+        public ?ValuationPosition $valuation = null,
     ) {}
+
+    public function isValuedByBalance(): bool
+    {
+        return $this->valuation !== null;
+    }
 
     public function price(): BigDecimal
     {
@@ -26,11 +33,19 @@ final readonly class PortfolioRow
 
     public function marketValue(): Money
     {
+        if ($this->valuation !== null) {
+            return Money::ofMinor($this->valuation->value, $this->asset->currency);
+        }
+
         return $this->position->marketValue($this->price(), $this->asset->currency);
     }
 
     public function cost(): Money
     {
+        if ($this->valuation !== null) {
+            return Money::ofMinor($this->valuation->invested, $this->asset->currency);
+        }
+
         return $this->position->totalCostMoney($this->asset->currency);
     }
 
@@ -41,22 +56,28 @@ final readonly class PortfolioRow
 
     public function resultPercent(): ?float
     {
-        if (! $this->position->totalCost->isPositive()) {
+        $cost = BigDecimal::of((string) $this->cost()->getAmount());
+
+        if (! $cost->isPositive()) {
             return null;
         }
 
         return BigDecimal::of((string) $this->result()->getAmount())
-            ->dividedBy($this->position->totalCost, 6, RoundingMode::HalfUp)
+            ->dividedBy($cost, 6, RoundingMode::HalfUp)
             ->multipliedBy(100)
             ->toScale(2, RoundingMode::HalfUp)
             ->toFloat();
     }
 
     /**
-     * Cotação com mais de 7 dias (ou inexistente) merece atenção.
+     * Cotação (B3) com mais de 7 dias, ou saldo informado (renda fixa/previdência) com mais de 30 dias.
      */
     public function isPriceStale(): bool
     {
+        if ($this->valuation !== null) {
+            return $this->valuation->lastValuation === null || $this->valuation->lastValuation->date->lt(today()->subDays(30));
+        }
+
         return $this->lastPrice === null || $this->lastPrice->date->lt(today()->subDays(7));
     }
 }
