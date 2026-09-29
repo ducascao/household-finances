@@ -114,4 +114,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Autenticação em dois fatores
+    |--------------------------------------------------------------------------
+    |
+    | Obrigatória para todos os usuários. Pode ser desligada só em
+    | desenvolvimento, até a entrega final (ver PLAN.md, "Pontos em aberto").
+    |
+    */
+
+    'mfa_enabled' => (bool) env('AUTH_MFA_ENABLED', true),
+
 ];

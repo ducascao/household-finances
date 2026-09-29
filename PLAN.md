@@ -365,6 +365,8 @@ Notas da entrega:
 
 ## Pontos em aberto
 
+- [ ] **Reativar o 2FA na entrega final:** em desenvolvimento está desligado (`AUTH_MFA_ENABLED=false` no `.env`), a pedido, para facilitar os testes. Na entrega final, voltar para `true` (padrão do `.env.example` e dos testes).
+
 - [ ] Fornecedor de cotações do exterior (decidir na E12)
 - [x] Bancos e cartões usados e formato de exportação (antes da E5): Bradesco, PicPay, Nubank e Mercado Pago — ver notas da E5; falta validar os perfis "a conferir" com arquivos reais
 - [x] Destino do backup além da pasta local: Google Drive, pasta Backups, 30 dias (E8)
