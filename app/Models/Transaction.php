@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Auth;
  * @property int|null $installment_group_id
  * @property int|null $installment_number
  * @property string|null $import_hash
+ * @property int|null $asset_operation_id
  * @property Carbon|null $occurrence_date
  * @property int|null $category_id
  * @property Money $amount
@@ -41,7 +42,7 @@ use Illuminate\Support\Facades\Auth;
  * @property string|null $notes
  * @property list<string> $tags
  */
-#[Fillable(['transfer_id', 'recurrence_id', 'occurrence_date', 'invoice_id', 'installment_group_id', 'installment_number', 'import_hash', 'account_id', 'category_id', 'amount', 'status', 'currency', 'date', 'due_date', 'competence_date', 'description', 'paid_by', 'notes', 'tags'])]
+#[Fillable(['transfer_id', 'recurrence_id', 'occurrence_date', 'invoice_id', 'installment_group_id', 'installment_number', 'import_hash', 'asset_operation_id', 'account_id', 'category_id', 'amount', 'status', 'currency', 'date', 'due_date', 'competence_date', 'description', 'paid_by', 'notes', 'tags'])]
 class Transaction extends Model
 {
     /** @use HasFactory<TransactionFactory> */
@@ -160,14 +161,20 @@ class Transaction extends Model
     }
 
     /**
-     * Receitas e despesas: exclui transferências (base dos relatórios).
+     * Receitas e despesas: exclui transferências e compras/vendas de ativos (base dos relatórios).
      *
      * @param  Builder<self>  $query
      */
     #[Scope]
     protected function incomeAndExpense(Builder $query): void
     {
-        $query->whereNull($query->qualifyColumn('transfer_id'));
+        $query->whereNull($query->qualifyColumn('transfer_id'))
+            ->whereNull($query->qualifyColumn('asset_operation_id'));
+    }
+
+    public function isAssetTrade(): bool
+    {
+        return $this->asset_operation_id !== null;
     }
 
     /**
