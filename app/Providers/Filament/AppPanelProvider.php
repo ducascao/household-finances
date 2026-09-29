@@ -31,9 +31,10 @@ class AppPanelProvider extends PanelProvider
             ->maxContentWidth(Width::Full)
             ->login()
             ->profile(isSimple: false)
+            // 2FA obrigatório; desligável só em desenvolvimento (AUTH_MFA_ENABLED=false) até a entrega final.
             ->multiFactorAuthentication(
-                AppAuthentication::make()->recoverable(),
-                isRequired: true,
+                config('auth.mfa_enabled') ? [AppAuthentication::make()->recoverable()] : [],
+                isRequired: (bool) config('auth.mfa_enabled'),
             )
             ->colors([
                 'primary' => Color::Emerald,
