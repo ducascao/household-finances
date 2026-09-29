@@ -23,9 +23,9 @@
             <p class="fc-value">{{ $fmt($cdi) }}</p>
             <p class="fc-hint">
                 @if ($cdi === null)
-                    sem dados do CDI (rode app:fetch-cdi)
+                    sem dados do CDI: a série precisa ser atualizada
                 @elseif ($missing = $this->cdiMissingUntil())
-                    <span class="fc-warning">só a partir de {{ $missing->format('d/m/Y') }} — carregue o histórico com app:fetch-cdi --from=…</span>
+                    <span class="fc-warning">disponível só a partir de {{ $missing->format('d/m/Y') }}; o histórico do CDI precisa ser atualizado</span>
                 @else
                     acumulado diário
                 @endif
