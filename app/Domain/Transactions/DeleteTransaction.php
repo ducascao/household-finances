@@ -3,9 +3,11 @@
 namespace App\Domain\Transactions;
 
 use App\Domain\CreditCard\DeleteInstallmentPurchase;
+use App\Domain\Investments\ManageIncomes;
 use App\Domain\Investments\ManageOperations;
 use App\Domain\Transfers\DeleteTransfer;
 use App\Models\Account;
+use App\Models\AssetIncome;
 use App\Models\AssetOperation;
 use App\Models\InstallmentGroup;
 use App\Models\Invoice;
@@ -34,6 +36,12 @@ class DeleteTransaction
 
         if ($transaction->asset_operation_id !== null) {
             app(ManageOperations::class)->delete($actor, AssetOperation::withoutGlobalScopes()->findOrFail($transaction->asset_operation_id));
+
+            return;
+        }
+
+        if ($transaction->asset_income_id !== null) {
+            app(ManageIncomes::class)->delete($actor, AssetIncome::withoutGlobalScopes()->findOrFail($transaction->asset_income_id));
 
             return;
         }

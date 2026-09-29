@@ -60,6 +60,14 @@ class Asset extends Model
     }
 
     /**
+     * @return HasMany<AssetIncome, $this>
+     */
+    public function incomes(): HasMany
+    {
+        return $this->hasMany(AssetIncome::class);
+    }
+
+    /**
      * @return HasMany<AssetPrice, $this>
      */
     public function prices(): HasMany

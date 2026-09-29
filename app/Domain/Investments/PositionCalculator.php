@@ -13,10 +13,15 @@ use Brick\Math\RoundingMode;
  * - Compra: custo += qtd × preço + taxas; PM = custo ÷ qtd.
  * - Venda: qtd diminui e o custo cai pelo PM (o PM não muda). Zerou a posição, zera o custo.
  * - Desdobramento 1→N: qtd × N e PM ÷ N. Grupamento N→1: qtd ÷ N e PM × N. O custo total não muda.
+ *
+ * Cada venda também gera um RealizedSale (valor líquido − quantidade × PM na data).
  */
 class PositionCalculator
 {
     public const SCALE = 8;
+
+    /** @var list<RealizedSale> */
+    private array $sales = [];
 
     /**
      * @param  iterable<AssetOperation>  $operations
@@ -25,6 +30,21 @@ class PositionCalculator
      */
     public function calculate(iterable $operations): Position
     {
+        return $this->history($operations)['position'];
+    }
+
+    /**
+     * Posição final e as vendas com o resultado realizado de cada uma.
+     *
+     * @param  iterable<AssetOperation>  $operations
+     * @return array{position: Position, sales: list<RealizedSale>}
+     *
+     * @throws InvalidPosition
+     */
+    public function history(iterable $operations): array
+    {
+        $this->sales = [];
+
         $sorted = collect($operations)->sortBy([
             fn (AssetOperation $a, AssetOperation $b): int => $a->date->toDateString() <=> $b->date->toDateString(),
             fn (AssetOperation $a, AssetOperation $b): int => ($a->id ?? PHP_INT_MAX) <=> ($b->id ?? PHP_INT_MAX),
@@ -36,7 +56,7 @@ class PositionCalculator
             $position = $this->apply($position, $operation);
         }
 
-        return $position;
+        return ['position' => $position, 'sales' => $this->sales];
     }
 
     public function apply(Position $position, AssetOperation $operation): Position
@@ -48,7 +68,7 @@ class PositionCalculator
 
         return match ($operation->type) {
             AssetOperationType::Buy => $this->buy($position, $quantity, $price, $fees),
-            AssetOperationType::Sell => $this->sell($position, $quantity, $operation),
+            AssetOperationType::Sell => $this->sell($position, $quantity, $price, $fees, $operation),
             AssetOperationType::Split => new Position(
                 $this->scale($position->quantity->multipliedBy($factor)),
                 $this->divide($position->averagePrice, $factor),
@@ -70,13 +90,19 @@ class PositionCalculator
         return new Position($this->scale($newQuantity), $this->divide($newCost, $newQuantity), $this->scale($newCost));
     }
 
-    private function sell(Position $position, BigDecimal $quantity, AssetOperation $operation): Position
+    private function sell(Position $position, BigDecimal $quantity, BigDecimal $price, BigDecimal $fees, AssetOperation $operation): Position
     {
         $remaining = $position->quantity->minus($quantity);
 
         if ($remaining->isNegative()) {
             throw InvalidPosition::oversold($operation, $position->quantity);
         }
+
+        $this->sales[] = new RealizedSale(
+            $operation,
+            $this->scale($quantity->multipliedBy($price)->minus($fees)),
+            $this->scale($quantity->multipliedBy($position->averagePrice)),
+        );
 
         if ($remaining->isZero()) {
             return Position::empty();
