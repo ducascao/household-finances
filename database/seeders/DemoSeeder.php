@@ -16,6 +16,7 @@ use App\Domain\Import\SaveImportProfile;
 use App\Domain\Import\SaveImportRule;
 use App\Domain\Investments\ManageIncomes;
 use App\Domain\Investments\ManageOperations;
+use App\Domain\Investments\ManageValuations;
 use App\Domain\Investments\SaveAsset;
 use App\Domain\Recurrences\CreateRecurrence;
 use App\Domain\Transactions\CreateTransaction;
@@ -41,7 +42,8 @@ use Illuminate\Support\Carbon;
  * Lar de exemplo com 2 usuários, contas pessoais e compartilhadas, 6 meses de lançamentos,
  * contas previstas (atrasadas e a vencer), transferências, contas fixas, cartões de crédito com faturas
  * importação (regras, perfil de CSV e um lote em revisão), orçamentos dos últimos meses e comprovantes
- * (no disco local, já que os dados de exemplo não têm Google Drive conectado) e uma carteira B3.
+ * (no disco local, já que os dados de exemplo não têm Google Drive conectado), uma carteira B3,
+ * renda fixa e previdência.
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -108,6 +110,7 @@ class DemoSeeder extends Seeder
         $this->budgets($household);
         $this->attachments($eduardo);
         $this->portfolio($eduardo, $joint);
+        $this->fixedIncome($eduardo);
 
         app(CreateTransfer::class)->execute($eduardo, [
             'from_account_id' => $joint->id,
@@ -357,6 +360,50 @@ class DemoSeeder extends Seeder
                 InterestRate::updateOrCreate(['series' => InterestRate::CDI, 'date' => $date->toDateString()], ['rate' => '0.05213']);
             }
         }
+    }
+
+    /**
+     * CDB 110% do CDI e Tesouro IPCA+ na corretora, com saldos mensais; VGBL debitado da conta do Eduardo
+     * com o último saldo há 40 dias (aparece o lembrete de atualizar o saldo).
+     */
+    private function fixedIncome(User $eduardo): void
+    {
+        $broker = Account::where('name', 'XP Investimentos')->sole();
+        $checking = Account::where('name', 'Nubank Eduardo')->sole();
+        $operations = app(ManageOperations::class);
+        $valuations = app(ManageValuations::class);
+        $asset = fn (Account $account, string $type, string $name, array $details = []) => app(SaveAsset::class)->execute($eduardo, [
+            'account_id' => $account->id, 'type' => $type, 'name' => $name, ...$details,
+        ]);
+        $monthsAgo = fn (int $months, int $day = 5): Carbon => today()->startOfMonth()->subMonthsNoOverflow($months)->day($day);
+
+        $cdb = $asset($broker, 'fixed_income', 'CDB Banco Inter 2028', ['issuer' => 'Banco Inter', 'indexer' => 'cdi', 'rate' => '110% do CDI', 'maturity_date' => today()->addYears(2)->toDateString()]);
+        $operations->register($eduardo, $cdb, ['type' => 'contribution', 'date' => $monthsAgo(5)->toDateString(), 'amount' => 1000000]);
+        $operations->register($eduardo, $cdb, ['type' => 'withdrawal', 'date' => $monthsAgo(2, 12)->toDateString(), 'amount' => 200000]);
+        $balance = 1000000;
+
+        for ($months = 4; $months >= 0; $months--) {
+            $date = $months === 0 ? today()->subDays(5) : $monthsAgo($months, 28);
+            $balance = (int) round($balance * 1.0115) - ($months === 1 ? 200000 : 0);
+            $valuations->save($eduardo, $cdb, $date, $balance);
+        }
+
+        $tesouro = $asset($broker, 'fixed_income', 'Tesouro IPCA+ 2035', ['issuer' => 'Tesouro Nacional', 'indexer' => 'ipca', 'rate' => 'IPCA + 6,8%', 'maturity_date' => '2035-05-15']);
+        $operations->register($eduardo, $tesouro, ['type' => 'contribution', 'date' => $monthsAgo(4)->toDateString(), 'amount' => 500000]);
+        $valuations->save($eduardo, $tesouro, $monthsAgo(2, 28), 509800);
+        $valuations->save($eduardo, $tesouro, today()->subDays(10), 521450);
+
+        $vgbl = $asset($checking, 'pension', 'VGBL Brasilprev', ['issuer' => 'Brasilprev', 'rate' => 'Fundo multimercado']);
+
+        for ($months = 5; $months >= 0; $months--) {
+            if ($monthsAgo($months, 10)->lte(today())) {
+                $operations->register($eduardo, $vgbl, ['type' => 'contribution', 'date' => $monthsAgo($months, 10)->toDateString(), 'amount' => 50000]);
+            }
+        }
+
+        // Saldo = aportes feitos até a data + um pouco de rendimento.
+        $invested = 50000 * $vgbl->operations()->whereDate('date', '<=', today()->subDays(40))->count();
+        $valuations->save($eduardo, $vgbl, today()->subDays(40), (int) round($invested * 1.024));
     }
 
     private function recurrence(Household $household, User $payer, Account $account, string $category, int $amount, string $frequency, ?int $day, Carbon $start, bool $estimate = false, ?string $description = null): void

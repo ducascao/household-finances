@@ -13,6 +13,7 @@ use App\Models\ImportRule;
 use App\Models\InstallmentGroup;
 use App\Models\InterestRate;
 use App\Models\Invoice;
+use App\Models\ManualValuation;
 use App\Models\Recurrence;
 use App\Models\Transaction;
 use App\Models\User;
@@ -40,10 +41,12 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(ImportLine::where('status', 'match')->count())->toBe(1)
         ->and(Budget::whereDate('month', today()->startOfMonth())->count())->toBe(10)
         ->and(Attachment::where('disk', 'local')->count())->toBe(2)
-        ->and(Asset::count())->toBe(4)
+        ->and(Asset::count())->toBe(7)
         ->and(AssetPrice::count())->toBe(20 + 24)
         ->and(AssetIncome::count())->toBeGreaterThanOrEqual(5)
-        ->and(InterestRate::count())->toBeGreaterThan(100);
+        ->and(InterestRate::count())->toBeGreaterThan(100)
+        ->and(Asset::whereIn('type', ['fixed_income', 'pension'])->count())->toBe(3)
+        ->and(ManualValuation::count())->toBe(8);
 
     $this->actingAs($maria);
 
