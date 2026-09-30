@@ -50,6 +50,7 @@ return [
 
     'bcb' => [
         'url' => env('BCB_SGS_URL', 'https://api.bcb.gov.br'),
+        'ptax_url' => env('BCB_PTAX_URL', 'https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata'),
     ],
 
 ];
