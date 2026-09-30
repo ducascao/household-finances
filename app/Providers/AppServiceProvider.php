@@ -4,12 +4,14 @@ namespace App\Providers;
 
 use App\Contracts\AttachmentStorage;
 use App\Contracts\ExchangeRateProvider;
+use App\Contracts\ForeignQuoteProvider;
 use App\Contracts\GoogleOAuth;
 use App\Contracts\InterestRateProvider;
 use App\Contracts\QuoteProvider;
 use App\Services\Google\FilesystemAttachmentStorage;
 use App\Services\Google\GoogleClientOAuth;
 use App\Services\Quotes\BrapiQuoteProvider;
+use App\Services\Quotes\FinnhubQuoteProvider;
 use App\Services\Rates\BcbPtaxProvider;
 use App\Services\Rates\BcbSgsProvider;
 use Google\Service\Drive;
@@ -30,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(GoogleOAuth::class, GoogleClientOAuth::class);
         $this->app->bind(AttachmentStorage::class, FilesystemAttachmentStorage::class);
         $this->app->bind(QuoteProvider::class, BrapiQuoteProvider::class);
+        $this->app->bind(ForeignQuoteProvider::class, FinnhubQuoteProvider::class);
         $this->app->bind(InterestRateProvider::class, BcbSgsProvider::class);
         $this->app->bind(ExchangeRateProvider::class, BcbPtaxProvider::class);
     }

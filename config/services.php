@@ -53,4 +53,9 @@ return [
         'ptax_url' => env('BCB_PTAX_URL', 'https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata'),
     ],
 
+    'finnhub' => [
+        'url' => env('FINNHUB_URL', 'https://finnhub.io'),
+        'token' => env('FINNHUB_TOKEN'),
+    ],
+
 ];
