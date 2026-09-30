@@ -2,6 +2,8 @@
 
 namespace App\Domain\Investments;
 
+use App\Domain\Currency\ExchangeRates;
+use App\Domain\Currency\MissingExchangeRate;
 use App\Enums\AssetOperationType;
 use App\Models\Asset;
 use App\Models\AssetIncome;
@@ -20,7 +22,9 @@ use Illuminate\Support\Collection;
  * - Fluxos: compras e aportes (+) e vendas e resgates (− valor líquido recebido) dentro do período,
  *   ponderados por (dias do período − dias até o fluxo) ÷ dias do período.
  * - Proventos: valor líquido recebido no período (entram no resultado, não nos fluxos).
- * Usa os escopos globais: só ativos visíveis ao usuário logado. Só ativos em BRL entram no total.
+ * Tudo em reais: ativos em moeda estrangeira têm os valores convertidos pelo câmbio de cada data (valor inicial
+ * e final nas datas do período, fluxos e proventos na data de cada um). Sem câmbio, o ativo fica de fora.
+ * Usa os escopos globais: só ativos visíveis ao usuário logado.
  */
 class ReturnCalculator
 {
@@ -28,6 +32,7 @@ class ReturnCalculator
         private readonly PositionCalculator $calculator,
         private readonly PriceBook $prices,
         private readonly ValuationCalculator $valuationCalculator,
+        private readonly ExchangeRates $rates,
     ) {}
 
     /**
@@ -56,37 +61,47 @@ class ReturnCalculator
             $assetOperations = $operations->get($asset->id, collect());
 
             $row = new AssetReturn($asset);
-            $untilEnd = $assetOperations->filter(fn (AssetOperation $op): bool => $op->date->lte($end));
+            $toBrl = fn (int $minor, Carbon $date): int => $asset->currency === 'BRL' || $minor === 0
+                ? $minor
+                : $this->rates->minorToBrl($minor, $asset->currency, $date);
 
-            if ($asset->type->isValuedByBalance()) {
-                $assetValuations = $valuations->get($asset->id, collect());
-                $row->startValue = $this->valuationCalculator->at($assetOperations, $assetValuations, $before)->value;
-                $row->endValue = $this->valuationCalculator->at($assetOperations, $assetValuations, $end)->value;
-            } else {
-                $row->startValue = $this->value($assetOperations->filter(fn (AssetOperation $op): bool => $op->date->lte($before)), $startPrices->get($asset->id)?->price);
-                $row->endValue = $this->value($untilEnd, $endPrices->get($asset->id)?->price);
-            }
+            try {
+                $untilEnd = $assetOperations->filter(fn (AssetOperation $op): bool => $op->date->lte($end));
 
-            foreach ($assetOperations->filter(fn (AssetOperation $op): bool => ($op->type->isTrade() || $op->type->isCashFlow()) && $op->date->between($start, $end)) as $operation) {
-                $cash = abs(ManageOperations::cashAmount($operation));
-                $weight = ($days - (int) $start->diffInDays($operation->date)) / $days;
-
-                if ($operation->type === AssetOperationType::Buy || $operation->type === AssetOperationType::Contribution) {
-                    $row->buys += $cash;
-                    $row->weightedFlows += $cash * $weight;
+                if ($asset->type->isValuedByBalance()) {
+                    $assetValuations = $valuations->get($asset->id, collect());
+                    $row->startValue = $toBrl($this->valuationCalculator->at($assetOperations, $assetValuations, $before)->value, $before);
+                    $row->endValue = $toBrl($this->valuationCalculator->at($assetOperations, $assetValuations, $end)->value, $end);
                 } else {
-                    $row->sells += $cash;
-                    $row->weightedFlows -= $cash * $weight;
+                    $row->startValue = $toBrl($this->value($assetOperations->filter(fn (AssetOperation $op): bool => $op->date->lte($before)), $startPrices->get($asset->id)?->price), $before);
+                    $row->endValue = $toBrl($this->value($untilEnd, $endPrices->get($asset->id)?->price), $end);
                 }
-            }
 
-            foreach ($this->calculator->history($untilEnd)['sales'] as $sale) {
-                if ($sale->operation->date->between($start, $end)) {
-                    $row->realized += $sale->resultMinor();
+                foreach ($assetOperations->filter(fn (AssetOperation $op): bool => ($op->type->isTrade() || $op->type->isCashFlow()) && $op->date->between($start, $end)) as $operation) {
+                    $cash = $toBrl(abs(ManageOperations::cashAmount($operation)), $operation->date);
+                    $weight = ($days - (int) $start->diffInDays($operation->date)) / $days;
+
+                    if ($operation->type === AssetOperationType::Buy || $operation->type === AssetOperationType::Contribution) {
+                        $row->buys += $cash;
+                        $row->weightedFlows += $cash * $weight;
+                    } else {
+                        $row->sells += $cash;
+                        $row->weightedFlows -= $cash * $weight;
+                    }
                 }
-            }
 
-            $row->incomes = (int) $incomes->get($asset->id, collect())->sum(fn (AssetIncome $income): int => $income->netAmount());
+                foreach ($this->calculator->history($untilEnd)['sales'] as $sale) {
+                    if ($sale->operation->date->between($start, $end)) {
+                        $row->realized += $sale->resultMinor() >= 0
+                            ? $toBrl($sale->resultMinor(), $sale->operation->date)
+                            : -$toBrl(-$sale->resultMinor(), $sale->operation->date);
+                    }
+                }
+
+                $row->incomes = (int) $incomes->get($asset->id, collect())->sum(fn (AssetIncome $income): int => $toBrl($income->netAmount(), $income->date));
+            } catch (MissingExchangeRate) {
+                continue;
+            }
 
             if ($row->isEmpty()) {
                 continue;
@@ -94,9 +109,7 @@ class ReturnCalculator
 
             $rows[] = $row;
 
-            if ($asset->currency === 'BRL') {
-                $total->add($row);
-            }
+            $total->add($row);
         }
 
         return ['assets' => $rows, 'total' => $total];
