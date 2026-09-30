@@ -1,27 +1,63 @@
-Eduardo Exemplo                                                  01 DE SETEMBRO DE 2026 a 30 DE SETEMBRO DE 2026
-CPF •••.123.456-••        Agência 0001        Conta 9999999-9
+                                                                                                           Fulano Exemplo
+                                                                                         CPF •••.123.456-•• Agência 0001 Conta
+                                                                                                                      1234567-8
 
-VALORES EM R$
 
-Saldo inicial                                                                           2.500,00
-Rendimento líquido                                                                       +3,21
-Total de entradas                                                                   +5.350,00
-Total de saídas                                                                     -1.482,40
-Saldo final do período                                                                6.370,81
+
+
+01 DE SETEMBRO DE 2026 a 30 DE SETEMBRO DE 2026                                                                         VALORES EM R$
+
+
+                                                                                   Saldo inicial                          2.500,00
+
+                                                                                   Rendimento líquido                        +3,21
+Saldo final do período
+                                                                                   Total de entradas                     +5.350,00
+R$ 6.370,81
+                                                                                   Total de saídas                       -1.482,40
+
+                                                                                   Saldo final do período                 6.370,81
+
 
 Movimentações
 
-02 SET 2026       Total de entradas                                                 + 5.000,00
-                  Transferência recebida pelo Pix EMPRESA FICTICIA LTDA -
-                  12.345.678/0001-90                                                  5.000,00
-                  Total de saídas                                                    - 132,40
-                  Compra no débito PADARIA PAO QUENTE                                    32,40
-                  Transferência enviada pelo Pix JOAO DA SILVA - •••.123.456-••        100,00
-05 SET 2026       Total de saídas                                                  - 1.350,00
-                  Pagamento de fatura                                                 1.350,00
-                  Saldo do dia                                                        6.017,60
-20 SET 2026       Total de entradas                                                   + 350,00
-                  Transferência recebida pelo Pix MARIA EXEMPLO                         350,00
+02 SET 2026       Total de entradas                                                                                     + 5.000,00
 
-Tem alguma dúvida? Mande uma mensagem para nosso time de atendimento pelo app.
-Nu Pagamentos S.A. - Instituição de Pagamento                                     1 de 1
+                  Transferência recebida pelo Pix           EMPRESA FICTICIA LTDA - 12.345.678/0001-90 - BANCO            5.000,00
+
+                                                            EXEMPLO S.A. (0001) Agência: 1 Conta:
+
+                                                            1234567-8
+
+
+
+                  Total de saídas                                                                                         - 132,40
+
+                  Compra no débito                          PADARIA PAO QUENTE                                               32,40
+
+                  Transferência enviada pelo Pix            JOAO DA SILVA - •••.987.654-•• - BANCO EXEMPLO                  100,00
+
+                                                            (0001) Agência: 1 Conta: 99-9
+
+
+
+05 SET 2026       Total de saídas                                                                                       - 1.350,00
+
+                  Pagamento de fatura                                                                                     1.350,00
+
+
+
+20 SET 2026       Total de entradas                                                                                       + 350,00
+
+                  Transferência recebida pelo Pix           MARIA EXEMPLO - •••.111.222-•• - BANCO EXEMPLO                  350,00
+
+
+
+
+O saldo líquido corresponde ao total de depósitos e rendimentos em conta, não considerando movimentações feitas após a data mencionada.
+Asseguramos a autenticidade destas movimentações e das informações aqui citadas.
+
+Nu Financeira S.A. - Sociedade de Credito, Financiamento e                         Nu Pagamentos S.A. - Instituição de
+Investimento                                                                       Pagamento
+
+                Extrato gerado dia 30 de setembro de 2026 às 12:12                                                                       1 de 1

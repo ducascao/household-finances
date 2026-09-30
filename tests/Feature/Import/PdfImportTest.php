@@ -47,20 +47,20 @@ it('importa a fatura em PDF para a revisão e guarda o leitor usado', function (
 
     expect($batch->format)->toBe(ImportFormat::Pdf)
         ->and($batch->reader)->toBe('Nubank — fatura do cartão')
-        ->and(ImportLine::where('import_batch_id', $batch->id)->count())->toBe(6)
-        ->and(ImportLine::where('import_batch_id', $batch->id)->sum('amount'))->toEqual(-24530 - 2390 - 9990 + 120000 + 3500 - 107705);
+        ->and(ImportLine::where('import_batch_id', $batch->id)->count())->toBe(8)
+        ->and(ImportLine::where('import_batch_id', $batch->id)->sum('amount'))->toEqual(-24975 - 2399 - 1495 - 1495 - 1330 - 37989 + 3500 + 62564);
 });
 
 it('o mesmo PDF importado duas vezes não duplica', function () {
     $first = ($this->import)('nubank-fatura.txt');
     app(ConfirmImport::class)->execute($this->eduardo, $first);
-    expect(Transaction::where('account_id', $this->card->id)->count())->toBe(6);
+    expect(Transaction::where('account_id', $this->card->id)->count())->toBe(8);
 
     $second = ($this->import)('nubank-fatura.txt');
     expect(ImportLine::where('import_batch_id', $second->id)->pluck('status')->unique()->all())->toBe([ImportLineStatus::Duplicate]);
 
     app(ConfirmImport::class)->execute($this->eduardo, $second);
-    expect(Transaction::where('account_id', $this->card->id)->count())->toBe(6);
+    expect(Transaction::where('account_id', $this->card->id)->count())->toBe(8);
 });
 
 it('fatura em conta corrente é recusada com mensagem clara', function () {
