@@ -1,0 +1,169 @@
+<?php
+
+namespace App\Domain\NetWorth;
+
+use App\Domain\Currency\ExchangeRates;
+use App\Domain\Currency\MissingExchangeRate;
+use App\Domain\Investments\AssetValuation;
+use App\Domain\Investments\PriceBook;
+use App\Enums\AccountType;
+use App\Enums\TransactionStatus;
+use App\Models\Account;
+use App\Models\Asset;
+use App\Models\AssetOperation;
+use App\Models\Debt;
+use App\Models\DebtInstallment;
+use App\Models\DebtPrepayment;
+use App\Models\ManualValuation;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Patrimônio líquido numa data (em reais) = contas + investimentos − dívidas.
+ *
+ * - Contas: saldo inicial + lançamentos pagos com data até a data (contas em outra moeda pelo câmbio da data).
+ *   Cartões com saldo negativo contam como dívida (fatura em aberto).
+ * - Investimentos: valor de cada ativo na data (AssetValuation), convertido pelo câmbio da data.
+ * - Dívidas: principal − amortização das parcelas pagas até a data − amortizações extraordinárias até a data,
+ *   a partir de um mês antes do 1º vencimento (quando o dinheiro foi liberado).
+ *
+ * Tudo depende só do que aconteceu até a data, então recalcular um mês passado repete o valor.
+ * Não usa escopos globais: o escopo (pessoa ou lar) define as contas consideradas.
+ */
+class NetWorthCalculator
+{
+    public function __construct(
+        private readonly ExchangeRates $rates,
+        private readonly AssetValuation $valuation,
+        private readonly PriceBook $prices,
+    ) {}
+
+    public function at(NetWorthScope $scope, Carbon $date): NetWorthBreakdown
+    {
+        $date = $date->copy()->startOfDay();
+        $accounts = $scope->accounts();
+        $breakdown = new NetWorthBreakdown($date);
+
+        $this->accountBalances($accounts, $date, $breakdown);
+        $this->investments($accounts, $date, $breakdown);
+        $this->debts($accounts, $date, $breakdown);
+
+        return $breakdown;
+    }
+
+    /**
+     * @param  Collection<int, Account>  $accounts
+     */
+    private function accountBalances(Collection $accounts, Carbon $date, NetWorthBreakdown $breakdown): void
+    {
+        $sums = DB::table('transactions')
+            ->whereIn('account_id', $accounts->modelKeys())
+            ->where('status', TransactionStatus::Paid->value)
+            ->whereDate('date', '<=', $date)
+            ->groupBy('account_id')
+            ->selectRaw('account_id, sum(amount) as total')
+            ->pluck('total', 'account_id');
+
+        foreach ($accounts as $account) {
+            $balance = $account->initial_balance->getMinorAmount()->toInt() + (int) ($sums[$account->id] ?? 0);
+
+            try {
+                $brl = $this->toBrl($balance, $account->currency, $date);
+            } catch (MissingExchangeRate) {
+                $breakdown->missing[] = $account->name;
+
+                continue;
+            }
+
+            if ($account->type === AccountType::CreditCard) {
+                if ($brl < 0) {
+                    $breakdown->debtItems['Cartão '.$account->name] = -$brl;
+                } elseif ($brl > 0) {
+                    $breakdown->accountItems[$account->name] = $brl;
+                }
+
+                continue;
+            }
+
+            if ($brl !== 0) {
+                $breakdown->accountItems[$account->name] = $brl;
+            }
+        }
+    }
+
+    /**
+     * @param  Collection<int, Account>  $accounts
+     */
+    private function investments(Collection $accounts, Carbon $date, NetWorthBreakdown $breakdown): void
+    {
+        $assets = Asset::withoutGlobalScopes()->whereIn('account_id', $accounts->modelKeys())->get();
+
+        if ($assets->isEmpty()) {
+            return;
+        }
+
+        $ids = $assets->modelKeys();
+        $operations = AssetOperation::withoutGlobalScopes()->whereIn('asset_id', $ids)->get()->groupBy('asset_id');
+        $valuations = ManualValuation::withoutGlobalScopes()->whereIn('asset_id', $ids)->get()->groupBy('asset_id');
+        $prices = $this->prices->latestFor($ids, $date);
+
+        foreach ($assets as $asset) {
+            $value = $this->valuation->valueAt(
+                $asset,
+                $operations->get($asset->id, collect()),
+                $valuations->get($asset->id, collect()),
+                $prices->get($asset->id)?->price,
+                $date,
+            );
+
+            if ($value === 0) {
+                continue;
+            }
+
+            try {
+                $label = $asset->type->label();
+                $breakdown->investmentItems[$label] = ($breakdown->investmentItems[$label] ?? 0) + $this->toBrl($value, $asset->currency, $date);
+            } catch (MissingExchangeRate) {
+                $breakdown->missing[] = $asset->label();
+            }
+        }
+    }
+
+    /**
+     * @param  Collection<int, Account>  $accounts
+     */
+    private function debts(Collection $accounts, Carbon $date, NetWorthBreakdown $breakdown): void
+    {
+        $debts = Debt::withoutGlobalScopes()->whereIn('payment_account_id', $accounts->modelKeys())->get();
+
+        foreach ($debts as $debt) {
+            if ($date->lt($debt->first_due_date->copy()->subMonthNoOverflow())) {
+                continue;
+            }
+
+            $amortized = (int) DebtInstallment::withoutGlobalScopes()
+                ->where('debt_installments.debt_id', $debt->id)
+                ->join('transactions', 'transactions.id', '=', 'debt_installments.transaction_id')
+                ->where('transactions.status', TransactionStatus::Paid->value)
+                ->whereDate('transactions.date', '<=', $date)
+                ->sum('debt_installments.amortization');
+
+            $prepaid = (int) DebtPrepayment::withoutGlobalScopes()
+                ->where('debt_id', $debt->id)
+                ->whereDate('date', '<=', $date)
+                ->sum('amount');
+
+            $outstanding = max(0, $debt->principal - $amortized - $prepaid);
+
+            if ($outstanding > 0) {
+                $breakdown->debtItems[$debt->name] = $outstanding;
+            }
+        }
+    }
+
+    private function toBrl(int $minor, string $currency, Carbon $date): int
+    {
+        return $currency === ExchangeRates::BRL || $minor === 0 ? $minor : $this->rates->minorToBrl($minor, $currency, $date);
+    }
+}
