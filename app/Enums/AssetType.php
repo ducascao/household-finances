@@ -12,6 +12,7 @@ enum AssetType: string
     case RealEstateFund = 'fii';
     case Etf = 'etf';
     case Bdr = 'bdr';
+    case Reit = 'reit';
     case FixedIncome = 'fixed_income';
     case Pension = 'pension';
 
@@ -22,6 +23,7 @@ enum AssetType: string
             self::RealEstateFund => 'FII',
             self::Etf => 'ETF',
             self::Bdr => 'BDR',
+            self::Reit => 'REIT',
             self::FixedIncome => 'Renda fixa',
             self::Pension => 'Previdência',
         };

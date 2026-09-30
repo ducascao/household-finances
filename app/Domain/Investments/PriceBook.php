@@ -2,6 +2,7 @@
 
 namespace App\Domain\Investments;
 
+use App\Contracts\ForeignQuoteProvider;
 use App\Contracts\QuoteProvider;
 use App\Enums\PriceSource;
 use App\Models\Asset;
@@ -23,6 +24,7 @@ class PriceBook
 {
     public function __construct(
         private readonly QuoteProvider $provider,
+        private readonly ForeignQuoteProvider $foreignProvider,
     ) {}
 
     /**
@@ -39,17 +41,25 @@ class PriceBook
             return ['updated' => 0, 'missing' => []];
         }
 
-        try {
-            $quotes = $this->provider->latest($assets->pluck('ticker')->unique()->values()->all());
-        } catch (Throwable $e) {
-            Log::error('Falha ao buscar cotações: '.$e->getMessage());
-            $quotes = [];
+        // B3 (BRL) pela brapi; exterior pelo provedor estrangeiro. Falha de um não afeta o outro.
+        $quotes = [];
+
+        foreach ($assets->groupBy(fn (Asset $asset): string => $asset->currency === 'BRL' ? 'BRL' : 'foreign') as $group => $groupAssets) {
+            $provider = $group === 'BRL' ? $this->provider : $this->foreignProvider;
+
+            try {
+                foreach ($provider->latest($groupAssets->pluck('ticker')->unique()->values()->all()) as $ticker => $quote) {
+                    $quotes[$group.'|'.$ticker] = $quote;
+                }
+            } catch (Throwable $e) {
+                Log::error('Falha ao buscar cotações ('.($group === 'BRL' ? 'B3' : 'exterior').'): '.$e->getMessage());
+            }
         }
 
         $updated = 0;
 
         foreach ($assets as $asset) {
-            $quote = $quotes[$asset->ticker] ?? null;
+            $quote = $quotes[($asset->currency === 'BRL' ? 'BRL' : 'foreign').'|'.$asset->ticker] ?? null;
 
             if ($quote === null) {
                 continue;
@@ -59,7 +69,12 @@ class PriceBook
             $updated++;
         }
 
-        $missing = $assets->pluck('ticker')->unique()->diff(array_keys($quotes))->values()->all();
+        $missing = $assets
+            ->reject(fn (Asset $asset): bool => isset($quotes[($asset->currency === 'BRL' ? 'BRL' : 'foreign').'|'.$asset->ticker]))
+            ->pluck('ticker')
+            ->unique()
+            ->values()
+            ->all();
 
         return ['updated' => $updated, 'missing' => $missing];
     }
