@@ -37,12 +37,12 @@ class AssetInfolist
                     TextEntry::make('quantity')->label('Quantidade')->visible($b3)
                         ->state(fn (Asset $record): string => Quantity::format((string) $row($record)?->position->quantity)),
                     TextEntry::make('average')->label('Preço médio')->visible($b3)
-                        ->state(fn (Asset $record): string => 'R$ '.Quantity::format((string) $row($record)?->position->averagePrice, 2)),
+                        ->state(fn (Asset $record): string => MoneyFormatter::symbol($record->currency).' '.Quantity::format((string) $row($record)?->position->averagePrice, 2)),
                     TextEntry::make('cost')->label('Custo total')->visible($b3)
                         ->state(fn (Asset $record): string => $row($record) !== null ? MoneyFormatter::format($row($record)->cost()) : '—'),
                     TextEntry::make('price')->label('Última cotação')->visible($b3)
                         ->state(fn (Asset $record): string => ($r = $row($record))?->lastPrice !== null
-                            ? 'R$ '.Quantity::format($r->lastPrice->price, 2).' em '.$r->lastPrice->date->format('d/m/Y')
+                            ? MoneyFormatter::symbol($record->currency).' '.Quantity::format($r->lastPrice->price, 2).' em '.$r->lastPrice->date->format('d/m/Y')
                             : 'sem cotação'),
                     TextEntry::make('market')->label('Valor de mercado')->visible($b3)
                         ->state(fn (Asset $record): string => $row($record) !== null ? MoneyFormatter::format($row($record)->marketValue()) : '—'),
@@ -63,6 +63,27 @@ class AssetInfolist
                             default => 'Saldo informado em '.$r->valuation->lastValuation->date->format('d/m/Y').'.',
                         }),
                     TextEntry::make('yield')->label('Rendimento')->visible($balance)->state($result)->color($resultColor),
+                ]),
+            Section::make('Em reais')
+                ->description('Custo convertido pelo câmbio de cada operação; valor pelo câmbio atual (PTAX).')
+                ->columns(3)
+                ->columnSpanFull()
+                ->visible(fn (Asset $record): bool => $record->currency !== 'BRL')
+                ->schema([
+                    TextEntry::make('average_rate')->label('Câmbio médio de compra')
+                        ->state(fn (Asset $record): string => ($rate = $row($record)?->averageRate()) !== null ? 'R$ '.Quantity::format((string) $rate, 4) : '—'),
+                    TextEntry::make('rate_now')->label('Câmbio atual')
+                        ->state(fn (Asset $record): string => ($rate = $row($record)?->rateNow) !== null ? 'R$ '.Quantity::format((string) $rate, 4) : 'sem câmbio: precisa ser atualizado'),
+                    TextEntry::make('cost_brl')->label('Custo em reais')
+                        ->state(fn (Asset $record): string => ($m = $row($record)?->costBrl()) !== null ? MoneyFormatter::format($m) : '—'),
+                    TextEntry::make('market_brl')->label('Valor em reais')
+                        ->state(fn (Asset $record): string => ($m = $row($record)?->marketValueBrl()) !== null ? MoneyFormatter::format($m) : '—'),
+                    TextEntry::make('asset_effect')->label('Variação do ativo')
+                        ->helperText('(valor − custo, na moeda) × câmbio atual')
+                        ->state(fn (Asset $record): string => ($m = $row($record)?->assetEffectBrl()) !== null ? MoneyFormatter::format($m) : '—'),
+                    TextEntry::make('fx_effect')->label('Variação cambial')
+                        ->helperText('custo na moeda × (câmbio atual − câmbio médio)')
+                        ->state(fn (Asset $record): string => ($m = $row($record)?->fxEffectBrl()) !== null ? MoneyFormatter::format($m) : '—'),
                 ]),
         ]);
     }

@@ -21,7 +21,10 @@ class PortfolioTotalsWidget extends StatsOverviewWidget
 
         return [
             Stat::make('Custo total', MoneyFormatter::format($totals['cost']))
-                ->description('Quanto foi investido nas posições abertas (com taxas)'),
+                ->description($totals['missing'] !== []
+                    ? 'Fora dos totais por falta de câmbio: '.implode(', ', $totals['missing'])
+                    : 'Quanto foi investido nas posições abertas (com taxas), em reais')
+                ->color($totals['missing'] !== [] ? 'warning' : null),
             Stat::make('Valor de mercado', MoneyFormatter::format($totals['market']))
                 ->description('Pela última cotação de cada ativo'),
             Stat::make('Resultado não realizado', MoneyFormatter::format($totals['result']))

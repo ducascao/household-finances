@@ -28,6 +28,11 @@ class MoneyFormatter
         return ($money->isNegative() ? '-' : '').$symbol.' '.$number;
     }
 
+    public static function symbol(string $currency): string
+    {
+        return self::SYMBOLS[$currency] ?? $currency;
+    }
+
     public static function formatMinor(int $minorAmount, string $currency = 'BRL'): string
     {
         return self::format(Money::ofMinor($minorAmount, $currency));

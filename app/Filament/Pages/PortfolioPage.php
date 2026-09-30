@@ -76,13 +76,13 @@ class PortfolioPage extends Page implements HasActions, HasSchemas, HasTable
                 TextColumn::make('ticker')->label('Ativo')->weight('bold')->description(fn (array $record): string => $record['type']),
                 TextColumn::make('quantity')->label('Quantidade')->alignEnd(),
                 TextColumn::make('average')->label('Preço médio')->alignEnd(),
-                TextColumn::make('cost')->label('Custo')->alignEnd(),
+                TextColumn::make('cost')->label('Custo (R$)')->alignEnd()->description(fn (array $record): ?string => $record['cost_original']),
                 TextColumn::make('price')->label('Cotação / saldo')->alignEnd()
                     ->description(fn (array $record): ?string => $record['price_date'])
                     ->icon(fn (array $record): ?string => $record['stale'] ? 'heroicon-m-exclamation-triangle' : null)
                     ->iconColor('warning')
                     ->tooltip(fn (array $record): ?string => $record['stale'] ? 'Cotação com mais de 7 dias ou saldo com mais de 30 dias' : null),
-                TextColumn::make('market')->label('Valor de mercado')->alignEnd()->weight('bold'),
+                TextColumn::make('market')->label('Valor (R$)')->alignEnd()->weight('bold')->description(fn (array $record): ?string => $record['market_original']),
                 TextColumn::make('result')->label('Resultado')->alignEnd()
                     ->description(fn (array $record): ?string => $record['result_percent'])
                     ->color(fn (array $record): string => $record['negative'] ? 'danger' : 'success'),
@@ -118,28 +118,38 @@ class PortfolioPage extends Page implements HasActions, HasSchemas, HasTable
      */
     private function record(PortfolioRow $row, Money $totalMarket): array
     {
-        $market = $row->marketValue();
-        $percent = $row->resultPercent();
+        $market = $row->marketValueBrl();
+        $result = $row->resultBrl();
+        $percent = $row->isForeign() && $row->costBrl()?->isPositive() && $result !== null
+            ? round((float) (string) $result->getAmount() / (float) (string) $row->costBrl()->getAmount() * 100, 2)
+            : $row->resultPercent();
+        $symbol = MoneyFormatter::symbol($row->asset->currency);
+        $original = fn (Money $money): ?string => $row->isForeign() ? MoneyFormatter::format($money) : null;
 
         return [
             'asset_id' => $row->asset->id,
             'ticker' => $row->asset->label(),
             'type' => $row->asset->type->label().' · '.$row->asset->account->name,
             'quantity' => $row->isValuedByBalance() ? '—' : Quantity::format((string) $row->position->quantity),
-            'average' => $row->isValuedByBalance() ? '—' : 'R$ '.Quantity::format((string) $row->position->averagePrice, 2),
-            'cost' => MoneyFormatter::format($row->cost()),
+            'average' => $row->isValuedByBalance() ? '—' : $symbol.' '.Quantity::format((string) $row->position->averagePrice, 2),
+            'cost' => $row->costBrl() !== null ? MoneyFormatter::format($row->costBrl()) : 'sem câmbio',
+            'cost_original' => $original($row->cost()),
             'price' => match (true) {
                 $row->isValuedByBalance() => $row->valuation?->lastValuation !== null ? ($row->valuation->estimated ? 'saldo + aportes' : 'saldo informado') : 'sem saldo',
-                $row->lastPrice !== null => 'R$ '.Quantity::format($row->lastPrice->price, 2),
+                $row->lastPrice !== null => $symbol.' '.Quantity::format($row->lastPrice->price, 2),
                 default => 'sem cotação',
             },
             'price_date' => $row->isValuedByBalance() ? $row->valuation?->lastValuation?->date->format('d/m/Y') : $row->lastPrice?->date->format('d/m/Y'),
             'stale' => $row->isPriceStale(),
-            'market' => MoneyFormatter::format($market),
-            'result' => MoneyFormatter::format($row->result()),
-            'result_percent' => $percent !== null ? number_format($percent, 2, ',', '.').'%' : null,
-            'negative' => $row->result()->isNegative(),
-            'share' => $totalMarket->isPositive()
+            'market' => $market !== null ? MoneyFormatter::format($market) : 'sem câmbio',
+            'market_original' => $original($row->marketValue()),
+            'result' => $result !== null ? MoneyFormatter::format($result) : '—',
+            'result_percent' => implode(' · ', array_filter([
+                $percent !== null ? number_format($percent, 2, ',', '.').'%' : null,
+                $row->isForeign() && $row->fxEffectBrl() !== null ? 'câmbio '.MoneyFormatter::format($row->fxEffectBrl()) : null,
+            ])) ?: null,
+            'negative' => $result?->isNegative() ?? false,
+            'share' => $market !== null && $totalMarket->isPositive()
                 ? number_format((float) (string) $market->getAmount() / (float) (string) $totalMarket->getAmount() * 100, 1, ',', '.').'%'
                 : '—',
         ];
