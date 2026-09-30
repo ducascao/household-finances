@@ -1,0 +1,11 @@
+PicPay
+Extrato da conta                                                Período: 01/09/2026 a 30/09/2026
+Eduardo Exemplo - CPF: ***.123.456-**
+
+Data/Hora              Descrição                                                   Valor
+02/09/2026 10:15       Pix recebido de Maria Exemplo                             + R$ 200,00
+03/09/2026 18:40       Pagamento de boleto - Internet Fibra                       - R$ 99,90
+05/09/2026 09:00       Rendimento da conta                                        + R$ 1,25
+06/09/2026 12:30       Compra no cartão de débito - Restaurante Sabor              - R$ 45,00
+
+Saldo em 30/09/2026                                                                 R$ 1.056,35

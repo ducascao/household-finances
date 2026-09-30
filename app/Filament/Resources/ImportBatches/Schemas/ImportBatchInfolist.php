@@ -23,7 +23,8 @@ class ImportBatchInfolist
                     ->columnSpanFull()
                     ->schema([
                         TextEntry::make('account.name')->label('Conta'),
-                        TextEntry::make('file_name')->label('Arquivo'),
+                        TextEntry::make('file_name')->label('Arquivo')
+                            ->helperText(fn (ImportBatch $record): ?string => $record->reader !== null ? 'PDF lido como: '.$record->reader : null),
                         TextEntry::make('status')->label('Situação')->badge()
                             ->formatStateUsing(fn (ImportBatch $record): string => $record->status->label()),
                         TextEntry::make('new')->label(ImportLineStatus::New->label().'s')

@@ -15,6 +15,7 @@ use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
@@ -33,7 +34,7 @@ class ImportActions
             ->label('Importar extrato')
             ->icon(Heroicon::OutlinedArrowUpTray)
             ->modalHeading('Importar extrato')
-            ->modalDescription('OFX (recomendado quando o banco oferece) ou CSV. Nada entra nos lançamentos antes da revisão.')
+            ->modalDescription('OFX (recomendado quando o banco oferece), CSV ou PDF do extrato/fatura. Nada entra nos lançamentos antes da revisão.')
             ->schema([
                 Select::make('account_id')
                     ->label('Conta ou cartão')
@@ -45,17 +46,28 @@ class ImportActions
                     ->directory('imports')
                     ->visibility('private')
                     ->storeFileNamesIn('file_name')
-                    ->rules(['extensions:ofx,csv,txt'])
-                    ->maxSize(5120)
+                    ->rules(['extensions:ofx,csv,txt,pdf'])
+                    ->maxSize(10240)
                     ->required(),
+                TextInput::make('password')
+                    ->label('Senha do PDF')
+                    ->password()
+                    ->revealable()
+                    ->autocomplete('off')
+                    ->helperText('Só para PDF protegido (muitos bancos usam o CPF). Usada para ler o arquivo e descartada.'),
             ])
             ->action(function (array $data, Action $action): void {
                 $path = (string) $data['file'];
                 $name = (string) ($data['file_name'] ?? basename($path));
-                $format = str_ends_with(strtolower($name), '.ofx') ? ImportFormat::Ofx : ImportFormat::Csv;
+                $format = match (strtolower(pathinfo($name, PATHINFO_EXTENSION))) {
+                    'ofx' => ImportFormat::Ofx,
+                    'pdf' => ImportFormat::Pdf,
+                    default => ImportFormat::Csv,
+                };
+                $password = filled($data['password'] ?? null) ? (string) $data['password'] : null;
 
                 try {
-                    $batch = app(ImportStatement::class)->execute(self::user(), (int) $data['account_id'], (string) Storage::disk(self::DISK)->get($path), $name, $format);
+                    $batch = app(ImportStatement::class)->execute(self::user(), (int) $data['account_id'], (string) Storage::disk(self::DISK)->get($path), $name, $format, $password);
                 } catch (ValidationException $e) {
                     Notification::make()->danger()->title('Não foi possível importar')->body($e->getMessage())->persistent()->send();
                     $action->halt();

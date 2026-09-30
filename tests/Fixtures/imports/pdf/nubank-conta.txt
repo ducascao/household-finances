@@ -1,0 +1,27 @@
+Eduardo Exemplo                                                  01 DE SETEMBRO DE 2026 a 30 DE SETEMBRO DE 2026
+CPF •••.123.456-••        Agência 0001        Conta 9999999-9
+
+VALORES EM R$
+
+Saldo inicial                                                                           2.500,00
+Rendimento líquido                                                                       +3,21
+Total de entradas                                                                   +5.350,00
+Total de saídas                                                                     -1.482,40
+Saldo final do período                                                                6.370,81
+
+Movimentações
+
+02 SET 2026       Total de entradas                                                 + 5.000,00
+                  Transferência recebida pelo Pix EMPRESA FICTICIA LTDA -
+                  12.345.678/0001-90                                                  5.000,00
+                  Total de saídas                                                    - 132,40
+                  Compra no débito PADARIA PAO QUENTE                                    32,40
+                  Transferência enviada pelo Pix JOAO DA SILVA - •••.123.456-••        100,00
+05 SET 2026       Total de saídas                                                  - 1.350,00
+                  Pagamento de fatura                                                 1.350,00
+                  Saldo do dia                                                        6.017,60
+20 SET 2026       Total de entradas                                                   + 350,00
+                  Transferência recebida pelo Pix MARIA EXEMPLO                         350,00
+
+Tem alguma dúvida? Mande uma mensagem para nosso time de atendimento pelo app.
+Nu Pagamentos S.A. - Instituição de Pagamento                                     1 de 1

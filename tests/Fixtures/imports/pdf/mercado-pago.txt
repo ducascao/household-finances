@@ -1,0 +1,10 @@
+mercado pago
+EXTRATO DE CONTA
+Eduardo Exemplo                CPF: ***.123.456-**                    Período: 01-09-2026 a 30-09-2026
+Saldo inicial: R$ 800,00         Entradas: R$ 1.500,00         Saídas: R$ -420,50         Saldo final: R$ 1.879,50
+
+DETALHE DOS MOVIMENTOS
+Data           Descrição                                    ID da operação          Valor             Saldo
+01-09-2026     Transferência Pix recebida Maria Exemplo     81234567890             R$ 1.500,00       R$ 2.300,00
+03-09-2026     Pagamento Conta de água                      81234567891             R$ -120,50        R$ 2.179,50
+10-09-2026     Transferência Pix enviada Joao da Silva      81234567892             R$ -300,00        R$ 1.879,50

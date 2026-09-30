@@ -1,0 +1,20 @@
+Olá, Eduardo. Esta é a sua fatura de outubro, no valor de R$ 1.411,15                    FATURA 10 OUT 2026
+                                                                              EMISSÃO E ENVIO 03 OUT 2026
+Data do vencimento: 10 OUT 2026                 Período vigente: 03 SET a 03 OUT
+
+RESUMO DA FATURA ATUAL
+Fatura anterior                                                                             R$ 1.200,00
+Pagamento recebido                                                                         −R$ 1.200,00
+Total de compras de todos os cartões                                                        R$ 1.446,15
+Outros créditos                                                                               −R$ 35,00
+Total a pagar                                                                               R$ 1.411,15
+
+TRANSAÇÕES DE 03 SET A 03 OUT                                                              Valor em R$
+03 SET          •••• 1234 Supermercado Bom Preço                                                 245,30
+07 SET          •••• 1234 Uber* Trip                                                              23,90
+15 SET                    Loja Fictícia - Parcela 2/5                                              99,90
+20 SET                    Pagamento em 20 SET                                                  −1.200,00
+28 SET          •••• 1234 Estorno Loja X                                                          −35,00
+02 OUT          •••• 1234 Posto Combustível                                                     1.077,05
+
+Nu Pagamentos S.A. - Instituição de Pagamento. CNPJ 18.236.120/0001-58                            1 de 2
