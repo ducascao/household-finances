@@ -326,15 +326,21 @@ Notas da entrega:
 **Valor:** incluir ativos em dólar na carteira.
 
 Escopo
-- [ ] Ativos e operações em moeda estrangeira (valor original + moeda)
-- [ ] `exchange_rates` diárias (PTAX do Banco Central) via contrato `ExchangeRateProvider`
-- [ ] Cotação de ativos do exterior via `QuoteProvider` (fornecedor a definir)
-- [ ] Posição em moeda original e em BRL; variação cambial separada da variação do ativo
+- [x] Ativos e operações em moeda estrangeira (valor original + moeda)
+- [x] `exchange_rates` diárias (PTAX do Banco Central) via contrato `ExchangeRateProvider`
+- [x] Cotação de ativos do exterior via `QuoteProvider` (fornecedor a definir)
+- [x] Posição em moeda original e em BRL; variação cambial separada da variação do ativo
 
 Critérios de aceite
-- [ ] Conversão usa o câmbio da data (ou o último anterior disponível) (teste)
+- [x] Conversão usa o câmbio da data (ou o último anterior disponível) (teste)
 
 Notas da entrega:
+- **Câmbio:** tabela `exchange_rates` (moeda, data, reais por unidade), sem `household_id` (dado público, como o CDI). Contrato `App\Contracts\ExchangeRateProvider` + `BcbPtaxProvider` (API Olinda, **PTAX de venda do boletim de fechamento**). `Domain/Currency/ExchangeRates::rateAt()` usa a taxa da data ou **a última anterior disponível**; BRL = 1; sem taxa, `MissingExchangeRate`. Job em dias úteis às 13:30 (últimos 10 dias das moedas usadas nas contas) e comando `app:fetch-exchange-rates --from= --currency=`.
+- **Fornecedor de cotações do exterior definido: Finnhub** (`FINNHUB_TOKEN`, plano gratuito, 60/min) via `App\Contracts\ForeignQuoteProvider`. O `PriceBook` roteia pela moeda da conta: BRL → brapi, demais → Finnhub; falha de um não afeta o outro. Tipo novo **REIT**. A moeda do ativo é a da conta da corretora (ex.: corretora em USD).
+- **Posição em reais:** `ForeignCostCalculator` converte cada operação pelo câmbio da data (câmbio médio de compra); a venda baixa o custo em reais na proporção da quantidade (o resgate, na do valor). Valor em reais = valor na moeda × câmbio atual. **Variação do ativo** = (valor − custo, na moeda) × câmbio atual; **variação cambial** = custo na moeda × (câmbio atual − câmbio médio); as duas somam o resultado em reais (conferido à mão no teste).
+- **Carteira e Rentabilidade em reais:** os totais e a distribuição passam a incluir o exterior (sem câmbio, o ativo fica de fora e aparece o aviso). A tabela mostra os valores em reais com o valor na moeda original embaixo e a variação cambial; a tela do ativo ganhou a seção "Em reais". Rentabilidade (Dietz) em reais: valores inicial e final pelo câmbio de cada data, fluxos e proventos pelo câmbio do dia.
+- **Mantido:** Resumo do mês e orçamento continuam só em BRL (lançamentos em contas de outra moeda ficam de fora, com aviso). Converter essas despesas pelo câmbio da data do lançamento fica como possível melhoria.
+- `DemoSeeder`: corretora "Avenue (USD)" com AAPL, VOO e o REIT O (com dividendo e IR retido), câmbio e cotações fictícios.
 
 ---
 
@@ -389,7 +395,7 @@ Notas da entrega:
 
 - [ ] **Reativar o 2FA na entrega final:** em desenvolvimento está desligado (`AUTH_MFA_ENABLED=false` no `.env`), a pedido, para facilitar os testes. Na entrega final, voltar para `true` (padrão do `.env.example` e dos testes).
 
-- [ ] Fornecedor de cotações do exterior (decidir na E12)
+- [x] Fornecedor de cotações do exterior: Finnhub (E12)
 - [x] Bancos e cartões usados e formato de exportação (antes da E5): Bradesco, PicPay, Nubank e Mercado Pago — ver notas da E5; falta validar os perfis "a conferir" com arquivos reais
 - [x] Destino do backup além da pasta local: Google Drive, pasta Backups, 30 dias (E8)
 - [ ] Modelo de progresso das metas (antes da E15)

@@ -30,6 +30,7 @@ use App\Models\Asset;
 use App\Models\AssetPrice;
 use App\Models\Category;
 use App\Models\CreditCard;
+use App\Models\ExchangeRate;
 use App\Models\Household;
 use App\Models\InterestRate;
 use App\Models\Invoice;
@@ -43,7 +44,7 @@ use Illuminate\Support\Carbon;
  * contas previstas (atrasadas e a vencer), transferências, contas fixas, cartões de crédito com faturas
  * importação (regras, perfil de CSV e um lote em revisão), orçamentos dos últimos meses e comprovantes
  * (no disco local, já que os dados de exemplo não têm Google Drive conectado), uma carteira B3,
- * renda fixa e previdência.
+ * renda fixa, previdência e ativos no exterior.
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -111,6 +112,7 @@ class DemoSeeder extends Seeder
         $this->attachments($eduardo);
         $this->portfolio($eduardo, $joint);
         $this->fixedIncome($eduardo);
+        $this->foreign($eduardo);
 
         app(CreateTransfer::class)->execute($eduardo, [
             'from_account_id' => $joint->id,
@@ -404,6 +406,57 @@ class DemoSeeder extends Seeder
         // Saldo = aportes feitos até a data + um pouco de rendimento.
         $invested = 50000 * $vgbl->operations()->whereDate('date', '<=', today()->subDays(40))->count();
         $valuations->save($eduardo, $vgbl, today()->subDays(40), (int) round($invested * 1.024));
+    }
+
+    /**
+     * Corretora em dólar (Avenue) com AAPL, VOO e um REIT; câmbio e cotações fictícios
+     * (em produção vêm da PTAX/Banco Central e da Finnhub).
+     */
+    private function foreign(User $eduardo): void
+    {
+        // Câmbio diário fictício dos últimos 7 meses, de R$ 5,05 a R$ 5,45.
+        $start = today()->subMonthsNoOverflow(7);
+        $days = (int) $start->diffInDays(today());
+
+        for ($date = $start->copy(), $i = 0; $date->lte(today()); $date->addDay(), $i++) {
+            if (! $date->isWeekend()) {
+                ExchangeRate::updateOrCreate(
+                    ['currency' => 'USD', 'date' => $date->toDateString()],
+                    ['rate' => number_format(5.05 + 0.40 * $i / max(1, $days) + 0.03 * sin($i / 6), 4, '.', '')],
+                );
+            }
+        }
+
+        $avenue = app(CreateAccount::class)->execute($eduardo, [
+            'name' => 'Avenue (USD)', 'type' => AccountType::Brokerage, 'visibility' => AccountVisibility::Shared,
+            'currency' => 'USD', 'initial_balance' => 600000,
+        ]);
+
+        $operations = app(ManageOperations::class);
+        $day = fn (int $daysAgo): string => today()->subDays($daysAgo)->toDateString();
+        $asset = fn (string $ticker, string $name, string $type) => app(SaveAsset::class)->execute($eduardo, [
+            'account_id' => $avenue->id, 'type' => $type, 'ticker' => $ticker, 'name' => $name,
+        ]);
+
+        $aapl = $asset('AAPL', 'Apple Inc.', 'stock');
+        $operations->register($eduardo, $aapl, ['type' => 'buy', 'date' => $day(190), 'quantity' => '8', 'unit_price' => '195.40', 'fees' => 0]);
+        $operations->register($eduardo, $aapl, ['type' => 'buy', 'date' => $day(70), 'quantity' => '4', 'unit_price' => '214.10', 'fees' => 0]);
+
+        $voo = $asset('VOO', 'Vanguard S&P 500 ETF', 'etf');
+        $operations->register($eduardo, $voo, ['type' => 'buy', 'date' => $day(160), 'quantity' => '3', 'unit_price' => '498.30', 'fees' => 0]);
+
+        $realty = $asset('O', 'Realty Income', 'reit');
+        $operations->register($eduardo, $realty, ['type' => 'buy', 'date' => $day(120), 'quantity' => '15', 'unit_price' => '56.20', 'fees' => 0]);
+        app(ManageIncomes::class)->register($eduardo, $realty, ['type' => 'dividend', 'date' => $day(20), 'gross_amount' => 399, 'withheld_tax' => 120]);
+
+        foreach (['AAPL' => [$aapl, 228.35], 'VOO' => [$voo, 541.20], 'O' => [$realty, 58.90]] as [$model, $price]) {
+            foreach ([1, 2, 3] as $daysAgo) {
+                $record = new AssetPrice(['asset_id' => $model->id, 'date' => today()->subDays($daysAgo), 'source' => PriceSource::Api]);
+                $record->household_id = $model->household_id;
+                $record->price = number_format($price * (1 - $daysAgo * 0.003), 2, '.', '');
+                $record->save();
+            }
+        }
     }
 
     private function recurrence(Household $household, User $payer, Account $account, string $category, int $amount, string $frequency, ?int $day, Carbon $start, bool $estimate = false, ?string $description = null): void

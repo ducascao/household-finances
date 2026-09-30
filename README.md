@@ -82,6 +82,15 @@ Para desenvolver sem conta Google, use `ATTACHMENTS_DISK=local` no `.env`.
 - **Cotações da B3:** crie um token gratuito em [brapi.dev](https://brapi.dev) e coloque em `BRAPI_TOKEN` no `.env`.
   As cotações são buscadas nos dias úteis às 19:00 (ou pelo botão "Atualizar cotações" na Carteira, ou
   `docker compose exec app php artisan app:fetch-quotes`). Sem cotação, o app usa a última disponível e avisa.
+- **Ativos do exterior:** crie uma chave gratuita em [finnhub.io](https://finnhub.io) e coloque em
+  `FINNHUB_TOKEN` no `.env` (ações e ETFs dos EUA). A conta da corretora precisa estar na moeda do ativo (ex.: USD).
+- **Câmbio (PTAX do Banco Central, sem token):** atualizado nos dias úteis às 13:30 para as moedas usadas nas
+  contas. Na primeira vez, carregue o histórico desde a primeira compra no exterior:
+
+  ```bash
+  docker compose exec app php artisan app:fetch-exchange-rates --from=2020-01-01
+  ```
+
 - **CDI (Banco Central, sem token):** atualizado todo dia às 09:00 com os últimos 30 dias. Na primeira vez,
   carregue o histórico desde o início dos seus investimentos:
 
