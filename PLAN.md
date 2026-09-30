@@ -398,24 +398,30 @@ Notas da entrega:
 **Valor:** acompanhar objetivos como reserva de emergência e viagem.
 
 Escopo
-- [ ] `goals`: nome, valor-alvo, prazo, contas vinculadas
-- [ ] Progresso = saldo das contas vinculadas (a confirmar: ou aportes registrados)
-- [ ] Ritmo mensal necessário para bater o prazo
-- [ ] Widget de metas no painel
+- [x] `goals`: nome, valor-alvo, prazo, contas vinculadas
+- [x] Progresso = saldo das contas vinculadas (a confirmar: ou aportes registrados)
+- [x] Ritmo mensal necessário para bater o prazo
+- [x] Widget de metas no painel
 
 Critérios de aceite
-- [ ] Progresso e ritmo mensal corretos em cenário de teste
+- [x] Progresso e ritmo mensal corretos em cenário de teste
 
 Notas da entrega:
+- **Modelo de progresso decidido: opção A** — saldo atual das **contas e investimentos vinculados** (`goal_accounts`, `goal_assets`), em reais (moeda estrangeira pelo câmbio de hoje). Sem lançamentos extras; funciona melhor com o dinheiro da meta separado (a mesma conta em duas metas conta nas duas).
+- **`goals`:** nome, alvo, início, prazo, dono, visibilidade (pessoal/compartilhada, com o mesmo escopo global das contas), arquivada, observações. Meta compartilhada só vincula contas compartilhadas e investimentos delas; meta pessoal vincula as contas do dono e as compartilhadas.
+- **`Domain/Goals/GoalProgress`:** falta = alvo − progresso; meses restantes = do mês atual ao mês do prazo (mínimo 1); **ritmo mensal = falta ÷ meses, arredondado para cima ao centavo**; situação: atingida, prazo vencido, "no ritmo" (progresso ≥ linha reta do início ao prazo) ou atrasada. Conferido à mão no teste (R$ 15.500 de R$ 30.000, 6 meses → R$ 2.416,67/mês).
+- **Telas:** "Patrimônio → Metas" (lista com barra de progresso e situação escrita, já tem/alvo, prazo e quanto guardar por mês; cadastro escolhendo contas e investimentos; tela com o detalhe de onde vem o progresso; arquivar) e widget "Metas" no Painel de Controle.
+- `DemoSeeder`: reserva de emergência (poupança + CDB, no ritmo), viagem de fim de ano (carteira, atrasada) e troca do celular da Maria (pessoal, atingida).
+- **Entrega final:** 2FA reativado (`AUTH_MFA_ENABLED=true`).
 
 ---
 
 ## Pontos em aberto
 
-- [ ] **Reativar o 2FA na entrega final:** em desenvolvimento está desligado (`AUTH_MFA_ENABLED=false` no `.env`), a pedido, para facilitar os testes. Na entrega final, voltar para `true` (padrão do `.env.example` e dos testes).
+- [x] **Reativar o 2FA na entrega final** (feito ao fechar a E15): em desenvolvimento está desligado (`AUTH_MFA_ENABLED=false` no `.env`), a pedido, para facilitar os testes. Na entrega final, voltar para `true` (padrão do `.env.example` e dos testes).
 
 - [x] Fornecedor de cotações do exterior: Finnhub (E12)
 - [x] Bancos e cartões usados e formato de exportação (antes da E5): Bradesco, PicPay, Nubank e Mercado Pago — ver notas da E5; falta validar os perfis "a conferir" com arquivos reais
 - [x] Destino do backup além da pasta local: Google Drive, pasta Backups, 30 dias (E8)
-- [ ] Modelo de progresso das metas (antes da E15)
+- [x] Modelo de progresso das metas: saldo das contas e investimentos vinculados (opção A, E15)
 - [x] Layout: conteúdo usa largura máxima fixa e centralizada, deixando muito espaço entre o menu e a tabela e à direita. Proposta: `->maxContentWidth(Width::Full)` no `AppPanelProvider` (ou `ScreenTwoExtraLarge`). Aproveitar para revisar a lista de lançamentos, que hoje precisa de rolagem horizontal (ações da linha cortadas): agrupar ações em menu e ocultar colunas secundárias por padrão. **Feito após a E3:** `Width::Full`; na lista de lançamentos, só "Pagar" fica visível e o resto vai para o menu ⋯; "Pago por" e "Vencimento" ficam ocultas por padrão (dá para exibir pelo seletor de colunas).

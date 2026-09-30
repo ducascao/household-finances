@@ -10,6 +10,7 @@ use App\Domain\CreditCard\CreateInstallmentPurchase;
 use App\Domain\CreditCard\PayInvoice;
 use App\Domain\Debts\GenerateDebtInstallments;
 use App\Domain\Debts\ManageDebts;
+use App\Domain\Goals\SaveGoal;
 use App\Domain\Household\AddMember;
 use App\Domain\Household\CreateHousehold;
 use App\Domain\Import\BankPresets;
@@ -52,7 +53,7 @@ use Illuminate\Support\Carbon;
  * contas previstas (atrasadas e a vencer), transferências, contas fixas, cartões de crédito com faturas
  * importação (regras, perfil de CSV e um lote em revisão), orçamentos dos últimos meses e comprovantes
  * (no disco local, já que os dados de exemplo não têm Google Drive conectado), uma carteira B3,
- * renda fixa, previdência, ativos no exterior, dívidas e o histórico do patrimônio.
+ * renda fixa, previdência, ativos no exterior, dívidas, metas e o histórico do patrimônio.
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -76,7 +77,7 @@ class DemoSeeder extends Seeder
         $nubank = $account($eduardo, 'Nubank Eduardo', AccountType::Checking, AccountVisibility::Private, 250000);
         $itau = $account($maria, 'Itaú Maria', AccountType::Checking, AccountVisibility::Private, 300000);
         $joint = $account($eduardo, 'Conta conjunta', AccountType::Checking, AccountVisibility::Shared, 5000000);
-        $wallet = $account($maria, 'Carteira', AccountType::Cash, AccountVisibility::Shared, 20000);
+        $wallet = $account($maria, 'Carteira', AccountType::Cash, AccountVisibility::Shared, 350000);
         $savings = $account($eduardo, 'Poupança', AccountType::Savings, AccountVisibility::Shared, 1500000);
 
         for ($monthsAgo = 5; $monthsAgo >= 0; $monthsAgo--) {
@@ -122,6 +123,8 @@ class DemoSeeder extends Seeder
         $this->fixedIncome($eduardo);
         $this->foreign($eduardo);
         $this->debts($household, $eduardo);
+
+        $this->goals($eduardo, $maria);
 
         // Histórico do patrimônio: fotografias dos últimos 6 meses (mesmo cálculo do comando app:net-worth).
         for ($month = today()->startOfMonth()->subMonthsNoOverflow(6); $month->lte(today()); $month->addMonthNoOverflow()) {
@@ -514,6 +517,34 @@ class DemoSeeder extends Seeder
             'payment_account_id' => $personal->id, 'category_id' => $category('Outras despesas'),
         ]);
         $payUntil($loan, today());
+    }
+
+    /**
+     * Reserva de emergência (poupança + CDB, no ritmo), viagem (dinheiro da carteira, atrasada)
+     * e troca do celular da Maria (pessoal, já atingida).
+     */
+    private function goals(User $eduardo, User $maria): void
+    {
+        $goals = app(SaveGoal::class);
+        $account = fn (string $name): int => Account::where('name', $name)->valueOrFail('id');
+
+        $goals->execute($eduardo, [
+            'name' => 'Reserva de emergência', 'target' => 6000000, 'visibility' => AccountVisibility::Shared,
+            'start_date' => today()->subMonthsNoOverflow(6)->toDateString(), 'deadline' => today()->addMonthsNoOverflow(12)->endOfMonth()->toDateString(),
+            'account_ids' => [$account('Poupança')], 'asset_ids' => [Asset::where('name', 'CDB Banco Inter 2028')->valueOrFail('id')],
+        ]);
+
+        $goals->execute($eduardo, [
+            'name' => 'Viagem de fim de ano', 'target' => 800000, 'visibility' => AccountVisibility::Shared,
+            'start_date' => today()->subMonthsNoOverflow(3)->toDateString(), 'deadline' => today()->addMonthsNoOverflow(2)->endOfMonth()->toDateString(),
+            'account_ids' => [$account('Carteira')],
+        ]);
+
+        $goals->execute($maria, [
+            'name' => 'Troca do celular', 'target' => 300000, 'visibility' => AccountVisibility::Private,
+            'start_date' => today()->subMonthsNoOverflow(4)->toDateString(), 'deadline' => today()->addMonthNoOverflow()->endOfMonth()->toDateString(),
+            'account_ids' => [$account('Itaú Maria')],
+        ]);
     }
 
     private function recurrence(Household $household, User $payer, Account $account, string $category, int $amount, string $frequency, ?int $day, Carbon $start, bool $estimate = false, ?string $description = null): void
