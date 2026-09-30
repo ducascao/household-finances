@@ -20,6 +20,7 @@ use App\Domain\Investments\ManageIncomes;
 use App\Domain\Investments\ManageOperations;
 use App\Domain\Investments\ManageValuations;
 use App\Domain\Investments\SaveAsset;
+use App\Domain\NetWorth\TakeSnapshots;
 use App\Domain\Recurrences\CreateRecurrence;
 use App\Domain\Transactions\CreateTransaction;
 use App\Domain\Transactions\MarkAsPaid;
@@ -51,7 +52,7 @@ use Illuminate\Support\Carbon;
  * contas previstas (atrasadas e a vencer), transferências, contas fixas, cartões de crédito com faturas
  * importação (regras, perfil de CSV e um lote em revisão), orçamentos dos últimos meses e comprovantes
  * (no disco local, já que os dados de exemplo não têm Google Drive conectado), uma carteira B3,
- * renda fixa, previdência, ativos no exterior e dívidas.
+ * renda fixa, previdência, ativos no exterior, dívidas e o histórico do patrimônio.
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -74,7 +75,7 @@ class DemoSeeder extends Seeder
 
         $nubank = $account($eduardo, 'Nubank Eduardo', AccountType::Checking, AccountVisibility::Private, 250000);
         $itau = $account($maria, 'Itaú Maria', AccountType::Checking, AccountVisibility::Private, 300000);
-        $joint = $account($eduardo, 'Conta conjunta', AccountType::Checking, AccountVisibility::Shared, 500000);
+        $joint = $account($eduardo, 'Conta conjunta', AccountType::Checking, AccountVisibility::Shared, 5000000);
         $wallet = $account($maria, 'Carteira', AccountType::Cash, AccountVisibility::Shared, 20000);
         $savings = $account($eduardo, 'Poupança', AccountType::Savings, AccountVisibility::Shared, 1500000);
 
@@ -94,8 +95,8 @@ class DemoSeeder extends Seeder
             $this->add($household, $eduardo, $nubank, 'Assinaturas', 3, 5590, 'Streaming', $month);
             $this->add($household, $maria, $wallet, 'Restaurante', 20, random_int(8000, 20000), 'Almoço de domingo', $month, ['lazer']);
             $this->add($household, $eduardo, $joint, 'Rendimentos', 28, random_int(4000, 9000), 'Rendimento poupança', $month);
-            $this->transfer($eduardo, $nubank, $joint, 6, 200000, 'Aporte na conjunta', $month);
-            $this->transfer($maria, $itau, $joint, 6, 200000, 'Aporte na conjunta', $month);
+            $this->transfer($eduardo, $nubank, $joint, 6, 520000, 'Aporte na conjunta', $month);
+            $this->transfer($maria, $itau, $joint, 6, 430000, 'Aporte na conjunta', $month);
         }
 
         // Contas previstas: uma atrasada, algumas vencendo nos próximos dias e o mês seguinte.
@@ -121,6 +122,11 @@ class DemoSeeder extends Seeder
         $this->fixedIncome($eduardo);
         $this->foreign($eduardo);
         $this->debts($household, $eduardo);
+
+        // Histórico do patrimônio: fotografias dos últimos 6 meses (mesmo cálculo do comando app:net-worth).
+        for ($month = today()->startOfMonth()->subMonthsNoOverflow(6); $month->lte(today()); $month->addMonthNoOverflow()) {
+            app(TakeSnapshots::class)->forMonth($month, $household);
+        }
 
         app(CreateTransfer::class)->execute($eduardo, [
             'from_account_id' => $joint->id,
