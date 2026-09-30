@@ -1,0 +1,9 @@
+Olá, Eduardo. Esta é a sua fatura de janeiro                                               FATURA 10 JAN 2027
+Data do vencimento: 10 JAN 2027                 Período vigente: 03 DEZ a 03 JAN
+
+TRANSAÇÕES DE 03 DEZ A 03 JAN                                                              Valor em R$
+20 DEZ          •••• 1234 Presentes de Natal                                                     310,00
+28 DEZ          •••• 1234 Restaurante Réveillon                                                  180,00
+02 JAN          •••• 1234 Farmácia                                                                42,50
+
+Nu Pagamentos S.A. - Instituição de Pagamento

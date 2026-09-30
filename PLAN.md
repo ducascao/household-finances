@@ -444,16 +444,24 @@ Notas da entrega:
 **Valor:** importar extrato e fatura quando o banco só oferece PDF.
 
 Escopo
-- [ ] Upload de PDF na importação, com senha opcional (não guardada); texto extraído com `pdftotext` (poppler) atrás de um contrato
-- [ ] Leitores por banco: Nubank (conta e fatura), Bradesco, PicPay, Mercado Pago e um genérico; detecção do banco pelo texto
-- [ ] Linhas do PDF entram na mesma revisão da E5 (duplicadas, previstos, regras, confirmação)
+- [x] Upload de PDF na importação, com senha opcional (não guardada); texto extraído com `pdftotext` (poppler) atrás de um contrato
+- [x] Leitores por banco: Nubank (conta e fatura), Bradesco, PicPay, Mercado Pago e um genérico; detecção do banco pelo texto
+- [x] Linhas do PDF entram na mesma revisão da E5 (duplicadas, previstos, regras, confirmação)
 
 Critérios de aceite
-- [ ] Um teste por leitor com fixtures em `tests/Fixtures/imports/pdf` (dados fictícios)
-- [ ] Data sem ano deduzida pelo período do documento, inclusive na virada do ano (teste)
-- [ ] Mesmo PDF importado duas vezes não duplica (teste)
+- [x] Um teste por leitor com fixtures em `tests/Fixtures/imports/pdf` (dados fictícios)
+- [x] Data sem ano deduzida pelo período do documento, inclusive na virada do ano (teste)
+- [x] Mesmo PDF importado duas vezes não duplica (teste)
 
 Notas da entrega:
+- Contrato `App\Contracts\PdfTextExtractor`; implementação `PopplerPdfTextExtractor` (`pdftotext -layout`, poppler-utils 25.03 na imagem). PDF vai para um temporário apagado logo após a leitura; a senha só vai para o comando e não é guardada. Fake nos testes: `Tests\Fakes\FakePdfTextExtractor` (o "PDF" é o texto da fixture); um teste usa o pdftotext de verdade com um PDF mínimo gerado no próprio teste.
+- Leitores em `app/Domain/Import/Pdf`: `NubankAccountLayout`, `NubankCardLayout`, `BradescoLayout`, `PicPayLayout`, `MercadoPagoLayout` e `GenericLayout`. **Todos "a conferir"**: escritos a partir do formato conhecido, com fixtures fictícias em `tests/Fixtures/imports/pdf` (texto como sai do `pdftotext -layout`). Ajustar quando chegarem PDFs reais (os originais não vão para o git; viram fixtures com dados trocados).
+- Detecção pelo texto (marca do banco + marcas da estrutura). Se o leitor do banco não achar nada, tenta o genérico. Fatura em conta que não é cartão (e extrato de conta em cartão) é recusada com mensagem.
+- Sinais: extrato de conta como impresso (Nubank pelo bloco entradas/saídas; Bradesco pelo "-" ou pela coluna Crédito/Débito); fatura: compra negativa, pagamento/estorno positivo. Genérico em conta de cartão inverte o sinal.
+- Data sem ano (fatura Nubank, genérico com dd/mm): ano do vencimento/fim do período, ou o anterior se a data cairia depois dele.
+- O pagamento da fatura aparece na fatura do cartão como crédito: use a regra "ignorar" (como no CSV da E5) para não duplicar o pagamento feito pela conta.
+- Lote guarda o leitor usado (`import_batches.reader`), mostrado na revisão ("PDF lido como: …").
+- DemoSeeder sem lote de PDF (não há PDF real de exemplo); os lotes de demonstração continuam OFX/CSV.
 
 ## Pontos em aberto
 

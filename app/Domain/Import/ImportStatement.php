@@ -2,10 +2,13 @@
 
 namespace App\Domain\Import;
 
+use App\Contracts\PdfTextExtractor;
 use App\Domain\Import\Parsers\CsvParser;
 use App\Domain\Import\Parsers\OfxParser;
 use App\Domain\Import\Parsers\ParsedLine;
 use App\Domain\Import\Parsers\StatementParseException;
+use App\Domain\Import\Pdf\PdfParser;
+use App\Enums\AccountType;
 use App\Enums\ImportBatchStatus;
 use App\Enums\ImportFormat;
 use App\Enums\ImportLineAction;
@@ -21,7 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Lê o extrato e cria um lote em revisão. Nada entra nos lançamentos até a confirmação.
+ * Lê o extrato (OFX, CSV ou PDF) e cria um lote em revisão. Nada entra nos lançamentos até a confirmação.
  *
  * Cada linha vira: duplicada (hash já importado na conta), correspondente a um previsto
  * (mesmo valor, vencimento a ±3 dias) ou nova (categorizada pelas regras).
@@ -30,7 +33,14 @@ class ImportStatement
 {
     public const MATCH_DAYS = 3;
 
-    public function execute(User $actor, int $accountId, string $content, string $fileName, ImportFormat $format): ImportBatch
+    public function __construct(
+        private readonly PdfTextExtractor $pdf,
+    ) {}
+
+    /**
+     * @param  string|null  $password  senha do PDF protegido: usada só para ler o arquivo, nunca guardada
+     */
+    public function execute(User $actor, int $accountId, string $content, string $fileName, ImportFormat $format, ?string $password = null): ImportBatch
     {
         $account = Account::withoutGlobalScopes()->find($accountId);
 
@@ -42,25 +52,34 @@ class ImportStatement
             throw ValidationException::withMessages(['account_id' => 'A conta está arquivada.']);
         }
 
+        $reader = null;
+
         try {
-            $parsed = $this->parser($account, $format)->parse($content);
+            if ($format === ImportFormat::Pdf) {
+                $parser = new PdfParser($account->type === AccountType::CreditCard);
+                $parsed = $parser->parse($this->pdfText($content, $password));
+                $reader = $parser->layout?->name();
+            } else {
+                $parsed = $this->parser($account, $format)->parse($content);
+            }
         } catch (StatementParseException $e) {
             throw ValidationException::withMessages(['file' => $e->getMessage()]);
         }
 
-        return DB::transaction(fn (): ImportBatch => $this->createBatch($actor, $account, $parsed, $fileName, $format));
+        return DB::transaction(fn (): ImportBatch => $this->createBatch($actor, $account, $parsed, $fileName, $format, $reader));
     }
 
     /**
      * @param  list<ParsedLine>  $parsed
      */
-    private function createBatch(User $actor, Account $account, array $parsed, string $fileName, ImportFormat $format): ImportBatch
+    private function createBatch(User $actor, Account $account, array $parsed, string $fileName, ImportFormat $format, ?string $reader): ImportBatch
     {
         $batch = new ImportBatch([
             'account_id' => $account->id,
             'user_id' => $actor->id,
             'file_name' => $fileName,
             'format' => $format,
+            'reader' => $reader,
             'status' => ImportBatchStatus::Reviewing,
         ]);
         $batch->household_id = $account->household_id;
@@ -128,6 +147,15 @@ class ImportStatement
             ->orderByRaw('abs(due_date - ?::date)', [$row->date->toDateString()])
             ->orderBy('id')
             ->first();
+    }
+
+    private function pdfText(string $content, ?string $password): string
+    {
+        try {
+            return $this->pdf->extract($content, $password);
+        } catch (\RuntimeException $e) {
+            throw ValidationException::withMessages(['file' => $e->getMessage()]);
+        }
     }
 
     private function parser(Account $account, ImportFormat $format): OfxParser|CsvParser

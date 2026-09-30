@@ -22,10 +22,11 @@ use Illuminate\Support\Facades\Auth;
  * @property int $user_id
  * @property string $file_name
  * @property ImportFormat $format
+ * @property string|null $reader
  * @property ImportBatchStatus $status
  * @property Carbon|null $confirmed_at
  */
-#[Fillable(['account_id', 'user_id', 'file_name', 'format', 'status', 'confirmed_at'])]
+#[Fillable(['account_id', 'user_id', 'file_name', 'format', 'reader', 'status', 'confirmed_at'])]
 class ImportBatch extends Model
 {
     use BelongsToHousehold;

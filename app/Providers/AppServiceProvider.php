@@ -7,9 +7,11 @@ use App\Contracts\ExchangeRateProvider;
 use App\Contracts\ForeignQuoteProvider;
 use App\Contracts\GoogleOAuth;
 use App\Contracts\InterestRateProvider;
+use App\Contracts\PdfTextExtractor;
 use App\Contracts\QuoteProvider;
 use App\Services\Google\FilesystemAttachmentStorage;
 use App\Services\Google\GoogleClientOAuth;
+use App\Services\Pdf\PopplerPdfTextExtractor;
 use App\Services\Quotes\BrapiQuoteProvider;
 use App\Services\Quotes\FinnhubQuoteProvider;
 use App\Services\Rates\BcbPtaxProvider;
@@ -35,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ForeignQuoteProvider::class, FinnhubQuoteProvider::class);
         $this->app->bind(InterestRateProvider::class, BcbSgsProvider::class);
         $this->app->bind(ExchangeRateProvider::class, BcbPtaxProvider::class);
+        $this->app->bind(PdfTextExtractor::class, PopplerPdfTextExtractor::class);
     }
 
     /**

@@ -1,0 +1,8 @@
+Banco Exemplo S.A.
+Extrato de conta corrente - período de 01/12/2026 a 05/01/2027
+
+Data      Histórico                                      Valor         Saldo
+28/12     Compra cartão débito Mercado Central          -150,00      850,00
+30/12     Pix recebido Ana                               300,00     1.150,00
+02/01     Tarifa pacote de serviços                      -29,90     1.120,10
+Saldo final                                                         1.120,10
