@@ -75,6 +75,108 @@ final class PdfText
         return $date === null || $date->gt($end) ? self::date($end->year - 1, $month, $day) : $date;
     }
 
+    /**
+     * Blocos de linhas separados por linha em branco (nos extratos, cada lançamento costuma ser um bloco:
+     * descrição acima e/ou abaixo da linha com data e valor).
+     *
+     * @return list<list<array{0: int, 1: string}>> [número da linha (1…), texto]
+     */
+    public static function blocks(string $text): array
+    {
+        $blocks = [];
+        $current = [];
+
+        foreach (self::lines($text) as $index => $line) {
+            if (trim($line) === '') {
+                if ($current !== []) {
+                    $blocks[] = $current;
+                    $current = [];
+                }
+
+                continue;
+            }
+
+            $current[] = [$index + 1, $line];
+        }
+
+        if ($current !== []) {
+            $blocks[] = $current;
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * Divide um bloco pelas linhas-âncora (a que tem data/valor): as linhas antes de cada âncora vão para ela,
+     * e as que sobram depois da última também.
+     *
+     * @param  list<array{0: int, 1: string}>  $block
+     * @param  callable(string): bool  $isAnchor
+     * @return list<array{anchor: array{0: int, 1: string}, above: list<string>, below: list<string>}>
+     */
+    public static function records(array $block, callable $isAnchor): array
+    {
+        $records = [];
+        $pending = [];
+
+        foreach ($block as $line) {
+            if ($isAnchor($line[1])) {
+                $records[] = ['anchor' => $line, 'above' => $pending, 'below' => []];
+                $pending = [];
+            } else {
+                $pending[] = $line[1];
+            }
+        }
+
+        if ($records !== [] && $pending !== []) {
+            $records[count($records) - 1]['below'] = $pending;
+        }
+
+        return $records;
+    }
+
+    /**
+     * Valores da linha com a posição (em caracteres) onde cada um termina e se tem "-" logo depois
+     * (como a fatura do Bradesco marca créditos: "3.909,86 -").
+     *
+     * @return list<array{amount: int, end: int}>
+     */
+    public static function amountsWithPosition(string $line): array
+    {
+        preg_match_all('/('.self::AMOUNT.')(\s?-(?!\d))?/u', $line, $matches, PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL);
+        $amounts = [];
+
+        foreach ($matches[1] as $index => [$token, $offset]) {
+            $amount = self::amount((string) $token);
+            $amounts[] = [
+                'amount' => ($matches[2][$index][0] ?? null) !== null ? -abs($amount) : $amount,
+                'end' => mb_strlen(substr($line, 0, (int) $offset)) + mb_strlen((string) $token),
+            ];
+        }
+
+        return $amounts;
+    }
+
+    /**
+     * Posição (em caracteres) onde o texto começa na linha, ou null.
+     */
+    public static function column(string $line, string $pattern): ?int
+    {
+        if (! preg_match($pattern, $line, $match, PREG_OFFSET_CAPTURE)) {
+            return null;
+        }
+
+        return mb_strlen(substr($line, 0, $match[0][1]));
+    }
+
+    /**
+     * Pedaço da linha entre duas colunas (em caracteres).
+     */
+    public static function slice(string $line, int $from, ?int $to = null): string
+    {
+        return trim(mb_substr($line, $from, $to === null ? null : max(0, $to - $from)));
+    }
+
     public static function clean(string $text): string
     {
         return trim((string) preg_replace('/\s+/u', ' ', $text));

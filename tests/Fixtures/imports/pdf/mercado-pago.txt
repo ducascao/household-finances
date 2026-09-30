@@ -1,10 +1,48 @@
-mercado pago
-EXTRATO DE CONTA
-Eduardo Exemplo                CPF: ***.123.456-**                    Período: 01-09-2026 a 30-09-2026
-Saldo inicial: R$ 800,00         Entradas: R$ 1.500,00         Saídas: R$ -420,50         Saldo final: R$ 1.879,50
+                                                                                     EXTRATO DE CONTA
+                                                                                       Fulano Exemplo
+                                                       CPF/CNPJ: ***.123.456-** Agência: 1 Conta: 1234567890
+                                                                        Periodo: De 01-08-2026 al 31-08-2026
 
-DETALHE DOS MOVIMENTOS
-Data           Descrição                                    ID da operação          Valor             Saldo
-01-09-2026     Transferência Pix recebida Maria Exemplo     81234567890             R$ 1.500,00       R$ 2.300,00
-03-09-2026     Pagamento Conta de água                      81234567891             R$ -120,50        R$ 2.179,50
-10-09-2026     Transferência Pix enviada Joao da Silva      81234567892             R$ -300,00        R$ 1.879,50
+
+                                           Entradas: R$ 5.601,26
+Saldo inicial: R$ 1.000,00                                                        Saldo final: R$ 4.253,86
+                                           Saidas: R$ -2.347,40
+
+
+                                       DETALHE DOS MOVIMENTOS
+
+Data         Descrição                          ID da operação                  Valor                Saldo
+
+
+             Pix enviado Maria dos
+01-08-2026                                      171520763694                R$ -119,00           R$ 881,00
+             Santos
+
+
+03-08-2026   Rendimentos                        1747685300838                  R$ 1,26           R$ 882,26
+
+
+             Pagamento de conta ESCOLA
+05-08-2026   EXEMPLO DE ENSINO                  171244610833              R$ -1.790,80          R$ -908,54
+             LTDA
+
+
+             Pix recebido FULANO
+05-08-2026                                      172147768036               R$ 5.600,00         R$ 4.691,46
+             EXEMPLO
+
+
+
+                                                                                          1/2
+Data         Descrição                          ID da operação                  Valor                Saldo
+
+
+10-08-2026   Pagamento de conta Sanasa          172086716995                R$ -321,49         R$ 4.369,97
+
+
+             Pagamento com QR Pix
+31-08-2026   COMPANHIA DE LUZ                   175541122715                R$ -116,11         R$ 4.253,86
+             EXEMPLO
+Data de geração: 30-09-2026
+Mercado Pago Instituição de Pagamento Ltda. CNPJ n.º 00.000.000/0001-00.
+                                                                                                                                  2/2
