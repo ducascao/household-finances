@@ -416,6 +416,39 @@ Notas da entrega:
 
 ---
 
+## Bloco E — Extensões (pedidas depois do plano original)
+
+### E16 — Bens
+**Valor:** o patrimônio considera imóvel, veículo e outros bens, não só a dívida que os financia.
+
+Escopo
+- [ ] `goods`: nome, tipo (imóvel, veículo, outro), dono, visibilidade, aquisição (data, valor), venda (data, valor, opcionais), dívida vinculada (opcional)
+- [ ] `good_valuations`: valor estimado por data, informado pelo usuário (sem avaliação, vale o de aquisição)
+- [ ] Tela de bens: valor atual, última avaliação, valor líquido (valor − saldo da dívida vinculada), histórico de avaliações
+- [ ] Patrimônio líquido com a parte "Bens" (contas + investimentos + bens − dívidas), nas duas visões; fotografias com a coluna de bens
+- [ ] Lembrete no painel quando a última avaliação tem mais de 6 meses
+
+Critérios de aceite
+- [ ] Valor do bem numa data (antes da compra, depois da venda, entre avaliações) (teste)
+- [ ] Patrimônio inclui bens pelo valor na data e o recálculo repete a fotografia (teste)
+
+Notas da entrega:
+
+### E17 — Importação de PDF
+**Valor:** importar extrato e fatura quando o banco só oferece PDF.
+
+Escopo
+- [ ] Upload de PDF na importação, com senha opcional (não guardada); texto extraído com `pdftotext` (poppler) atrás de um contrato
+- [ ] Leitores por banco: Nubank (conta e fatura), Bradesco, PicPay, Mercado Pago e um genérico; detecção do banco pelo texto
+- [ ] Linhas do PDF entram na mesma revisão da E5 (duplicadas, previstos, regras, confirmação)
+
+Critérios de aceite
+- [ ] Um teste por leitor com fixtures em `tests/Fixtures/imports/pdf` (dados fictícios)
+- [ ] Data sem ano deduzida pelo período do documento, inclusive na virada do ano (teste)
+- [ ] Mesmo PDF importado duas vezes não duplica (teste)
+
+Notas da entrega:
+
 ## Pontos em aberto
 
 - [x] **Reativar o 2FA na entrega final** (feito ao fechar a E15): em desenvolvimento está desligado (`AUTH_MFA_ENABLED=false` no `.env`), a pedido, para facilitar os testes. Na entrega final, voltar para `true` (padrão do `.env.example` e dos testes).
