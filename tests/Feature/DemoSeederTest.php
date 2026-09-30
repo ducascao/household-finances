@@ -10,6 +10,7 @@ use App\Models\Budget;
 use App\Models\Debt;
 use App\Models\DebtPrepayment;
 use App\Models\ExchangeRate;
+use App\Models\Goal;
 use App\Models\Household;
 use App\Models\ImportLine;
 use App\Models\ImportRule;
@@ -55,7 +56,8 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(ExchangeRate::count())->toBeGreaterThan(100)
         ->and(Debt::count())->toBe(2)
         ->and(DebtPrepayment::count())->toBe(1)
-        ->and(NetWorthSnapshot::count())->toBe(7 * 3);
+        ->and(NetWorthSnapshot::count())->toBe(7 * 3)
+        ->and(Goal::count())->toBe(3);
 
     $this->actingAs($maria);
 
