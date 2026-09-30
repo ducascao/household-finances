@@ -7,6 +7,8 @@ use App\Models\AssetIncome;
 use App\Models\AssetPrice;
 use App\Models\Attachment;
 use App\Models\Budget;
+use App\Models\Debt;
+use App\Models\DebtPrepayment;
 use App\Models\ExchangeRate;
 use App\Models\Household;
 use App\Models\ImportLine;
@@ -49,7 +51,9 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(Asset::whereIn('type', ['fixed_income', 'pension'])->count())->toBe(3)
         ->and(ManualValuation::count())->toBe(8)
         ->and(Asset::whereHas('account', fn ($q) => $q->where('currency', 'USD'))->count())->toBe(3)
-        ->and(ExchangeRate::count())->toBeGreaterThan(100);
+        ->and(ExchangeRate::count())->toBeGreaterThan(100)
+        ->and(Debt::count())->toBe(2)
+        ->and(DebtPrepayment::count())->toBe(1);
 
     $this->actingAs($maria);
 
