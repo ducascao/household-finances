@@ -46,7 +46,7 @@ it('abre a página e mostra patrimônio, variação no mês e histórico', funct
 it('visão do lar mostra só o compartilhado', function () {
     Livewire::test(NetWorthStatsWidget::class, ['pageFilters' => ['view' => 'household']])
         ->assertSee('R$ 6.000,00')
-        ->assertSee('só contas, investimentos e dívidas em contas compartilhadas');
+        ->assertSee('só contas, investimentos, bens e dívidas compartilhados');
 
     Livewire::test(CompositionWidget::class, ['pageFilters' => ['view' => 'household']])
         ->assertSee('Conjunta')

@@ -64,6 +64,7 @@ class TakeSnapshots
         $snapshot->fill([
             'accounts' => $breakdown->accounts(),
             'investments' => $breakdown->investments(),
+            'goods' => $breakdown->goods(),
             'debts' => $breakdown->debts(),
             'net_worth' => $breakdown->netWorth(),
         ])->save();

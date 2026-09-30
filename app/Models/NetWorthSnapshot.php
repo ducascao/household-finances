@@ -17,10 +17,11 @@ use Illuminate\Support\Carbon;
  * @property Carbon $month
  * @property int $accounts
  * @property int $investments
+ * @property int $goods
  * @property int $debts
  * @property int $net_worth
  */
-#[Fillable(['user_id', 'month', 'accounts', 'investments', 'debts', 'net_worth'])]
+#[Fillable(['user_id', 'month', 'accounts', 'investments', 'goods', 'debts', 'net_worth'])]
 class NetWorthSnapshot extends Model
 {
     use BelongsToHousehold;
@@ -31,6 +32,7 @@ class NetWorthSnapshot extends Model
             'month' => 'date',
             'accounts' => 'integer',
             'investments' => 'integer',
+            'goods' => 'integer',
             'debts' => 'integer',
             'net_worth' => 'integer',
         ];

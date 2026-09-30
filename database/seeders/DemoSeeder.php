@@ -11,6 +11,7 @@ use App\Domain\CreditCard\PayInvoice;
 use App\Domain\Debts\GenerateDebtInstallments;
 use App\Domain\Debts\ManageDebts;
 use App\Domain\Goals\SaveGoal;
+use App\Domain\Goods\ManageGoods;
 use App\Domain\Household\AddMember;
 use App\Domain\Household\CreateHousehold;
 use App\Domain\Import\BankPresets;
@@ -125,6 +126,7 @@ class DemoSeeder extends Seeder
         $this->debts($household, $eduardo);
 
         $this->goals($eduardo, $maria);
+        $this->goods($eduardo, $maria);
 
         // Histórico do patrimônio: fotografias dos últimos 6 meses (mesmo cálculo do comando app:net-worth).
         for ($month = today()->startOfMonth()->subMonthsNoOverflow(6); $month->lte(today()); $month->addMonthNoOverflow()) {
@@ -544,6 +546,35 @@ class DemoSeeder extends Seeder
             'name' => 'Troca do celular', 'target' => 300000, 'visibility' => AccountVisibility::Private,
             'start_date' => today()->subMonthsNoOverflow(4)->toDateString(), 'deadline' => today()->addMonthNoOverflow()->endOfMonth()->toDateString(),
             'account_ids' => [$account('Itaú Maria')],
+        ]);
+    }
+
+    /**
+     * Apartamento do lar (financiado), carro do Eduardo com avaliação de mais de 6 meses (lembrete no painel)
+     * e moto da Maria já vendida.
+     */
+    private function goods(User $eduardo, User $maria): void
+    {
+        $goods = app(ManageGoods::class);
+
+        $apartment = $goods->save($eduardo, [
+            'name' => 'Apartamento', 'type' => 'property', 'visibility' => 'shared',
+            'acquisition_date' => today()->startOfMonth()->subMonthsNoOverflow(9)->day(15)->toDateString(), 'acquisition_value' => 40000000,
+            'debt_id' => Debt::where('name', 'Financiamento do apartamento')->valueOrFail('id'),
+        ]);
+        $goods->value($eduardo, $apartment, today()->startOfMonth()->subMonthsNoOverflow(3), 41500000);
+
+        $car = $goods->save($eduardo, [
+            'name' => 'Carro', 'type' => 'vehicle', 'visibility' => 'private',
+            'acquisition_date' => today()->subYears(2)->toDateString(), 'acquisition_value' => 9000000,
+        ]);
+        $goods->value($eduardo, $car, today()->subYear(), 8200000);
+        $goods->value($eduardo, $car, today()->subMonthsNoOverflow(8), 7800000);
+
+        $goods->save($maria, [
+            'name' => 'Moto', 'type' => 'vehicle', 'visibility' => 'private',
+            'acquisition_date' => today()->subYears(3)->toDateString(), 'acquisition_value' => 1800000,
+            'sale_date' => today()->subMonthsNoOverflow(2)->toDateString(), 'sale_value' => 1350000,
         ]);
     }
 

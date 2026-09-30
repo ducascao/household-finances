@@ -18,8 +18,8 @@ class NetWorthStatsWidget extends StatsOverviewWidget
     protected function getDescription(): ?string
     {
         return $this->isHousehold()
-            ? 'Do lar: só contas, investimentos e dívidas em contas compartilhadas.'
-            : 'O que você vê: contas compartilhadas e as suas pessoais.';
+            ? 'Do lar: só contas, investimentos, bens e dívidas compartilhados.'
+            : 'O que você vê: itens compartilhados e os seus pessoais.';
     }
 
     protected function getStats(): array
@@ -32,14 +32,14 @@ class NetWorthStatsWidget extends StatsOverviewWidget
 
         return [
             Stat::make('Patrimônio líquido', MoneyFormatter::formatMinor($now['net_worth']))
-                ->description('contas + investimentos − dívidas, hoje'),
+                ->description('contas + investimentos + bens − dívidas, hoje'),
             Stat::make('No mês', $delta($previous))
                 ->description($previous !== null ? 'desde o fim de '.$previous['month']->locale('pt_BR')->translatedFormat('F') : 'grave o histórico para comparar')
                 ->color($previous !== null && $now['net_worth'] < $previous['net_worth'] ? 'danger' : 'success'),
             Stat::make('Em 12 meses', $delta($yearAgo))
                 ->color($yearAgo !== null && $now['net_worth'] < $yearAgo['net_worth'] ? 'danger' : 'success'),
-            Stat::make('Composição', MoneyFormatter::formatMinor($now['accounts'] + $now['investments']))
-                ->description('bens; dívidas: '.MoneyFormatter::formatMinor($now['debts'])),
+            Stat::make('Composição', MoneyFormatter::formatMinor($now['accounts'] + $now['investments'] + $now['goods']))
+                ->description('ativos (bens: '.MoneyFormatter::formatMinor($now['goods']).'); dívidas: '.MoneyFormatter::formatMinor($now['debts'])),
         ];
     }
 }

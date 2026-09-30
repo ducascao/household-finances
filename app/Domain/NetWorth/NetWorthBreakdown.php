@@ -12,6 +12,7 @@ final class NetWorthBreakdown
     /**
      * @param  array<string, int>  $accountItems  nome da conta => saldo
      * @param  array<string, int>  $investmentItems  tipo de ativo => valor
+     * @param  array<string, int>  $goodItems  nome do bem => valor
      * @param  array<string, int>  $debtItems  dívida ou cartão => saldo devedor
      * @param  list<string>  $missing  itens que ficaram de fora por falta de câmbio
      */
@@ -19,6 +20,7 @@ final class NetWorthBreakdown
         public readonly Carbon $date,
         public array $accountItems = [],
         public array $investmentItems = [],
+        public array $goodItems = [],
         public array $debtItems = [],
         public array $missing = [],
     ) {}
@@ -33,6 +35,11 @@ final class NetWorthBreakdown
         return array_sum($this->investmentItems);
     }
 
+    public function goods(): int
+    {
+        return array_sum($this->goodItems);
+    }
+
     public function debts(): int
     {
         return array_sum($this->debtItems);
@@ -40,6 +47,6 @@ final class NetWorthBreakdown
 
     public function netWorth(): int
     {
-        return $this->accounts() + $this->investments() - $this->debts();
+        return $this->accounts() + $this->investments() + $this->goods() - $this->debts();
     }
 }
