@@ -7,6 +7,7 @@ use App\Models\AssetIncome;
 use App\Models\AssetPrice;
 use App\Models\Attachment;
 use App\Models\Budget;
+use App\Models\ExchangeRate;
 use App\Models\Household;
 use App\Models\ImportLine;
 use App\Models\ImportRule;
@@ -41,12 +42,14 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(ImportLine::where('status', 'match')->count())->toBe(1)
         ->and(Budget::whereDate('month', today()->startOfMonth())->count())->toBe(10)
         ->and(Attachment::where('disk', 'local')->count())->toBe(2)
-        ->and(Asset::count())->toBe(7)
-        ->and(AssetPrice::count())->toBe(20 + 24)
+        ->and(Asset::count())->toBe(10)
+        ->and(AssetPrice::count())->toBe(20 + 24 + 9)
         ->and(AssetIncome::count())->toBeGreaterThanOrEqual(5)
         ->and(InterestRate::count())->toBeGreaterThan(100)
         ->and(Asset::whereIn('type', ['fixed_income', 'pension'])->count())->toBe(3)
-        ->and(ManualValuation::count())->toBe(8);
+        ->and(ManualValuation::count())->toBe(8)
+        ->and(Asset::whereHas('account', fn ($q) => $q->where('currency', 'USD'))->count())->toBe(3)
+        ->and(ExchangeRate::count())->toBeGreaterThan(100);
 
     $this->actingAs($maria);
 
