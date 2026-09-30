@@ -1,19 +1,49 @@
-                                     Bradesco Internet Banking
-Extrato Mensal / Por Período
-Nome: EDUARDO EXEMPLO                                   Agência: 1234 | Conta: 0012345-6
-                                                         Período: 01/09/2026 a 30/09/2026
+                                             Bradesco Celular
+                                             Data: 30/09/2026 - 11h47
+                                             Nome: FULANO EXEMPLO
 
-Data          Lançamento                              Dcto.             Crédito (R$)       Débito (R$)        Saldo (R$)
-31/08/2026    SALDO ANTERIOR                                                                                  1.500,00
-01/09/2026    TRANSFERENCIA PIX                       1234567                                  -150,00         1.350,00
-              REM: JOAO DA SILVA 01/09
-              PAGTO ELETRON COBRANCA                  0000123                                   -89,90         1.260,10
-              CONTA DE LUZ
-05/09/2026    CREDITO DE SALARIO                      0005678           5.000,00                               6.260,10
-              EMPRESA FICTICIA
-10/09/2026    TARIFA BANCARIA                         0000001                                   -45,00         6.215,10
-              CESTA FACIL
 
-Total                                                                   5.000,00               -284,90         6.215,10
+Extrato de: Agência: 1234 | Conta: 12345-6 | Movimentação entre: 21/09/2026 e 30/09/2026                                Folha: 1/2
 
-Os dados acima têm como base 30/09/2026 às 18:00 e estão sujeitos a alteração.
+
+Data               Histórico                                                 Docto.        Crédito (R$)   Débito (R$)   Saldo (R$)
+
+
+
+18/09/2026        COD. LANC. 0                                                                     0,00                       0,40
+
+
+                  PIX RECEBIDO
+22/09/2026                                                                  0744329            1.866,88                   1.867,28
+                  REM: Maria Exemplo 22/09
+
+                  PRESTACAO DE CRED IMOB
+23/09/2026                                                                  5320266                          1.866,88         0,40
+                  PRESTACAO
+
+
+Total                                                                                          1.866,88      1.866,88         0,40
+                                             Bradesco Celular
+                                             Data: 30/09/2026 - 11h47
+
+
+Extrato de: Agência: 1234 | Conta: 12345-6 | Últimos Lancamentos                                               Folha: 2/2
+
+
+Data               Histórico                                            Docto.    Crédito (R$)   Débito (R$)   Saldo (R$)
+
+
+
+23/09/2026        COD. LANC. 0                                                                                      0,40
+
+
+                  CREDITO DE SALARIO
+30/09/2026                                                              0002960      5.000,00                   5.000,40
+                  EMPRESA FICTICIA
+
+                  PIX ENVIADO
+                                                                        0948532                       95,00     4.905,40
+                  DES: JOAO DA SILVA 30/09
+
+
+Total                                                                                5.000,00         95,00     4.905,40

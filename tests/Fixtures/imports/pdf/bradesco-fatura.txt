@@ -1,0 +1,46 @@
+1FP005VTC101PF 00000000000000000000000000000000000000000000000000000
+
+
+                                                                                Fatura Mensal
+                                                                                                                                                                                                                                                Página 1 de 2
+
+                                                                                                                                                                                                                        Total da fatura                 Vencimento
+
+                                                                                                                                                                                                                            R$ 1.083,17                 05/01/2027
+
+
+                                                                                                                   FULANO EXEMPLO
+                                                                                                                   RUA DOS EXEMPLOS 100
+                                                                                                                                                                                                                       Previsão de fechamento da próxima fatura: 25/01/2027
+
+                                                   Resumo da fatura
+                                                   Saldo anterior......................... R$ 900,00
+                                                   (-) Créditos/Pagamentos..... R$ 900,00
+                                                   (+)Compras/Débitos............ R$ 1.083,17
+
+1FP005VTC101PF 00000000000000000000000000000000000000000000000000000
+
+                                                                Fatura Mensal
+                                                                                                                                                                                                                                      Página 2 de 2
+
+                                                  Número do Cartão                         4066 XXXX XXXX 1111                                        Total para as próximas faturas                           R$ 1.200,00
+
+                                                              Data Histórico de Lançamentos               Cidade         US$
+                                                                                                                               Cotação
+                                                                                                                                                    R$         Limites
+                                                                                                                               do Dólar
+                                                              06/12 PAGTO. POR DEB EM C/C                                                        900,00 -                                                        22/12/2026
+                                                              FULANO EXEMPLO                               Cartão 4066 XXXX XXXX 1111
+                                                              24/10 LOJA ESPORTES      03/06              CAMPINAS                                 79,99      Compras     R$ 30.000,00         R$ 10.000,00
+                                                              20/12 SUPERMERCADO EXEMPLO                  CAMPINAS                                245,30
+                                                                                                                                                              Taxas mensais
+                                                              28/12 POSTO COMBUSTIVEL                     VALINHOS                                131,80      Pagamento de Contas     1,99% 26,67% 55,72%
+                                                              30/12 LOJA FERRAGENS    01/03               CAMPINAS                                291,68      Rotativo               14,99% 434,46% 481,30%
+                                                              Total para FULANO EXEMPLO                                                           748,77
+                                                              MARIA EXEMPLO                                Cartão 4066 XXXX XXXX 2222
+                                                              02/01 FARMACIA EXEMPLO                      CAMPINAS                                 34,39
+                                                              03/01 PADARIA DO BAIRRO                     SANTANA DE                              300,01      Saldo de pontos em 22/12/26:            12.345
+                                                                                                          PA
+                                                              Total para MARIA EXEMPLO                                                            334,40
+                                                              Total da fatura em real                                                           1.083,17
+                                                         O Banco Bradesco Cartões S/A declara, para fins de atendimento às disposições da

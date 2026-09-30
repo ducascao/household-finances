@@ -54,13 +54,27 @@ it('data sem ano na virada do ano: dezembro fica no ano anterior ao vencimento',
     ]);
 });
 
-it('Bradesco: data do dia repetida, complemento na linha de baixo e documento fora da descrição', function () {
+it('Bradesco conta: histórico acima, complemento abaixo e sinal pela coluna Crédito/Débito (que muda de lugar por folha)', function () {
     expect(readPdf('bradesco-conta.txt', parser: $parser))->toBe([
-        ['2026-09-01', 'TRANSFERENCIA PIX REM: JOAO DA SILVA 01/09', -15000],
-        ['2026-09-01', 'PAGTO ELETRON COBRANCA CONTA DE LUZ', -8990],
-        ['2026-09-05', 'CREDITO DE SALARIO EMPRESA FICTICIA', 500000],
-        ['2026-09-10', 'TARIFA BANCARIA CESTA FACIL', -4500],
+        ['2026-09-22', 'PIX RECEBIDO REM: Maria Exemplo 22/09', 186688],
+        ['2026-09-23', 'PRESTACAO DE CRED IMOB PRESTACAO', -186688],
+        ['2026-09-30', 'CREDITO DE SALARIO EMPRESA FICTICIA', 500000],
+        ['2026-09-30', 'PIX ENVIADO DES: JOAO DA SILVA 30/09', -9500],
     ])->and($parser->layout?->name())->toBe('Bradesco — extrato da conta');
+});
+
+it('Bradesco fatura: só a coluna de lançamentos, crédito com "-", parcela no ciclo da fatura e virada do ano', function () {
+    // Vencimento 05/01/2027: dezembro fica em 2026, janeiro em 2027; "03/06" comprada em 24/10 cai em 24/12
+    expect(readPdf('bradesco-fatura.txt', card: true, parser: $parser))->toBe([
+        ['2026-12-06', 'PAGTO. POR DEB EM C/C', 90000],
+        ['2026-12-24', 'LOJA ESPORTES 03/06', -7999],
+        ['2026-12-20', 'SUPERMERCADO EXEMPLO', -24530],
+        ['2026-12-28', 'POSTO COMBUSTIVEL', -13180],
+        ['2026-12-30', 'LOJA FERRAGENS 01/03', -29168],
+        ['2027-01-02', 'FARMACIA EXEMPLO', -3439],
+        ['2027-01-03', 'PADARIA DO BAIRRO', -30001],
+    ])->and($parser->layout?->name())->toBe('Bradesco — fatura do cartão')
+        ->and(array_sum(array_filter(array_column(readPdf('bradesco-fatura.txt', card: true), 2), fn (int $amount): bool => $amount < 0)))->toBe(-108317);
 });
 
 it('Bradesco sem sinal impresso: usa a coluna do valor (crédito ou débito)', function () {
@@ -77,21 +91,29 @@ it('Bradesco sem sinal impresso: usa a coluna do valor (crédito ou débito)', f
     expect(array_map(fn (ParsedLine $line): int => $line->amount, $lines))->toBe([-15000, 30000]);
 });
 
-it('PicPay: data com hora e sinal impresso', function () {
+it('PicPay: dia no cabeçalho, origem/destino quebrado acima e abaixo da hora, sem CPF', function () {
     expect(readPdf('picpay.txt', parser: $parser))->toBe([
-        ['2026-09-02', 'Pix recebido de Maria Exemplo', 20000],
-        ['2026-09-03', 'Pagamento de boleto - Internet Fibra', -9990],
-        ['2026-09-05', 'Rendimento da conta', 125],
-        ['2026-09-06', 'Compra no cartão de débito - Restaurante Sabor', -4500],
+        ['2026-09-08', 'Pix enviado - MARIA EXEMPLO', -36720],
+        ['2026-09-04', 'Pix enviado - JOAO DA SILVA PEREIRA', -34032],
+        ['2026-08-15', 'Dinheiro guardado - No cofrinho Cofrinho Turbinado', -1000000],
+        ['2026-08-13', 'Pix recebido - FULANO EXEMPLO', 1090620],
     ])->and($parser->layout?->name())->toBe('PicPay — extrato da conta');
 });
 
-it('Mercado Pago: valor antes do saldo e ID da operação fora da descrição', function () {
-    expect(readPdf('mercado-pago.txt', parser: $parser))->toBe([
-        ['2026-09-01', 'Transferência Pix recebida Maria Exemplo', 150000],
-        ['2026-09-03', 'Pagamento Conta de água', -12050],
-        ['2026-09-10', 'Transferência Pix enviada Joao da Silva', -30000],
-    ])->and($parser->layout?->name())->toBe('Mercado Pago — extrato da conta');
+it('Mercado Pago: descrição quebrada acima e abaixo da data, valor antes do saldo, sem ID da operação', function () {
+    $lines = readPdf('mercado-pago.txt', parser: $parser);
+
+    expect($lines)->toBe([
+        ['2026-08-01', 'Pix enviado Maria dos Santos', -11900],
+        ['2026-08-03', 'Rendimentos', 126],
+        ['2026-08-05', 'Pagamento de conta ESCOLA EXEMPLO DE ENSINO LTDA', -179080],
+        ['2026-08-05', 'Pix recebido FULANO EXEMPLO', 560000],
+        ['2026-08-10', 'Pagamento de conta Sanasa', -32149],
+        ['2026-08-31', 'Pagamento com QR Pix COMPANHIA DE LUZ EXEMPLO', -11611],
+    ])->and($parser->layout?->name())->toBe('Mercado Pago — extrato da conta')
+        // Confere com o resumo do extrato: entradas 5.601,26, saídas −2.347,40
+        ->and(array_sum(array_filter(array_column($lines, 2), fn (int $amount): bool => $amount > 0)))->toBe(560126)
+        ->and(array_sum(array_filter(array_column($lines, 2), fn (int $amount): bool => $amount < 0)))->toBe(-234740);
 });
 
 it('genérico: banco desconhecido; numa conta de cartão as compras viram negativas', function () {
@@ -103,6 +125,7 @@ it('genérico: banco desconhecido; numa conta de cartão as compras viram negati
 it('recusa fatura em conta corrente, extrato em cartão, PDF sem texto e PDF sem lançamentos', function () {
     expect(fn () => readPdf('nubank-fatura.txt'))->toThrow(StatementParseException::class, 'fatura de cartão')
         ->and(fn () => readPdf('picpay.txt', card: true))->toThrow(StatementParseException::class, 'extrato de conta')
+        ->and(fn () => readPdf('bradesco-fatura.txt'))->toThrow(StatementParseException::class, 'fatura de cartão')
         ->and(fn () => (new PdfParser(false))->parse("  \n\f "))->toThrow(StatementParseException::class, 'imagem escaneada')
         ->and(fn () => (new PdfParser(false))->parse("Um texto qualquer\nsem datas"))->toThrow(StatementParseException::class, 'Nenhum lançamento');
 });

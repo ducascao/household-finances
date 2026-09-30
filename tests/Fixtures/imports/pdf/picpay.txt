@@ -1,11 +1,77 @@
-PicPay
-Extrato da conta                                                Período: 01/09/2026 a 30/09/2026
-Eduardo Exemplo - CPF: ***.123.456-**
+Fulano Exemplo
+CPF: ***.123.456-** Agência: 0001 Conta: 1234567-8
 
-Data/Hora              Descrição                                                   Valor
-02/09/2026 10:15       Pix recebido de Maria Exemplo                             + R$ 200,00
-03/09/2026 18:40       Pagamento de boleto - Internet Fibra                       - R$ 99,90
-05/09/2026 09:00       Rendimento da conta                                        + R$ 1,25
-06/09/2026 12:30       Compra no cartão de débito - Restaurante Sabor              - R$ 45,00
 
-Saldo em 30/09/2026                                                                 R$ 1.056,35
+
+
+Extrato de conta
+
+Período                                            Saldo final do período
+
+1 de agosto de 2026 a                              R$ 120,00
+30 de setembro de 2026
+
+
+   08 de setembro 2026                                                                                     Saldo ao final do dia: R$ 120,00
+
+
+
+   Hora                  Tipo                           Origem / Destino            Forma de pagamento                               Valor
+
+
+
+   23:29                 Pix enviado                    MARIA EXEMPLO               Com saldo                                  −R$ 367,20
+
+
+
+
+   04 de setembro 2026                                                                                     Saldo ao final do dia: R$ 487,20
+
+
+
+   Hora                  Tipo                           Origem / Destino            Forma de pagamento                               Valor
+
+
+                                                        JOAO DA SILVA
+   20:03                 Pix enviado                                                Com saldo                                  −R$ 340,32
+                                                        PEREIRA
+
+
+
+
+   15 de agosto 2026                                                                                       Saldo ao final do dia: R$ 827,52
+
+
+
+   Hora                  Tipo                           Origem / Destino            Forma de pagamento                               Valor
+
+
+                                                        No cofrinho Cofrinho
+   13:56                 Dinheiro guardado                                          Com saldo                               −R$ 10.000,00
+                                                        Turbinado
+
+
+
+
+Documento emitido em:        PicPay Serviços S/A            Dúvidas? Entre em contato pelo chat do app
+30/09/2026 às 11:40          CNPJ: 00.000.000/0001-00       todos os dias, 24h                                   1 de 2
+Fulano Exemplo
+
+
+
+   13 de agosto 2026                                                                                    Saldo ao final do dia: R$ 10.827,52
+
+
+
+   Hora                  Tipo                           Origem / Destino            Forma de pagamento                               Valor
+
+
+                                                        FULANO EXEMPLO
+   17:04                 Pix recebido                                                                                       +R$ 10.906,20
+                                                        12345678909
+
+
+
+
+Documento emitido em:        PicPay Serviços S/A
+30/09/2026 às 11:40                                                                    2 de 2
