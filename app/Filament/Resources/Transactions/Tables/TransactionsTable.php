@@ -176,7 +176,7 @@ class TransactionsTable
                         ->visible(fn (Transaction $record): bool => $record->recurrence_id !== null && self::viewer()->can('update', $record))
                         ->url(fn (Transaction $record): string => RecurrenceResource::getUrl('edit', ['record' => $record->recurrence_id])),
                     EditAction::make()
-                        ->hidden(fn (Transaction $record): bool => $record->isTransfer() || $record->installment_group_id !== null || $record->isAssetTrade()),
+                        ->hidden(fn (Transaction $record): bool => $record->isTransfer() || $record->installment_group_id !== null || $record->isAssetTrade() || $record->debt_id !== null),
                     InstallmentActions::edit(),
                     TransferActions::edit(),
                     TransferActions::delete(),

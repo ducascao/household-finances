@@ -38,7 +38,7 @@ class EditTransaction extends EditRecord
     {
         parent::mount($record);
 
-        if ($this->record->isTransfer() || $this->record->installment_group_id !== null || $this->record->isAssetTrade()) {
+        if ($this->record->isTransfer() || $this->record->installment_group_id !== null || $this->record->isAssetTrade() || $this->record->debt_id !== null) {
             $this->redirect(static::getResource()::getUrl('index'));
         }
     }
