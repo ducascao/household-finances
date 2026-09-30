@@ -4,6 +4,7 @@ use App\Jobs\FetchCdi;
 use App\Jobs\FetchExchangeRates;
 use App\Jobs\FetchQuotes;
 use App\Jobs\GenerateRecurringTransactions;
+use App\Jobs\TakeNetWorthSnapshots;
 use Illuminate\Support\Facades\Schedule;
 
 // Contas fixas: gera os previstos até hoje + 60 dias.
@@ -20,3 +21,6 @@ Schedule::job(new FetchCdi)->dailyAt('09:00')->withoutOverlapping();
 
 // Câmbio PTAX (fechamento publicado por volta das 13h), dias úteis.
 Schedule::job(new FetchExchangeRates)->weekdays()->at('13:30')->withoutOverlapping();
+
+// Patrimônio líquido: fotografia no último dia do mês.
+Schedule::job(new TakeNetWorthSnapshots)->lastDayOfMonth('23:30')->withoutOverlapping();

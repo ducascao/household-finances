@@ -9,7 +9,6 @@ use App\Models\Asset;
 use App\Models\AssetIncome;
 use App\Models\AssetOperation;
 use App\Models\ManualValuation;
-use Brick\Math\BigDecimal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -31,7 +30,7 @@ class ReturnCalculator
     public function __construct(
         private readonly PositionCalculator $calculator,
         private readonly PriceBook $prices,
-        private readonly ValuationCalculator $valuationCalculator,
+        private readonly AssetValuation $valuation,
         private readonly ExchangeRates $rates,
     ) {}
 
@@ -68,14 +67,9 @@ class ReturnCalculator
             try {
                 $untilEnd = $assetOperations->filter(fn (AssetOperation $op): bool => $op->date->lte($end));
 
-                if ($asset->type->isValuedByBalance()) {
-                    $assetValuations = $valuations->get($asset->id, collect());
-                    $row->startValue = $toBrl($this->valuationCalculator->at($assetOperations, $assetValuations, $before)->value, $before);
-                    $row->endValue = $toBrl($this->valuationCalculator->at($assetOperations, $assetValuations, $end)->value, $end);
-                } else {
-                    $row->startValue = $toBrl($this->value($assetOperations->filter(fn (AssetOperation $op): bool => $op->date->lte($before)), $startPrices->get($asset->id)?->price), $before);
-                    $row->endValue = $toBrl($this->value($untilEnd, $endPrices->get($asset->id)?->price), $end);
-                }
+                $assetValuations = $valuations->get($asset->id, collect());
+                $row->startValue = $toBrl($this->valuation->valueAt($asset, $assetOperations, $assetValuations, $startPrices->get($asset->id)?->price, $before), $before);
+                $row->endValue = $toBrl($this->valuation->valueAt($asset, $assetOperations, $assetValuations, $endPrices->get($asset->id)?->price, $end), $end);
 
                 foreach ($assetOperations->filter(fn (AssetOperation $op): bool => ($op->type->isTrade() || $op->type->isCashFlow()) && $op->date->between($start, $end)) as $operation) {
                     $cash = $toBrl(abs(ManageOperations::cashAmount($operation)), $operation->date);
@@ -113,21 +107,5 @@ class ReturnCalculator
         }
 
         return ['assets' => $rows, 'total' => $total];
-    }
-
-    /**
-     * Valor da posição em centavos: quantidade × cotação (sem cotação, o PM).
-     *
-     * @param  iterable<AssetOperation>  $operations
-     */
-    private function value(iterable $operations, ?string $price): int
-    {
-        $position = $this->calculator->calculate($operations);
-
-        if (! $position->isOpen()) {
-            return 0;
-        }
-
-        return $position->marketValue($price !== null ? BigDecimal::of($price) : $position->averagePrice)->getMinorAmount()->toInt();
     }
 }
