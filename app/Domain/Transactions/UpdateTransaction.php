@@ -16,6 +16,12 @@ class UpdateTransaction
      */
     public function execute(User $actor, Transaction $transaction, array $data): Transaction
     {
+        if ($transaction->debt_id !== null) {
+            throw ValidationException::withMessages([
+                'transaction' => 'Parcelas e amortizações de dívidas são alteradas pela tela da dívida.',
+            ]);
+        }
+
         if ($transaction->asset_operation_id !== null || $transaction->asset_income_id !== null) {
             throw ValidationException::withMessages([
                 'transaction' => 'Compras, vendas e proventos de ativos são editados pela tela do ativo, na Carteira.',

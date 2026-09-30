@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Debts\GenerateDebtInstallments;
 use App\Domain\Recurrences\CreateRecurrence;
 use App\Domain\Recurrences\DeleteRecurrence;
 use App\Domain\Recurrences\GenerateOccurrences;
@@ -61,8 +62,8 @@ it('ao criar gera os previstos até hoje + 60 dias, ligados à recorrência', fu
 it('rodar o job duas vezes não duplica lançamentos', function () {
     $recurrence = ($this->create)();
 
-    (new GenerateRecurringTransactions)->handle(app(GenerateOccurrences::class));
-    (new GenerateRecurringTransactions)->handle(app(GenerateOccurrences::class));
+    (new GenerateRecurringTransactions)->handle(app(GenerateOccurrences::class), app(GenerateDebtInstallments::class));
+    (new GenerateRecurringTransactions)->handle(app(GenerateOccurrences::class), app(GenerateDebtInstallments::class));
     $this->artisan('app:generate-recurrences')->assertSuccessful();
 
     expect(($this->dates)($recurrence))->toBe(['2026-10-10', '2026-11-10']);
