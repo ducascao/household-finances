@@ -26,7 +26,7 @@ class NetWorthHistory
     }
 
     /**
-     * @return list<array{month: Carbon, accounts: int, investments: int, debts: int, net_worth: int, live: bool}>
+     * @return list<array{month: Carbon, accounts: int, investments: int, goods: int, debts: int, net_worth: int, live: bool}>
      */
     public function series(User $user, bool $household, int $months = 24): array
     {
@@ -43,6 +43,7 @@ class NetWorthHistory
                 'month' => $snapshot->month,
                 'accounts' => $snapshot->accounts,
                 'investments' => $snapshot->investments,
+                'goods' => $snapshot->goods,
                 'debts' => $snapshot->debts,
                 'net_worth' => $snapshot->net_worth,
                 'live' => false,
@@ -55,6 +56,7 @@ class NetWorthHistory
             'month' => today()->startOfMonth(),
             'accounts' => $now->accounts(),
             'investments' => $now->investments(),
+            'goods' => $now->goods(),
             'debts' => $now->debts(),
             'net_worth' => $now->netWorth(),
             'live' => true,

@@ -4,6 +4,7 @@ namespace App\Domain\NetWorth;
 
 use App\Domain\Currency\ExchangeRates;
 use App\Domain\Currency\MissingExchangeRate;
+use App\Domain\Goods\GoodValue;
 use App\Domain\Investments\AssetValuation;
 use App\Domain\Investments\PriceBook;
 use App\Enums\AccountType;
@@ -20,11 +21,12 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Patrimônio líquido numa data (em reais) = contas + investimentos − dívidas.
+ * Patrimônio líquido numa data (em reais) = contas + investimentos + bens − dívidas.
  *
  * - Contas: saldo inicial + lançamentos pagos com data até a data (contas em outra moeda pelo câmbio da data).
  *   Cartões com saldo negativo contam como dívida (fatura em aberto).
  * - Investimentos: valor de cada ativo na data (AssetValuation), convertido pelo câmbio da data.
+ * - Bens: valor de cada bem na data (GoodValue: última avaliação até a data, fora antes da compra e depois da venda).
  * - Dívidas: principal − amortização das parcelas pagas até a data − amortizações extraordinárias até a data,
  *   a partir de um mês antes do 1º vencimento (quando o dinheiro foi liberado).
  *
@@ -47,6 +49,7 @@ class NetWorthCalculator
 
         $this->accountBalances($accounts, $date, $breakdown);
         $this->investments($accounts, $date, $breakdown);
+        $this->goods($scope, $date, $breakdown);
         $this->debts($accounts, $date, $breakdown);
 
         return $breakdown;
@@ -126,6 +129,17 @@ class NetWorthCalculator
                 $breakdown->investmentItems[$label] = ($breakdown->investmentItems[$label] ?? 0) + $this->toBrl($value, $asset->currency, $date);
             } catch (MissingExchangeRate) {
                 $breakdown->missing[] = $asset->label();
+            }
+        }
+    }
+
+    private function goods(NetWorthScope $scope, Carbon $date, NetWorthBreakdown $breakdown): void
+    {
+        foreach ($scope->goods() as $good) {
+            $value = GoodValue::at($good, $date);
+
+            if ($value !== 0) {
+                $breakdown->goodItems[$good->name] = ($breakdown->goodItems[$good->name] ?? 0) + $value;
             }
         }
     }

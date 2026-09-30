@@ -422,17 +422,23 @@ Notas da entrega:
 **Valor:** o patrimônio considera imóvel, veículo e outros bens, não só a dívida que os financia.
 
 Escopo
-- [ ] `goods`: nome, tipo (imóvel, veículo, outro), dono, visibilidade, aquisição (data, valor), venda (data, valor, opcionais), dívida vinculada (opcional)
-- [ ] `good_valuations`: valor estimado por data, informado pelo usuário (sem avaliação, vale o de aquisição)
-- [ ] Tela de bens: valor atual, última avaliação, valor líquido (valor − saldo da dívida vinculada), histórico de avaliações
-- [ ] Patrimônio líquido com a parte "Bens" (contas + investimentos + bens − dívidas), nas duas visões; fotografias com a coluna de bens
-- [ ] Lembrete no painel quando a última avaliação tem mais de 6 meses
+- [x] `goods`: nome, tipo (imóvel, veículo, outro), dono, visibilidade, aquisição (data, valor), venda (data, valor, opcionais), dívida vinculada (opcional)
+- [x] `good_valuations`: valor estimado por data, informado pelo usuário (sem avaliação, vale o de aquisição)
+- [x] Tela de bens: valor atual, última avaliação, valor líquido (valor − saldo da dívida vinculada), histórico de avaliações
+- [x] Patrimônio líquido com a parte "Bens" (contas + investimentos + bens − dívidas), nas duas visões; fotografias com a coluna de bens
+- [x] Lembrete no painel quando a última avaliação tem mais de 6 meses
 
 Critérios de aceite
-- [ ] Valor do bem numa data (antes da compra, depois da venda, entre avaliações) (teste)
-- [ ] Patrimônio inclui bens pelo valor na data e o recálculo repete a fotografia (teste)
+- [x] Valor do bem numa data (antes da compra, depois da venda, entre avaliações) (teste)
+- [x] Patrimônio inclui bens pelo valor na data e o recálculo repete a fotografia (teste)
 
 Notas da entrega:
+- Módulo próprio `app/Domain/Goods` (`ManageGoods`, `GoodValue`); menu Patrimônio → Bens, com "Informar valor" na tela do bem, no histórico e no lembrete do painel.
+- Visibilidade como a das contas (pessoal só o dono; compartilhado o lar). A visão do lar no patrimônio só soma bens compartilhados.
+- Bem compartilhado só vincula dívida paga por conta compartilhada; pessoal aceita dívida de conta compartilhada ou do dono.
+- Comprar/vender não gera lançamento (o dinheiro já está nas contas e na dívida). A partir da data de venda o bem sai do patrimônio; o valor de venda é só informativo.
+- Avaliação manual (sem FIPE). Lembrete: bem ainda seu com última avaliação (ou aquisição, se nunca avaliado) há mais de 180 dias.
+- Fotografias antigas ficam com bens = 0 até serem recalculadas (`app:net-worth --from=…`).
 
 ### E17 — Importação de PDF
 **Valor:** importar extrato e fatura quando o banco só oferece PDF.

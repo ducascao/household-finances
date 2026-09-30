@@ -28,6 +28,7 @@ class HistoryTableWidget extends TableWidget
                 TextColumn::make('month')->label('Mês'),
                 TextColumn::make('accounts')->label('Contas')->alignEnd(),
                 TextColumn::make('investments')->label('Investimentos')->alignEnd(),
+                TextColumn::make('goods')->label('Bens')->alignEnd(),
                 TextColumn::make('debts')->label('Dívidas')->alignEnd()->color('danger'),
                 TextColumn::make('net_worth')->label('Patrimônio líquido')->alignEnd()->weight('bold'),
                 TextColumn::make('change')->label('Variação')->alignEnd()
@@ -50,6 +51,7 @@ class HistoryTableWidget extends TableWidget
                 'month' => ucfirst($point['month']->locale('pt_BR')->translatedFormat('F/Y')).($point['live'] ? ' (hoje)' : ''),
                 'accounts' => MoneyFormatter::formatMinor($point['accounts']),
                 'investments' => MoneyFormatter::formatMinor($point['investments']),
+                'goods' => MoneyFormatter::formatMinor($point['goods']),
                 'debts' => MoneyFormatter::formatMinor(-$point['debts']),
                 'net_worth' => MoneyFormatter::formatMinor($point['net_worth']),
                 'change' => $change !== null ? MoneyFormatter::formatMinor($change) : '—',
