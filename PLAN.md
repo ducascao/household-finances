@@ -373,15 +373,26 @@ Notas da entrega:
 **Valor:** acompanhar a evolução do patrimônio mês a mês.
 
 Escopo
-- [ ] `net_worth_snapshots`: mês, total em contas, investimentos, dívidas, patrimônio líquido
-- [ ] Job no último dia do mês + comando para recalcular meses passados
-- [ ] Gráfico histórico e composição atual
-- [ ] Visão por usuário (só o que ele vê) e do lar
+- [x] `net_worth_snapshots`: mês, total em contas, investimentos, dívidas, patrimônio líquido
+- [x] Job no último dia do mês + comando para recalcular meses passados
+- [x] Gráfico histórico e composição atual
+- [x] Visão por usuário (só o que ele vê) e do lar
 
 Critérios de aceite
-- [ ] Recalcular um mês passado gera o mesmo valor que o snapshot original (teste)
+- [x] Recalcular um mês passado gera o mesmo valor que o snapshot original (teste)
 
 Notas da entrega:
+- **Cálculo numa data** (`Domain/NetWorth/NetWorthCalculator`), tudo em reais:
+  - **contas:** saldo inicial + lançamentos pagos com data até a data, com contas em moeda estrangeira pelo câmbio da data; cartão com saldo negativo vira dívida ("Cartão X");
+  - **investimentos:** `AssetValuation` (extraído nesta entrega e usado também pela Rentabilidade), com posição/saldo, última cotação e câmbio até a data;
+  - **dívidas:** principal − amortizações das parcelas pagas até a data − amortizações extraordinárias até a data, a partir de um mês antes do 1º vencimento.
+
+  Como tudo depende só do que aconteceu até a data, recalcular um mês passado repete o valor (critério de aceite testado com parcela, despesa, cotação e câmbio posteriores).
+- **Visões (decisão: opção A):** "O que eu vejo" = contas compartilhadas + as pessoais da pessoa; **"Do lar" = só o que está em contas compartilhadas** (contas, ativos dessas contas e dívidas pagas por elas), sem expor contas pessoais de ninguém.
+- **`net_worth_snapshots`** (lar, `user_id` preenchido para a pessoa ou vazio para o lar, mês, contas, investimentos, dívidas, patrimônio), única por (lar, pessoa, mês) com `nullsNotDistinct`. Job `TakeNetWorthSnapshots` no último dia do mês às 23:30 (uma por pessoa + uma do lar) e comando `app:net-worth --month=AAAA-MM | --from=AAAA-MM` para recalcular/gerar o histórico.
+- **Tela "Patrimônio → Patrimônio líquido":** seletor de visão; cards (patrimônio hoje, variação no mês e em 12 meses, bens × dívidas); linha da evolução mensal (uma série, sem legenda); composição de hoje (contas, investimentos por tipo, dívidas) com o peso de cada item; tabela do histórico com a variação.
+- **Limitação a decidir:** o PLAN não prevê **bens** (imóvel, carro). Um financiamento imobiliário entra como dívida sem o imóvel correspondente, deixando o patrimônio negativo (é o caso da demo). Sugestão para uma entrega futura: tipo de ativo "Bem" com valor informado por data (mesmo mecanismo da renda fixa).
+- `DemoSeeder`: fotografias dos últimos 6 meses + mês atual (pessoa × 2 e lar). Ajustei os dados de exemplo (aportes mensais maiores e saldo inicial da conta conjunta) para a conta conjunta não ficar negativa.
 
 ### E15 — Metas
 **Valor:** acompanhar objetivos como reserva de emergência e viagem.
