@@ -40,6 +40,12 @@ class DeleteTransaction
             return;
         }
 
+        if ($transaction->debt_id !== null) {
+            throw ValidationException::withMessages([
+                'transaction' => 'Parcelas e amortizações de dívidas são alteradas pela tela da dívida.',
+            ]);
+        }
+
         if ($transaction->asset_income_id !== null) {
             app(ManageIncomes::class)->delete($actor, AssetIncome::withoutGlobalScopes()->findOrFail($transaction->asset_income_id));
 
