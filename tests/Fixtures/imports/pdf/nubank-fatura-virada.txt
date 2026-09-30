@@ -1,9 +1,31 @@
-Olá, Eduardo. Esta é a sua fatura de janeiro                                               FATURA 10 JAN 2027
-Data do vencimento: 10 JAN 2027                 Período vigente: 03 DEZ a 03 JAN
+Olá, Fulano.
+Esta é a sua fatura de
+outubro, no valor de
+R$ 0,00
+Data de vencimento: 07 JAN 2027
+Período vigente: 01 DEZ a 30 DEZ
+Limite total do cartão de crédito: R$ 9.600,00
 
-TRANSAÇÕES DE 03 DEZ A 03 JAN                                                              Valor em R$
-20 DEZ          •••• 1234 Presentes de Natal                                                     310,00
-28 DEZ          •••• 1234 Restaurante Réveillon                                                  180,00
-02 JAN          •••• 1234 Farmácia                                                                42,50
+                                                 1 de 2
+                                                                               FULANO EXEMPLO
+                                                                               FATURA 07 JAN 2027             EMISSÃO E ENVIO 30 DEZ 2026
 
-Nu Pagamentos S.A. - Instituição de Pagamento
+RESUMO DA FATURA ATUAL
+                         Fatura anterior                                                                                      R$ 625,64
+                         Pagamento recebido                                                                                  −R$ 625,64
+                         Fechamento da próxima fatura                                                                       31 OUT 2026
+
+                                                                                                                                            1 de 2
+                                                                                   FULANO EXEMPLO
+                                                                                   FATURA 07 JAN 2027          EMISSÃO E ENVIO 30 DEZ 2026
+
+TRANSAÇÕES             DE 01 DEZ A 30 DEZ
+
+                   Fulano Exemplo                                                                                                R$ 0,00
+                    20 DEZ         •••• 1234    Presentes de Natal                                                             R$ 310,00
+                    28 DEZ         •••• 1234    Restaurante Réveillon                                                          R$ 180,00
+                    02 JAN         •••• 1234    Farmácia                                                                        R$ 42,50
+
+ Em cumprimento à regulação do Banco Central, as suas operações de crédito serão comunicadas ao SCR.
+                                                                                                                                            2 de 2
+Nu Pagamentos S.A. - Instituição de Pagamento. CNPJ 18.236.120/0001-58

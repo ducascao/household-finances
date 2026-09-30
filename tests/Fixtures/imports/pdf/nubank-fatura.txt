@@ -1,20 +1,39 @@
-Olá, Eduardo. Esta é a sua fatura de outubro, no valor de R$ 1.411,15                    FATURA 10 OUT 2026
-                                                                              EMISSÃO E ENVIO 03 OUT 2026
-Data do vencimento: 10 OUT 2026                 Período vigente: 03 SET a 03 OUT
+Olá, Fulano.
+Esta é a sua fatura de
+outubro, no valor de
+R$ 0,00
+Data de vencimento: 07 OUT 2026
+Período vigente: 31 AGO a 30 SET
+Limite total do cartão de crédito: R$ 9.600,00
+
+                                                 1 de 2
+                                                                               FULANO EXEMPLO
+                                                                               FATURA 07 OUT 2026             EMISSÃO E ENVIO 30 SET 2026
 
 RESUMO DA FATURA ATUAL
-Fatura anterior                                                                             R$ 1.200,00
-Pagamento recebido                                                                         −R$ 1.200,00
-Total de compras de todos os cartões                                                        R$ 1.446,15
-Outros créditos                                                                               −R$ 35,00
-Total a pagar                                                                               R$ 1.411,15
+                         Fatura anterior                                                                                      R$ 625,64
+                         Pagamento recebido                                                                                  −R$ 625,64
+                         Fechamento da próxima fatura                                                                       31 OUT 2026
 
-TRANSAÇÕES DE 03 SET A 03 OUT                                                              Valor em R$
-03 SET          •••• 1234 Supermercado Bom Preço                                                 245,30
-07 SET          •••• 1234 Uber* Trip                                                              23,90
-15 SET                    Loja Fictícia - Parcela 2/5                                              99,90
-20 SET                    Pagamento em 20 SET                                                  −1.200,00
-28 SET          •••• 1234 Estorno Loja X                                                          −35,00
-02 OUT          •••• 1234 Posto Combustível                                                     1.077,05
+                                                                                                                                            1 de 2
+                                                                                   FULANO EXEMPLO
+                                                                                   FATURA 07 OUT 2026          EMISSÃO E ENVIO 30 SET 2026
 
-Nu Pagamentos S.A. - Instituição de Pagamento. CNPJ 18.236.120/0001-58                            1 de 2
+TRANSAÇÕES             DE 31 AGO A 30 SET
+
+                   Fulano Exemplo                                                                                                R$ 0,00
+                    31 AGO         •••• 1234    Curso Exemplo - Parcela 8/12                                                   R$ 249,75
+                    04 SET         •••• 1234    Google One                                                                      R$ 23,99
+                    17 SET         •••• 1234    Dl*Uberrides                                                                    R$ 14,95
+                    17 SET         •••• 1234    Dl*Uberrides                                                                    R$ 14,95
+                    18 SET             IOF de "Wl *Steam Purchase"                                                              R$ 13,30
+                    18 SET         •••• 1234    Wl *Steam Purchase                                                             R$ 379,89
+                                                BRL 364.70 = USD 70.89
+                                                Conversão: BRL 5.35 = USD 1 = R$ 5,35
+                    28 SET         •••• 1234    Estorno Loja X                                                                 −R$ 35,00
+                   Pagamentos                                                                                                -R$ 625,64
+                    08 SET             Pagamento em 08 SET                                                                    −R$ 625,64
+
+ Em cumprimento à regulação do Banco Central, as suas operações de crédito serão comunicadas ao SCR.
+                                                                                                                                            2 de 2
+Nu Pagamentos S.A. - Instituição de Pagamento. CNPJ 18.236.120/0001-58

@@ -19,24 +19,26 @@ function readPdf(string $fixture, bool $card = false, ?PdfParser &$parser = null
     );
 }
 
-it('Nubank conta: sinal pelos blocos de entradas e saídas e descrição quebrada em duas linhas', function () {
+it('Nubank conta: sinal pelos blocos de entradas e saídas e origem/destino continuando abaixo do valor', function () {
     expect(readPdf('nubank-conta.txt', parser: $parser))->toBe([
-        ['2026-09-02', 'Transferência recebida pelo Pix EMPRESA FICTICIA LTDA - 12.345.678/0001-90', 500000],
+        ['2026-09-02', 'Transferência recebida pelo Pix EMPRESA FICTICIA LTDA - 12.345.678/0001-90 - BANCO EXEMPLO S.A. (0001) Agência: 1 Conta: 1234567-8', 500000],
         ['2026-09-02', 'Compra no débito PADARIA PAO QUENTE', -3240],
-        ['2026-09-02', 'Transferência enviada pelo Pix JOAO DA SILVA - •••.123.456-••', -10000],
+        ['2026-09-02', 'Transferência enviada pelo Pix JOAO DA SILVA - •••.987.654-•• - BANCO EXEMPLO (0001) Agência: 1 Conta: 99-9', -10000],
         ['2026-09-05', 'Pagamento de fatura', -135000],
-        ['2026-09-20', 'Transferência recebida pelo Pix MARIA EXEMPLO', 35000],
+        ['2026-09-20', 'Transferência recebida pelo Pix MARIA EXEMPLO - •••.111.222-•• - BANCO EXEMPLO', 35000],
     ])->and($parser->layout?->name())->toBe('Nubank — extrato da conta');
 });
 
-it('Nubank fatura: compras negativas, pagamento e estorno positivos, ano pelo vencimento', function () {
+it('Nubank fatura: compras e IOF negativos, pagamento e estorno positivos, ano pelo vencimento', function () {
     expect(readPdf('nubank-fatura.txt', card: true, parser: $parser))->toBe([
-        ['2026-09-03', 'Supermercado Bom Preço', -24530],
-        ['2026-09-07', 'Uber* Trip', -2390],
-        ['2026-09-15', 'Loja Fictícia - Parcela 2/5', -9990],
-        ['2026-09-20', 'Pagamento em 20 SET', 120000],
+        ['2026-08-31', 'Curso Exemplo - Parcela 8/12', -24975],
+        ['2026-09-04', 'Google One', -2399],
+        ['2026-09-17', 'Dl*Uberrides', -1495],
+        ['2026-09-17', 'Dl*Uberrides', -1495],
+        ['2026-09-18', 'IOF de "Wl *Steam Purchase"', -1330],
+        ['2026-09-18', 'Wl *Steam Purchase', -37989],
         ['2026-09-28', 'Estorno Loja X', 3500],
-        ['2026-10-02', 'Posto Combustível', -107705],
+        ['2026-09-08', 'Pagamento em 08 SET', 62564],
     ])->and($parser->layout?->name())->toBe('Nubank — fatura do cartão');
 });
 
