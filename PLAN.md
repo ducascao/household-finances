@@ -350,16 +350,24 @@ Notas da entrega:
 **Valor:** ver quanto falta pagar de cada financiamento.
 
 Escopo
-- [ ] `debts`: credor, principal, taxa mensal, sistema (price, sac, custom), número de parcelas, início, conta de pagamento
-- [ ] Geração da tabela de parcelas (`debt_installments`: vencimento, amortização, juros, total)
-- [ ] Parcelas geram lançamentos previstos; pagar o lançamento baixa a parcela
-- [ ] Amortização extraordinária (reduz prazo ou parcela)
-- [ ] Saldo devedor atual e projeção de quitação
+- [x] `debts`: credor, principal, taxa mensal, sistema (price, sac, custom), número de parcelas, início, conta de pagamento
+- [x] Geração da tabela de parcelas (`debt_installments`: vencimento, amortização, juros, total)
+- [x] Parcelas geram lançamentos previstos; pagar o lançamento baixa a parcela
+- [x] Amortização extraordinária (reduz prazo ou parcela)
+- [x] Saldo devedor atual e projeção de quitação
 
 Critérios de aceite
-- [ ] Tabelas Price e SAC conferem com um simulador de referência (teste)
+- [x] Tabelas Price e SAC conferem com um simulador de referência (teste)
 
 Notas da entrega:
+- **Tabelas:** `debts` (nome, credor, principal, `monthly_rate` em % a.m., sistema, nº de parcelas, 1º vencimento, conta de pagamento, categoria, situação), `debt_installments` (nº, vencimento, amortização, juros, total, saldo depois, lançamento) e `debt_prepayments` (data, valor, modo, lançamento). Visibilidade herdada da conta de pagamento (corrente, poupança ou dinheiro, em BRL).
+- **`Domain/Debts/AmortizationSchedule`:** Price (parcela = P·i ÷ (1 − (1+i)⁻ⁿ), arredondada ao centavo), SAC (amortização = P ÷ n para baixo) e personalizada (tabela informada, precisa fechar o principal). Juros mensais arredondados ao centavo; a última parcela zera o saldo. Conferido com a Calculadora do Cidadão/BCB (R$ 10.000 a 1% em 12x = R$ 888,49), com a fórmula fechada do SAC (juros = P·i·(n+1)/2 = R$ 650,00) e com cálculo independente em Decimal (R$ 300.000 a 0,95% em 360x = R$ 2.948,01).
+- **Parcelas → lançamentos previstos** na conta de pagamento, na **janela de 60 dias** (mesmo job diário das contas fixas), com descrição "Nome (k/N)" e `debt_id`. Pagar o lançamento (Pagar, importação de extrato) baixa a parcela. Esses lançamentos só são alterados pela dívida.
+- **Amortização extraordinária:** gera lançamento pago e recalcula as parcelas não pagas a partir do novo saldo, mantendo numeração e vencimentos: "reduzir a parcela" mantém o nº de parcelas restantes; "reduzir o prazo" mantém a parcela (Price) ou a amortização (SAC). Na personalizada, só abate o saldo.
+- **Saldo devedor** = principal − amortizações das parcelas pagas − amortizações extraordinárias; projeção com a última parcela, juros e total a pagar; situação "quitada" quando o saldo zera. Dívida com parcela paga não pode ser excluída.
+- **Telas:** "Patrimônio → Dívidas" (lista com saldo, parcelas, próxima e quitação; cadastro com prévia da tabela; tela com resumo, cronograma com situação paga/prevista/atrasada/futura e "Amortizar").
+- **Fora do escopo:** correção monetária (TR/IPCA) — usar a tabela personalizada.
+- `DemoSeeder`: financiamento do apartamento (SAC, 360x, conta conjunta, com amortização extraordinária) e empréstimo pessoal (Price, 18x, conta do Eduardo), com as parcelas pagas até hoje.
 
 ### E14 — Patrimônio líquido
 **Valor:** acompanhar a evolução do patrimônio mês a mês.

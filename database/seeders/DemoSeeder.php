@@ -8,6 +8,8 @@ use App\Domain\Budgets\CopyPreviousMonth;
 use App\Domain\Budgets\SaveBudget;
 use App\Domain\CreditCard\CreateInstallmentPurchase;
 use App\Domain\CreditCard\PayInvoice;
+use App\Domain\Debts\GenerateDebtInstallments;
+use App\Domain\Debts\ManageDebts;
 use App\Domain\Household\AddMember;
 use App\Domain\Household\CreateHousehold;
 use App\Domain\Import\BankPresets;
@@ -20,16 +22,21 @@ use App\Domain\Investments\ManageValuations;
 use App\Domain\Investments\SaveAsset;
 use App\Domain\Recurrences\CreateRecurrence;
 use App\Domain\Transactions\CreateTransaction;
+use App\Domain\Transactions\MarkAsPaid;
 use App\Domain\Transfers\CreateTransfer;
 use App\Enums\AccountType;
 use App\Enums\AccountVisibility;
 use App\Enums\ImportFormat;
+use App\Enums\PrepaymentMode;
 use App\Enums\PriceSource;
+use App\Enums\TransactionStatus;
 use App\Models\Account;
 use App\Models\Asset;
 use App\Models\AssetPrice;
 use App\Models\Category;
 use App\Models\CreditCard;
+use App\Models\Debt;
+use App\Models\DebtInstallment;
 use App\Models\ExchangeRate;
 use App\Models\Household;
 use App\Models\InterestRate;
@@ -44,7 +51,7 @@ use Illuminate\Support\Carbon;
  * contas previstas (atrasadas e a vencer), transferências, contas fixas, cartões de crédito com faturas
  * importação (regras, perfil de CSV e um lote em revisão), orçamentos dos últimos meses e comprovantes
  * (no disco local, já que os dados de exemplo não têm Google Drive conectado), uma carteira B3,
- * renda fixa, previdência e ativos no exterior.
+ * renda fixa, previdência, ativos no exterior e dívidas.
  * Senha dos usuários: "password". O 2FA é configurado no primeiro login.
  */
 class DemoSeeder extends Seeder
@@ -113,6 +120,7 @@ class DemoSeeder extends Seeder
         $this->portfolio($eduardo, $joint);
         $this->fixedIncome($eduardo);
         $this->foreign($eduardo);
+        $this->debts($household, $eduardo);
 
         app(CreateTransfer::class)->execute($eduardo, [
             'from_account_id' => $joint->id,
@@ -457,6 +465,49 @@ class DemoSeeder extends Seeder
                 $record->save();
             }
         }
+    }
+
+    /**
+     * Financiamento SAC na conta conjunta (parcelas pagas até hoje e uma amortização
+     * extraordinária no meio) e empréstimo pessoal Price na conta do Eduardo.
+     */
+    private function debts(Household $household, User $eduardo): void
+    {
+        $debts = app(ManageDebts::class);
+        $joint = Account::where('name', 'Conta conjunta')->sole();
+        $personal = Account::where('name', 'Nubank Eduardo')->sole();
+        $category = fn (string $name): int => Category::where('household_id', $household->id)->where('name', $name)->valueOrFail('id');
+
+        $payUntil = function (Debt $debt, Carbon $until) use ($eduardo): void {
+            app(GenerateDebtInstallments::class)->execute($debt);
+
+            DebtInstallment::where('debt_id', $debt->id)->whereNotNull('transaction_id')->whereDate('due_date', '<=', $until)->orderBy('number')->get()
+                ->each(function (DebtInstallment $installment) use ($eduardo): void {
+                    $transaction = Transaction::findOrFail($installment->transaction_id);
+
+                    if ($transaction->status === TransactionStatus::Scheduled) {
+                        app(MarkAsPaid::class)->execute($eduardo, $transaction, $installment->due_date);
+                    }
+                });
+        };
+
+        $mortgage = $debts->create($eduardo, [
+            'name' => 'Financiamento do apartamento', 'creditor' => 'Caixa Econômica Federal', 'principal' => 32000000,
+            'monthly_rate' => '0,79', 'system' => 'sac', 'installments_count' => 360,
+            'first_due_date' => today()->startOfMonth()->subMonthsNoOverflow(8)->day(20)->toDateString(),
+            'payment_account_id' => $joint->id, 'category_id' => $category('Moradia'),
+        ]);
+        $payUntil($mortgage, today()->startOfMonth()->subMonthsNoOverflow(4)->day(20));
+        $debts->prepay($eduardo, $mortgage, today()->startOfMonth()->subMonthsNoOverflow(4)->day(25), 2000000, PrepaymentMode::ReduceTerm);
+        $payUntil($mortgage, today());
+
+        $loan = $debts->create($eduardo, [
+            'name' => 'Empréstimo pessoal', 'creditor' => 'Banco Inter', 'principal' => 1500000,
+            'monthly_rate' => '1,89', 'system' => 'price', 'installments_count' => 18,
+            'first_due_date' => today()->startOfMonth()->subMonthsNoOverflow(3)->day(8)->toDateString(),
+            'payment_account_id' => $personal->id, 'category_id' => $category('Outras despesas'),
+        ]);
+        $payUntil($loan, today());
     }
 
     private function recurrence(Household $household, User $payer, Account $account, string $category, int $amount, string $frequency, ?int $day, Carbon $start, bool $estimate = false, ?string $description = null): void
