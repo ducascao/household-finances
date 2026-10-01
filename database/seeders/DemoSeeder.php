@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Domain\Accounts\CreateAccount;
+use App\Domain\Accounts\SetOpeningBalance;
 use App\Domain\Attachments\AttachFile;
 use App\Domain\Budgets\CopyPreviousMonth;
 use App\Domain\Budgets\SaveBudget;
@@ -127,6 +128,10 @@ class DemoSeeder extends Seeder
 
         $this->goals($eduardo, $maria);
         $this->goods($eduardo, $maria);
+
+        // Carteira com saldo inicial datado (E18): o saldo informado vale a partir do início do histórico de demonstração.
+        $wallet = Account::where('name', 'Carteira')->sole();
+        app(SetOpeningBalance::class)->execute($eduardo, $wallet, $wallet->initial_balance->getMinorAmount()->toInt(), today()->startOfMonth()->subMonthsNoOverflow(6)->subDay());
 
         // Histórico do patrimônio: fotografias dos últimos 6 meses (mesmo cálculo do comando app:net-worth).
         for ($month = today()->startOfMonth()->subMonthsNoOverflow(6); $month->lte(today()); $month->addMonthNoOverflow()) {

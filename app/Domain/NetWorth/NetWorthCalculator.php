@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
  * Patrimônio líquido numa data (em reais) = contas + investimentos + bens − dívidas.
  *
  * - Contas: saldo inicial + lançamentos pagos com data até a data (contas em outra moeda pelo câmbio da data).
+ *   Conta com data do saldo inicial: só os pagos depois dela; antes dela a conta fica de fora (sem saldo confiável).
  *   Cartões com saldo negativo contam como dívida (fatura em aberto).
  * - Investimentos: valor de cada ativo na data (AssetValuation), convertido pelo câmbio da data.
  * - Bens: valor de cada bem na data (GoodValue: última avaliação até a data, fora antes da compra e depois da venda).
@@ -61,14 +62,20 @@ class NetWorthCalculator
     private function accountBalances(Collection $accounts, Carbon $date, NetWorthBreakdown $breakdown): void
     {
         $sums = DB::table('transactions')
-            ->whereIn('account_id', $accounts->modelKeys())
-            ->where('status', TransactionStatus::Paid->value)
-            ->whereDate('date', '<=', $date)
-            ->groupBy('account_id')
-            ->selectRaw('account_id, sum(amount) as total')
+            ->join('accounts', 'accounts.id', '=', 'transactions.account_id')
+            ->whereIn('transactions.account_id', $accounts->modelKeys())
+            ->where('transactions.status', TransactionStatus::Paid->value)
+            ->whereDate('transactions.date', '<=', $date)
+            ->where(fn ($query) => $query->whereNull('accounts.balance_date')->orWhereColumn('transactions.date', '>', 'accounts.balance_date'))
+            ->groupBy('transactions.account_id')
+            ->selectRaw('transactions.account_id, sum(transactions.amount) as total')
             ->pluck('total', 'account_id');
 
         foreach ($accounts as $account) {
+            if ($account->balance_date !== null && $date->lt($account->balance_date)) {
+                continue;
+            }
+
             $balance = $account->initial_balance->getMinorAmount()->toInt() + (int) ($sums[$account->id] ?? 0);
 
             try {

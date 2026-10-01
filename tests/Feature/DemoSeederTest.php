@@ -60,6 +60,7 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(DebtPrepayment::count())->toBe(1)
         ->and(NetWorthSnapshot::count())->toBe(7 * 3)
         ->and(Goal::count())->toBe(3)
+        ->and(Account::whereNotNull('balance_date')->count())->toBe(1)
         ->and(Good::count())->toBe(3)
         ->and(GoodValuation::count())->toBe(3)
         ->and(NetWorthSnapshot::whereNull('user_id')->latest('month')->value('goods'))->toBe(41500000);
