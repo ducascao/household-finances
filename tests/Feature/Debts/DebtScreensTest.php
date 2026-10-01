@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Debts\DebtSummary;
 use App\Domain\Debts\ManageDebts;
 use App\Domain\Household\CreateHousehold;
 use App\Filament\Resources\Debts\Pages\CreateDebt;
@@ -10,6 +11,7 @@ use App\Models\Account;
 use App\Models\Category;
 use App\Models\Debt;
 use App\Models\DebtPrepayment;
+use App\Models\InterestRate;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Livewire\Livewire;
@@ -32,7 +34,7 @@ it('mostra a prévia e cadastra a dívida pelo formulário', function () {
     Livewire::test(CreateDebt::class)
         ->fillForm([
             'name' => 'Empréstimo', 'creditor' => 'Banco X', 'system' => 'price',
-            'principal' => '10.000,00', 'monthly_rate' => '1', 'installments_count' => 12, 'first_due_date' => '2026-02-15',
+            'principal' => '10.000,00', 'rate' => '1', 'rate_period' => 'monthly', 'installments_count' => 12, 'first_due_date' => '2026-02-15',
         ])
         ->assertSee('R$ 888,49')
         ->fillForm(['payment_account_id' => $this->account->id, 'category_id' => $this->category->id])
@@ -82,4 +84,43 @@ it('lista só as dívidas visíveis', function () {
 
     Livewire::test(ListDebts::class)->assertCanSeeTableRecords([$shared])->assertCanNotSeeTableRecords([$private]);
     $this->get(route('filament.app.resources.debts.view', $private))->assertNotFound();
+});
+
+it('cadastra financiamento com taxa anual, TR e encargos pela tela e ajusta o saldo devedor', function () {
+    InterestRate::create(['series' => InterestRate::TR, 'date' => '2026-01-15', 'rate' => '0.1700']);
+
+    Livewire::test(CreateDebt::class)
+        ->fillForm([
+            'name' => 'Imobiliário', 'creditor' => 'Banco Exemplo', 'system' => 'sac', 'principal' => '100.000,00',
+            'rate' => '8,25', 'rate_period' => 'annual_effective', 'installments_count' => 100, 'first_due_date' => '2026-02-15',
+            'tr_correction' => true, 'insurance_rate' => '0,0150', 'monthly_fee' => '40,00',
+        ])
+        // correção 170,00; amortização 100.170 ÷ 100 = 1.001,70; juros 0,66279668% = 663,92; seguro 15,03 + 40,00
+        ->assertSee('Juros equivalentes: 0,662797% ao mês')
+        ->assertSee('correção do saldo (TR)')
+        ->assertSee('R$ 170,00')
+        ->assertSee('R$ 1.001,70')
+        ->assertSee('R$ 663,92')
+        ->assertSee('R$ 55,03')
+        ->assertSee('R$ 1.720,65')
+        ->fillForm(['payment_account_id' => $this->account->id, 'category_id' => $this->category->id])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $debt = Debt::sole();
+    expect($debt->tr_correction)->toBeTrue()
+        ->and($debt->monthly_fee)->toBe(4000)
+        ->and($debt->monthly_rate)->toBe('0.66279668');
+
+    $this->get(route('filament.app.resources.debts.view', $debt))->assertSuccessful()->assertSee('corrigido pela TR');
+
+    Livewire::test(InstallmentsRelationManager::class, ['ownerRecord' => $debt, 'pageClass' => ViewDebt::class])
+        ->assertSee('Correção (TR)')
+        ->assertSee('Seguros/encargos');
+
+    Livewire::test(ViewDebt::class, ['record' => $debt->getRouteKey()])
+        ->callAction('adjustBalance', ['balance' => '99.000,00', 'date' => '2026-01-10'])
+        ->assertHasNoActionErrors();
+
+    expect((new DebtSummary($debt->refresh()))->outstanding())->toBe(9900000);
 });

@@ -360,6 +360,11 @@ class DemoSeeder extends Seeder
             $drift = 1 - $monthsAgo * 0.015;
 
             foreach ($assets as $ticker => $asset) {
+                // No dia 1º, o fim do mês anterior já está entre as cotações dos últimos dias úteis.
+                if (AssetPrice::where('asset_id', $asset->id)->whereDate('date', $date)->exists()) {
+                    continue;
+                }
+
                 $value = $base[$ticker] * $drift * ($ticker === 'BBAS3' && $date->lt($splitDate) ? 2 : 1);
                 $price = new AssetPrice(['asset_id' => $asset->id, 'date' => $date, 'source' => PriceSource::Api]);
                 $price->household_id = $asset->household_id;
@@ -507,9 +512,17 @@ class DemoSeeder extends Seeder
                 });
         };
 
+        // TR fictícia (em produção vem do Banco Central): períodos que começam no dia 20 dos últimos 10 meses.
+        for ($monthsAgo = 10; $monthsAgo >= 0; $monthsAgo--) {
+            $start = today()->startOfMonth()->subMonthsNoOverflow($monthsAgo)->day(20);
+            InterestRate::updateOrCreate(['series' => InterestRate::TR, 'date' => $start->toDateString()], ['rate' => number_format(0.17 - $monthsAgo * 0.002, 4, '.', '')]);
+        }
+
+        // Financiamento imobiliário como os reais: SAC corrigido pela TR, seguro sobre o saldo e encargo fixo.
         $mortgage = $debts->create($eduardo, [
             'name' => 'Financiamento do apartamento', 'creditor' => 'Caixa Econômica Federal', 'principal' => 32000000,
-            'monthly_rate' => '0,79', 'system' => 'sac', 'installments_count' => 360,
+            'rate' => '9,5', 'rate_period' => 'annual_effective', 'system' => 'sac', 'installments_count' => 360,
+            'tr_correction' => true, 'insurance_rate' => '0,0150', 'monthly_fee' => 4000,
             'first_due_date' => today()->startOfMonth()->subMonthsNoOverflow(8)->day(20)->toDateString(),
             'payment_account_id' => $joint->id, 'category_id' => $category('Moradia'),
         ]);

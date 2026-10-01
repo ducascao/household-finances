@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Debts\Pages;
 
 use App\Domain\Debts\DebtSummary;
 use App\Domain\Debts\ManageDebts;
+use App\Enums\DebtSystem;
 use App\Enums\PrepaymentMode;
 use App\Filament\Forms\MoneyInput;
 use App\Filament\Resources\Debts\DebtResource;
@@ -51,6 +52,28 @@ class ViewDebt extends ViewRecord
                     }
 
                     Notification::make()->success()->title('Amortização registrada e parcelas recalculadas.')->send();
+                }),
+            Action::make('adjustBalance')
+                ->label('Ajustar saldo devedor')
+                ->icon(Heroicon::OutlinedScale)
+                ->color('gray')
+                ->visible(fn (): bool => $this->record->system !== DebtSystem::Custom && ! (new DebtSummary($this->record))->isPaidOff())
+                ->modalDescription('Informe o saldo devedor que o banco mostra hoje (depois da última parcela paga). As parcelas ainda não pagas são recalculadas a partir dele.')
+                ->schema([
+                    MoneyInput::make('balance')->label('Saldo devedor no banco')->required(),
+                    DatePicker::make('date')->label('Data')->displayFormat('d/m/Y')->native(false)->default(now())->maxDate(now())->required(),
+                ])
+                ->action(function (array $data, Action $action): void {
+                    try {
+                        app(ManageDebts::class)->adjustBalance($this->user(), $this->record, Carbon::parse($data['date']), (int) $data['balance']);
+                    } catch (ValidationException $e) {
+                        Notification::make()->danger()->title($e->getMessage())->send();
+                        $action->halt();
+
+                        return;
+                    }
+
+                    Notification::make()->success()->title('Saldo ajustado e parcelas recalculadas.')->send();
                 }),
             Action::make('delete')
                 ->label('Excluir')

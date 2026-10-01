@@ -10,19 +10,22 @@ use Illuminate\Support\Carbon;
 
 /**
  * Parcela da dívida (centavos). Está paga quando o lançamento ligado a ela está pago.
+ * total = amortização + juros + encargos (seguros e taxas); correction = correção do saldo (TR) aplicada antes da parcela.
  *
  * @property int $id
  * @property int $household_id
  * @property int $debt_id
  * @property int $number
  * @property Carbon $due_date
+ * @property int $correction
  * @property int $amortization
  * @property int $interest
+ * @property int $charges
  * @property int $total
  * @property int $balance_after
  * @property int|null $transaction_id
  */
-#[Fillable(['debt_id', 'number', 'due_date', 'amortization', 'interest', 'total', 'balance_after', 'transaction_id'])]
+#[Fillable(['debt_id', 'number', 'due_date', 'correction', 'amortization', 'interest', 'charges', 'total', 'balance_after', 'transaction_id'])]
 class DebtInstallment extends Model
 {
     use BelongsToHousehold;
@@ -32,7 +35,9 @@ class DebtInstallment extends Model
         return [
             'number' => 'integer',
             'due_date' => 'date',
+            'correction' => 'integer',
             'amortization' => 'integer',
+            'charges' => 'integer',
             'interest' => 'integer',
             'total' => 'integer',
             'balance_after' => 'integer',

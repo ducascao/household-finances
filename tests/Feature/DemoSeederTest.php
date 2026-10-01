@@ -49,7 +49,7 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(Budget::whereDate('month', today()->startOfMonth())->count())->toBe(10)
         ->and(Attachment::where('disk', 'local')->count())->toBe(2)
         ->and(Asset::count())->toBe(10)
-        ->and(AssetPrice::count())->toBe(20 + 24 + 9)
+        ->and(AssetPrice::count())->toBeBetween(20 + 20 + 9, 20 + 24 + 9) // no dia 1º, o fim do mês anterior coincide com um dos últimos dias úteis
         ->and(AssetIncome::count())->toBeGreaterThanOrEqual(5)
         ->and(InterestRate::count())->toBeGreaterThan(100)
         ->and(Asset::whereIn('type', ['fixed_income', 'pension'])->count())->toBe(3)
@@ -57,6 +57,7 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(Asset::whereHas('account', fn ($q) => $q->where('currency', 'USD'))->count())->toBe(3)
         ->and(ExchangeRate::count())->toBeGreaterThan(100)
         ->and(Debt::count())->toBe(2)
+        ->and(Debt::where('tr_correction', true)->count())->toBe(1)
         ->and(DebtPrepayment::count())->toBe(1)
         ->and(NetWorthSnapshot::count())->toBe(7 * 3)
         ->and(Goal::count())->toBe(3)

@@ -13,6 +13,7 @@ use App\Models\Account;
 use App\Models\Asset;
 use App\Models\AssetOperation;
 use App\Models\Debt;
+use App\Models\DebtAdjustment;
 use App\Models\DebtInstallment;
 use App\Models\DebtPrepayment;
 use App\Models\ManualValuation;
@@ -28,7 +29,8 @@ use Illuminate\Support\Facades\DB;
  *   Cartões com saldo negativo contam como dívida (fatura em aberto).
  * - Investimentos: valor de cada ativo na data (AssetValuation), convertido pelo câmbio da data.
  * - Bens: valor de cada bem na data (GoodValue: última avaliação até a data, fora antes da compra e depois da venda).
- * - Dívidas: principal − amortização das parcelas pagas até a data − amortizações extraordinárias até a data,
+ * - Dívidas: principal + correção (TR) − amortização das parcelas pagas até a data − amortizações extraordinárias
+ *   e ajustes de saldo até a data,
  *   a partir de um mês antes do 1º vencimento (quando o dinheiro foi liberado).
  *
  * Tudo depende só do que aconteceu até a data, então recalcular um mês passado repete o valor.
@@ -168,14 +170,19 @@ class NetWorthCalculator
                 ->join('transactions', 'transactions.id', '=', 'debt_installments.transaction_id')
                 ->where('transactions.status', TransactionStatus::Paid->value)
                 ->whereDate('transactions.date', '<=', $date)
-                ->sum('debt_installments.amortization');
+                ->sum(DB::raw('debt_installments.amortization - debt_installments.correction'));
 
             $prepaid = (int) DebtPrepayment::withoutGlobalScopes()
                 ->where('debt_id', $debt->id)
                 ->whereDate('date', '<=', $date)
                 ->sum('amount');
 
-            $outstanding = max(0, $debt->principal - $amortized - $prepaid);
+            $adjusted = (int) DebtAdjustment::withoutGlobalScopes()
+                ->where('debt_id', $debt->id)
+                ->whereDate('date', '<=', $date)
+                ->sum('amount');
+
+            $outstanding = max(0, $debt->principal - $amortized - $prepaid + $adjusted);
 
             if ($outstanding > 0) {
                 $breakdown->debtItems[$debt->name] = $outstanding;

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 /**
- * Taxa diária de uma série pública (CDI). Dado de mercado, sem household_id.
+ * Taxa de uma série pública: CDI diário ou TR mensal (pela data de início do período). Dado de mercado, sem household_id.
  *
  * @property int $id
  * @property string $series
@@ -18,6 +18,8 @@ use Illuminate\Support\Carbon;
 class InterestRate extends Model
 {
     public const CDI = 'cdi';
+
+    public const TR = 'tr';
 
     protected function casts(): array
     {
