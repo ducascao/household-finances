@@ -28,9 +28,10 @@ use Illuminate\Support\Carbon;
  * @property AccountVisibility $visibility
  * @property string $currency
  * @property Money $initial_balance
+ * @property Carbon|null $balance_date
  * @property Carbon|null $archived_at
  */
-#[Fillable(['owner_id', 'name', 'type', 'visibility', 'currency', 'initial_balance', 'archived_at'])]
+#[Fillable(['owner_id', 'name', 'type', 'visibility', 'currency', 'initial_balance', 'balance_date', 'archived_at'])]
 class Account extends Model
 {
     /** @use HasFactory<AccountFactory> */
@@ -47,6 +48,7 @@ class Account extends Model
             'type' => AccountType::class,
             'visibility' => AccountVisibility::class,
             'initial_balance' => MoneyCast::class,
+            'balance_date' => 'date',
             'archived_at' => 'datetime',
         ];
     }

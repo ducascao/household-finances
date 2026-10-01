@@ -14,7 +14,7 @@ class AccountRules
 {
     /**
      * @param  array<string, mixed>  $data
-     * @return array{name: string, type: string, visibility: string, currency: string, initial_balance: int}
+     * @return array{name: string, type: string, visibility: string, currency: string, initial_balance: int, balance_date: string|null}
      */
     public static function validate(array $data): array
     {
@@ -24,9 +24,10 @@ class AccountRules
             'visibility' => $data['visibility'] instanceof AccountVisibility ? $data['visibility']->value : ($data['visibility'] ?? null),
             'currency' => strtoupper((string) ($data['currency'] ?? 'BRL')),
             'initial_balance' => $data['initial_balance'] ?? 0,
+            'balance_date' => filled($data['balance_date'] ?? null) ? $data['balance_date'] : null,
         ];
 
-        /** @var array{name: string, type: string, visibility: string, currency: string, initial_balance: int} */
+        /** @var array{name: string, type: string, visibility: string, currency: string, initial_balance: int, balance_date: string|null} */
         return Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(AccountType::class)],
@@ -39,12 +40,14 @@ class AccountRules
                 }
             }],
             'initial_balance' => ['required', 'integer'],
-        ], attributes: [
+            'balance_date' => ['nullable', 'date', 'before_or_equal:today'],
+        ], ['balance_date.before_or_equal' => 'A data do saldo inicial não pode ser futura.'], attributes: [
             'name' => 'nome',
             'type' => 'tipo',
             'visibility' => 'visibilidade',
             'currency' => 'moeda',
             'initial_balance' => 'saldo inicial',
+            'balance_date' => 'data do saldo inicial',
         ])->validate();
     }
 }

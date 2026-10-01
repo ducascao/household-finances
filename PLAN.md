@@ -467,6 +467,27 @@ Notas da entrega:
 - Lote guarda o leitor usado (`import_batches.reader`), mostrado na revisão ("PDF lido como: …").
 - DemoSeeder sem lote de PDF (não há PDF real de exemplo); os lotes de demonstração continuam OFX/CSV.
 
+### E18 — Saldo inicial em uma data
+**Valor:** começar o uso com histórico de investimentos sem que aportes e compras antigos deixem o saldo das contas negativo.
+
+Escopo
+- [x] `accounts.balance_date` (opcional): o saldo inicial é o saldo real no fim desse dia; lançamentos pagos até ele ficam no histórico e na carteira, mas não entram no saldo
+- [x] Saldo atual, projetado e saldo numa data respeitam a data; previstos (mesmo atrasados de antes dela) continuam no projetado
+- [x] Patrimônio: antes da data a conta fica de fora; a partir dela, saldo inicial + pagos depois
+- [x] Campo "Saldo inicial em" no formulário da conta e ação "Ajustar saldo" na lista de contas
+
+Critérios de aceite
+- [x] Conta sem data continua igual; com data, pagos até ela não contam e previstos contam no projetado (teste)
+- [x] Saldo vale no fim do dia: lançamento pago no próprio dia não entra (teste)
+- [x] Patrimônio antes e depois da data (teste)
+- [x] Ajuste pela tela, data futura recusada e usuário B não ajusta conta pessoal de A (teste)
+
+Notas da entrega:
+- Ação de domínio `App\Domain\Accounts\SetOpeningBalance`; cálculo centralizado em `AccountBalance` (lista de contas, painel, resumo mensal e metas herdam) e em `NetWorthCalculator`.
+- Projetado passou a somar explicitamente "pagos que contam + previstos até o fim do mês" (antes era "pagos ou vencimento até o fim do mês"; mesmo resultado sem data do saldo).
+- Motivação: carga inicial real com aportes/compras antigos lançados sem as entradas da época deixou PicPay, Mercado Pago e BTG negativos. Uso: Contas → Ajustar saldo com o saldo real de hoje.
+- DemoSeeder: Carteira com saldo inicial datado no início do histórico de demonstração.
+
 ## Pontos em aberto
 
 - [x] **Reativar o 2FA na entrega final** (feito ao fechar a E15): em desenvolvimento está desligado (`AUTH_MFA_ENABLED=false` no `.env`), a pedido, para facilitar os testes. Na entrega final, voltar para `true` (padrão do `.env.example` e dos testes).

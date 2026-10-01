@@ -6,6 +6,7 @@ use App\Enums\AccountType;
 use App\Enums\AccountVisibility;
 use App\Filament\Forms\MoneyInput;
 use App\Models\Account;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -46,6 +47,12 @@ class AccountForm
                     ->label('Saldo inicial')
                     ->default(0)
                     ->required(),
+                DatePicker::make('balance_date')
+                    ->label('Saldo inicial em')
+                    ->displayFormat('d/m/Y')
+                    ->native(false)
+                    ->maxDate(now())
+                    ->helperText('Opcional. Saldo real no fim deste dia: lançamentos pagos até ele ficam no histórico, mas não mexem no saldo.'),
                 Section::make('Cartão de crédito')
                     ->description('Compras antes do dia de fechamento caem na fatura que fecha no mês; no dia do fechamento ou depois, na seguinte.')
                     ->columns(3)

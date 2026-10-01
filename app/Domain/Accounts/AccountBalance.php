@@ -12,8 +12,10 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Saldo atual = saldo inicial + lançamentos pagos.
- * Saldo projetado = saldo atual + previstos com vencimento até o fim do mês corrente (inclui atrasados).
+ * Saldo atual = saldo inicial + lançamentos pagos. Com data do saldo inicial (balance_date), só contam os
+ * pagos com data depois dela: o saldo inicial já é o saldo real no fim daquele dia.
+ * Saldo projetado = saldo atual + previstos com vencimento até o fim do mês corrente (inclui atrasados,
+ * mesmo de antes da data do saldo inicial: ainda vão sair ou entrar).
  */
 class AccountBalance
 {
@@ -32,14 +34,16 @@ class AccountBalance
         return $query
             ->selectSub(
                 self::sumQuery()->selectRaw('accounts.initial_balance + coalesce(sum(transactions.amount), 0)')
-                    ->where('transactions.status', TransactionStatus::Paid->value),
+                    ->where(fn (QueryBuilder $query) => self::paidAfterOpening($query)),
                 'current_balance',
             )
             ->selectSub(
                 self::sumQuery()->selectRaw('accounts.initial_balance + coalesce(sum(transactions.amount), 0)')
                     ->where(fn (QueryBuilder $query) => $query
-                        ->where('transactions.status', TransactionStatus::Paid->value)
-                        ->orWhereDate('transactions.due_date', '<=', self::projectionEnd())),
+                        ->where(fn (QueryBuilder $query) => self::paidAfterOpening($query))
+                        ->orWhere(fn (QueryBuilder $query) => $query
+                            ->where('transactions.status', TransactionStatus::Scheduled->value)
+                            ->whereDate('transactions.due_date', '<=', self::projectionEnd()))),
                 'projected_balance',
             );
     }
@@ -53,6 +57,7 @@ class AccountBalance
                 + (int) DB::table('transactions')
                     ->where('account_id', $account->id)
                     ->where('status', TransactionStatus::Paid->value)
+                    ->when($account->balance_date, fn (QueryBuilder $query, Carbon $date) => $query->whereDate('date', '>', $date))
                     ->sum('amount');
         }
 
@@ -87,6 +92,7 @@ class AccountBalance
             ->where('account_id', $account->id)
             ->where('status', TransactionStatus::Paid->value)
             ->whereDate('date', '<=', $cutoff)
+            ->when($account->balance_date, fn (QueryBuilder $query, Carbon $date) => $query->whereDate('date', '>', $date))
             ->sum('amount');
 
         $scheduled = $cutoff->lt(today()) ? 0 : (int) DB::table('transactions')
@@ -123,6 +129,18 @@ class AccountBalance
     public static function projectionEnd(): Carbon
     {
         return today()->endOfMonth()->startOfDay();
+    }
+
+    /**
+     * Pagos que contam no saldo: todos, ou só os depois da data do saldo inicial da conta.
+     */
+    private static function paidAfterOpening(QueryBuilder $query): QueryBuilder
+    {
+        return $query
+            ->where('transactions.status', TransactionStatus::Paid->value)
+            ->where(fn (QueryBuilder $query) => $query
+                ->whereNull('accounts.balance_date')
+                ->orWhereColumn('transactions.date', '>', 'accounts.balance_date'));
     }
 
     private static function sumQuery(): QueryBuilder
