@@ -488,6 +488,28 @@ Notas da entrega:
 - Motivação: carga inicial real com aportes/compras antigos lançados sem as entradas da época deixou PicPay, Mercado Pago e BTG negativos. Uso: Contas → Ajustar saldo com o saldo real de hoje.
 - DemoSeeder: Carteira com saldo inicial datado no início do histórico de demonstração.
 
+### E19 — Financiamento com TR e encargos mensais
+**Valor:** o financiamento imobiliário bate com o débito do banco (parcela e saldo devedor).
+
+Escopo
+- [x] Taxa informada ao mês ou ao ano (efetiva ou nominal), convertida para a taxa mensal guardada
+- [x] Correção do saldo pela TR (série 226 do SGS/Banco Central, atrás de `InterestRateProvider`), em cada vencimento, com a TR do período que começa um mês antes; parcelas futuras com a última TR conhecida, recalculadas quando sai a TR nova (job diário)
+- [x] Encargos na parcela: seguro em % sobre o saldo corrigido (MIP) e valor fixo (DFI, taxa de administração)
+- [x] "Ajustar saldo devedor": grava a diferença para o saldo do banco e recalcula as parcelas não pagas
+- [x] Saldo devedor e patrimônio incluem a correção das parcelas pagas e os ajustes
+
+Critérios de aceite
+- [x] Com parâmetros de um financiamento real (mantidos fora do repositório) e a TR oficial de abr–out/2026, as 7 parcelas bateram com os débitos do banco (até R$ 0,02) e o saldo após setembro com R$ 0,01; o teste usa parâmetros fictícios com esperados calculados por script independente (teste)
+- [x] TR nova recalcula a parcela futura e atualiza o lançamento previsto sem recriá-lo (teste)
+- [x] Taxa anual efetiva/nominal → mensal; encargos na parcela e fora do saldo; ajuste de saldo; amortização extraordinária com TR; usuário B não ajusta dívida de conta pessoal de A (teste)
+
+Notas da entrega:
+- Calibrado com o financiamento real do usuário (SAC com taxa anual efetiva; valores fora do repositório, que é público): seguro em % sobre o saldo corrigido mais um valor fixo reproduzem as 7 parcelas de abr a out/2026 com no máximo R$ 0,01 de diferença. A taxa "nominal" foi descartada (exigiria seguro negativo).
+- SAC com TR: amortização = saldo corrigido ÷ parcelas restantes (arredondada ao centavo); Price com TR: parcela recalculada sobre o saldo corrigido e o prazo restante. Sem TR, o cálculo antigo não muda.
+- Recalcular (TR nova, ajuste, amortização extraordinária) atualiza as parcelas não pagas e os lançamentos previstos no lugar, sem apagar/recriar.
+- Tabela informada não aceita TR (a correção já vem na tabela do banco).
+- Correção no DemoSeeder: no dia 1º, a cotação de fim do mês anterior coincidia com um dos últimos dias úteis (chave duplicada); o seeder passou a pular a data repetida.
+
 ## Pontos em aberto
 
 - [x] **Reativar o 2FA na entrega final** (feito ao fechar a E15): em desenvolvimento está desligado (`AUTH_MFA_ENABLED=false` no `.env`), a pedido, para facilitar os testes. Na entrega final, voltar para `true` (padrão do `.env.example` e dos testes).

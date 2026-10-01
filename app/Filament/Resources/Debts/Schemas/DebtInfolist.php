@@ -18,7 +18,14 @@ class DebtInfolist
 
         return $schema->components([
             Section::make(fn (Debt $record): string => $record->name)
-                ->description(fn (Debt $record): string => $record->creditor.' · '.$record->system->label().' · '.Quantity::format($record->monthly_rate, 2).'% a.m.')
+                ->description(fn (Debt $record): string => implode(' · ', array_filter([
+                    $record->creditor,
+                    $record->system->label(),
+                    Quantity::format($record->monthly_rate, 4).'% a.m. ('.Quantity::format(number_format(((1 + (float) $record->monthly_rate / 100) ** 12 - 1) * 100, 2, '.', ''), 2).'% a.a. efetiva)',
+                    $record->tr_correction ? 'corrigido pela TR' : null,
+                    (float) $record->insurance_rate > 0 ? 'seguro '.Quantity::format($record->insurance_rate, 4).'% do saldo' : null,
+                    $record->monthly_fee > 0 ? 'encargos fixos '.MoneyFormatter::formatMinor($record->monthly_fee) : null,
+                ])))
                 ->columns(4)
                 ->columnSpanFull()
                 ->schema([
@@ -42,6 +49,15 @@ class DebtInfolist
                         ->state(fn (Debt $record): string => MoneyFormatter::formatMinor($summary($record)->totalRemaining())),
                     TextEntry::make('prepaid')->label('Amortizações extraordinárias')
                         ->state(fn (Debt $record): string => MoneyFormatter::formatMinor($summary($record)->prepaid())),
+                    TextEntry::make('corrected')->label('Correção pela TR (paga)')
+                        ->visible(fn (Debt $record): bool => $record->tr_correction)
+                        ->state(fn (Debt $record): string => MoneyFormatter::formatMinor($summary($record)->corrected())),
+                    TextEntry::make('charges_remaining')->label('Seguros e encargos a pagar')
+                        ->visible(fn (Debt $record): bool => (float) $record->insurance_rate > 0 || $record->monthly_fee > 0)
+                        ->state(fn (Debt $record): string => MoneyFormatter::formatMinor($summary($record)->chargesRemaining())),
+                    TextEntry::make('adjusted')->label('Ajustes de saldo')
+                        ->visible(fn (Debt $record): bool => $summary($record)->adjusted() !== 0)
+                        ->state(fn (Debt $record): string => MoneyFormatter::formatMinor($summary($record)->adjusted())),
                     TextEntry::make('paymentAccount.name')->label('Conta de pagamento'),
                     TextEntry::make('category.name')->label('Categoria'),
                 ]),

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Debts;
 
+use App\Enums\DebtSystem;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Support\Carbon;
@@ -15,6 +16,10 @@ use InvalidArgumentException;
  * - SAC: amortização = P ÷ n (arredondada para baixo); juros sobre o saldo.
  * - A última parcela amortiza o saldo que restar (absorve os centavos) e zera o saldo.
  * - Vencimentos mensais a partir do primeiro, mantendo o dia (31 cai no último dia em meses curtos).
+ *
+ * Com correção pela TR (financiamento imobiliário), em cada parcela: saldo corrigido = saldo × (1 + TR do período);
+ * SAC: amortização = saldo corrigido ÷ parcelas restantes; Price: parcela recalculada sobre o saldo corrigido e o
+ * prazo restante; juros sobre o saldo corrigido. Encargos (seguro % do saldo corrigido + fixo) somam na parcela.
  */
 class AmortizationSchedule
 {
@@ -41,6 +46,78 @@ class AmortizationSchedule
         $amortization = $fixedAmortization ?? intdiv($balance, $count ?? throw new InvalidArgumentException('Informe o número de parcelas.'));
 
         return self::build($balance, self::rate($monthlyRate), $count, $firstDue, $firstNumber, fn (int $interest, int $remaining): int => $amortization);
+    }
+
+    /**
+     * Tabela com as condições completas da dívida (TR e encargos). Sem TR, igual a price()/sac() mais os encargos.
+     *
+     * @return list<ScheduleRow>
+     */
+    public static function schedule(DebtTerms $terms, int $balance, int $count, Carbon $firstDue, int $firstNumber = 1): array
+    {
+        if ($terms->trFor === null) {
+            $rows = $terms->system === DebtSystem::Price
+                ? self::price($balance, $terms->monthlyRate, $count, $firstDue, $firstNumber)
+                : self::sac($balance, $terms->monthlyRate, $count, $firstDue, $firstNumber);
+
+            return self::withCharges($terms, $rows);
+        }
+
+        if ($count < 1) {
+            throw new InvalidArgumentException('Informe ao menos uma parcela.');
+        }
+
+        $rate = self::rate($terms->monthlyRate);
+        $rows = [];
+
+        for ($i = 0; $i < $count && $balance > 0; $i++) {
+            $due = self::dueDate($firstDue, $i);
+            $correction = BigDecimal::of($balance)->multipliedBy(($terms->trFor)($due))->toScale(0, RoundingMode::HalfUp)->toInt();
+            $corrected = $balance + $correction;
+            $remaining = $count - $i;
+            $interest = BigDecimal::of($corrected)->multipliedBy($rate)->toScale(0, RoundingMode::HalfUp)->toInt();
+
+            $amortization = match (true) {
+                $remaining === 1 => $corrected,
+                $terms->system === DebtSystem::Price => self::pricePayment($corrected, $rate, $remaining) - $interest,
+                default => BigDecimal::of($corrected)->dividedBy($remaining, 0, RoundingMode::HalfUp)->toInt(),
+            };
+
+            if ($amortization <= 0) {
+                throw new InvalidArgumentException('A parcela não cobre os juros: a dívida nunca seria quitada.');
+            }
+
+            $amortization = min($amortization, $corrected);
+            $balance = $corrected - $amortization;
+
+            $rows[] = new ScheduleRow($firstNumber + $i, $due, $amortization, $interest, $balance, $correction, self::charges($terms, $corrected));
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Soma os encargos (seguro sobre o saldo antes da parcela + fixo) a uma tabela sem TR.
+     *
+     * @param  list<ScheduleRow>  $rows
+     * @return list<ScheduleRow>
+     */
+    public static function withCharges(DebtTerms $terms, array $rows): array
+    {
+        return array_map(fn (ScheduleRow $row): ScheduleRow => new ScheduleRow(
+            $row->number, $row->dueDate, $row->amortization, $row->interest, $row->balanceAfter, 0,
+            self::charges($terms, $row->balanceAfter + $row->amortization),
+        ), $rows);
+    }
+
+    /**
+     * Encargos da parcela: seguro proporcional ao saldo (corrigido) + valor fixo.
+     */
+    public static function charges(DebtTerms $terms, int $balance): int
+    {
+        $insurance = BigDecimal::of($balance)->multipliedBy(self::rate($terms->insuranceRate))->toScale(0, RoundingMode::HalfUp)->toInt();
+
+        return $insurance + $terms->monthlyFee;
     }
 
     /**

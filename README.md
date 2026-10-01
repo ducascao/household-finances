@@ -113,6 +113,19 @@ Para desenvolver sem conta Google, use `ATTACHMENTS_DISK=local` no `.env`.
   docker compose exec app php artisan app:fetch-cdi --from=2020-01-01
   ```
 
+## Financiamentos (TR, seguros e encargos)
+
+Em **Patrimônio → Dívidas**, o financiamento pode ser cadastrado com a taxa **ao mês** ou **ao ano** (efetiva ou
+nominal; o app converte). Use a taxa efetiva de juros do contrato, não o CET. Para financiamento imobiliário:
+
+- **Saldo corrigido pela TR:** em cada vencimento, o saldo é corrigido pela TR do período (série 226 do Banco Central,
+  sem token), atualizada todo dia às 09:10; as parcelas ainda não pagas são recalculadas. Na primeira vez:
+  `docker compose exec app php artisan app:fetch-tr --from=2026-01-01`.
+- **Seguro sobre o saldo (MIP)** em % ao mês e **encargos fixos** (seguro do imóvel, taxa de administração) entram
+  no valor de cada parcela, que passa a bater com o débito do banco.
+- Contrato antigo: cadastre a partir de hoje, com o **saldo devedor atual**, o **prazo restante** e a **próxima parcela**.
+  Se o saldo se afastar do banco, use **Ajustar saldo devedor** na tela da dívida.
+
 ## Importação de extratos
 
 Em **Importações → Importar extrato**, envie OFX (recomendado), CSV (com perfil da conta) ou **PDF** do extrato

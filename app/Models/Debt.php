@@ -23,6 +23,9 @@ use Illuminate\Support\Facades\Auth;
  * @property int $principal
  * @property string $monthly_rate
  * @property DebtSystem $system
+ * @property bool $tr_correction
+ * @property string $insurance_rate
+ * @property int $monthly_fee
  * @property int $installments_count
  * @property Carbon $first_due_date
  * @property int $payment_account_id
@@ -30,7 +33,7 @@ use Illuminate\Support\Facades\Auth;
  * @property DebtStatus $status
  * @property string|null $notes
  */
-#[Fillable(['name', 'creditor', 'principal', 'monthly_rate', 'system', 'installments_count', 'first_due_date', 'payment_account_id', 'category_id', 'status', 'notes'])]
+#[Fillable(['name', 'creditor', 'principal', 'monthly_rate', 'system', 'tr_correction', 'insurance_rate', 'monthly_fee', 'installments_count', 'first_due_date', 'payment_account_id', 'category_id', 'status', 'notes'])]
 class Debt extends Model
 {
     use BelongsToHousehold;
@@ -49,6 +52,8 @@ class Debt extends Model
         return [
             'principal' => 'integer',
             'system' => DebtSystem::class,
+            'tr_correction' => 'boolean',
+            'monthly_fee' => 'integer',
             'status' => DebtStatus::class,
             'installments_count' => 'integer',
             'first_due_date' => 'date',
@@ -77,6 +82,14 @@ class Debt extends Model
     public function installments(): HasMany
     {
         return $this->hasMany(DebtInstallment::class);
+    }
+
+    /**
+     * @return HasMany<DebtAdjustment, $this>
+     */
+    public function adjustments(): HasMany
+    {
+        return $this->hasMany(DebtAdjustment::class);
     }
 
     /**

@@ -31,8 +31,14 @@ class InstallmentsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('number')->label('Nº'),
                 TextColumn::make('due_date')->label('Vencimento')->date('d/m/Y'),
+                TextColumn::make('correction')->label('Correção (TR)')->alignEnd()
+                    ->visible(fn (): bool => $this->debt()->tr_correction)
+                    ->formatStateUsing(fn (int $state): string => MoneyFormatter::formatMinor($state)),
                 TextColumn::make('amortization')->label('Amortização')->alignEnd()->formatStateUsing(fn (int $state): string => MoneyFormatter::formatMinor($state)),
                 TextColumn::make('interest')->label('Juros')->alignEnd()->formatStateUsing(fn (int $state): string => MoneyFormatter::formatMinor($state)),
+                TextColumn::make('charges')->label('Seguros/encargos')->alignEnd()
+                    ->visible(fn (): bool => (float) $this->debt()->insurance_rate > 0 || $this->debt()->monthly_fee > 0)
+                    ->formatStateUsing(fn (int $state): string => MoneyFormatter::formatMinor($state)),
                 TextColumn::make('total')->label('Parcela')->alignEnd()->weight('bold')->formatStateUsing(fn (int $state): string => MoneyFormatter::formatMinor($state)),
                 TextColumn::make('balance_after')->label('Saldo depois')->alignEnd()->formatStateUsing(fn (int $state): string => MoneyFormatter::formatMinor($state)),
                 TextColumn::make('status')->label('Situação')->badge()
@@ -53,9 +59,12 @@ class InstallmentsRelationManager extends RelationManager
 
     private function summary(): DebtSummary
     {
-        /** @var Debt $debt */
-        $debt = $this->getOwnerRecord();
+        return $this->summary ??= new DebtSummary($this->debt());
+    }
 
-        return $this->summary ??= new DebtSummary($debt);
+    private function debt(): Debt
+    {
+        /** @var Debt */
+        return $this->getOwnerRecord();
     }
 }
