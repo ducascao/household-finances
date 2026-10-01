@@ -20,6 +20,21 @@ docker compose exec app php artisan migrate
 
 Acesse `http://localhost:8000` (porta em `APP_PORT`). Na rede de casa, use o IP da máquina.
 
+### Acesso pela rede de casa
+
+Com o Docker Desktop, a porta `APP_PORT` fica aberta em todas as interfaces do Windows: outros aparelhos da rede
+acessam `http://IP-DA-MÁQUINA:8000` (veja o IP com `ipconfig`, adaptador Ethernet/Wi-Fi).
+
+- No `.env`, deixe `APP_URL` com esse endereço e, em uso real, `APP_ENV=production` e `APP_DEBUG=false`
+  (com debug ligado, qualquer erro mostra detalhes internos para quem estiver na rede). Depois:
+  `docker compose exec app php artisan config:clear && docker compose restart app queue scheduler`.
+- Reserve o IP da máquina no roteador (DHCP fixo); se ele mudar, o link muda junto.
+- Se outro aparelho não abrir, libere a porta no Firewall do Windows (PowerShell como administrador):
+  `New-NetFirewallRule -DisplayName "Financas de Casa 8000" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow -Profile Private,Public`.
+- O Google Drive continua sendo conectado pelo próprio computador, em `localhost` (o Google não aceita IP da rede como retorno).
+- Cada pessoa precisa de usuário próprio (não há cadastro público): `app:add-member` para entrar no mesmo lar,
+  ou `app:create-household` para um lar separado, com dados isolados.
+
 Serviços do `compose.yaml`:
 
 | Serviço     | Função                                                   |
