@@ -24,7 +24,7 @@ class PdfParser implements StatementParser
      */
     public static function layouts(): array
     {
-        return [new NubankCardLayout, new NubankAccountLayout, new BradescoCardLayout, new BradescoLayout, new PicPayLayout, new MercadoPagoLayout];
+        return [new NubankCardLayout, new NubankAccountLayout, new BradescoCardLayout, new BradescoLayout, new ItauCardLayout, new PicPayLayout, new MercadoPagoLayout];
     }
 
     public function parse(string $content): array
