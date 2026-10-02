@@ -31,6 +31,12 @@
     .dark .fc-positive { color: var(--success-400); }
     .dark .fc-negative { color: var(--danger-400); }
     .dark .fc-warning { color: var(--warning-400); }
+    /* Distribuição por tipo (Carteira): no celular em pé a barra fica estreita demais e sai; ficam tipo, valor e %. */
+    .fc-distribution-row { display: grid; align-items: center; gap: 0.75rem; grid-template-columns: 5rem 1fr 9rem 4rem; }
+    @media (max-width: 40rem) and (orientation: portrait) {
+        .fc-distribution-row { grid-template-columns: 1fr auto 4rem; }
+        .fc-distribution-bar { display: none; }
+    }
     /* Modo privacidade (E20): valores marcados com fc-sensitive ficam borrados enquanto <html> tem fc-private. */
     .fc-private .fc-sensitive { filter: blur(0.45rem); user-select: none; transition: filter 0.15s; }
 </style>

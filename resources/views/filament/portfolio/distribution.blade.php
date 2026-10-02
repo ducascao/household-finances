@@ -6,9 +6,9 @@
         @else
             <div class="fc-stack">
                 @foreach ($items as $item)
-                    <div style="display: grid; align-items: center; gap: 0.75rem; grid-template-columns: 5rem 1fr 9rem 4rem;">
+                    <div class="fc-distribution-row">
                         <span class="fc-text fc-strong">{{ $item['label'] }}</span>
-                        <div class="fc-track fc-track-lg" role="img" aria-label="{{ $item['label'] }}: {{ number_format($item['percent'], 1, ',', '.') }}%">
+                        <div class="fc-track fc-track-lg fc-distribution-bar" role="img" aria-label="{{ $item['label'] }}: {{ number_format($item['percent'], 1, ',', '.') }}%">
                             <div class="fc-bar" style="width: {{ $item['percent'] }}%; background: #2a78d6;"></div>
                         </div>
                         <span class="fc-text fc-num fc-right fc-sensitive">{{ $item['value'] }}</span>
