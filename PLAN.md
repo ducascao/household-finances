@@ -528,7 +528,7 @@ Notas da entrega:
 - Sem migration: o estado fica no `localStorage` (`fc-privacy`) e vira a classe `fc-private` no `<html>`; o CSS borra `.fc-sensitive`. Os valores continuam no HTML (proteção contra olhares, não contra quem inspeciona a página).
 - `App\Filament\Support\Sensitive`: `html()` para indicadores/descrições e `ATTRIBUTES` para colunas de tabela.
 - Ao alternar, os gráficos são redesenhados pelo `updateChartTheme()` do componente de gráfico do Filament.
-- O clique no botão (JavaScript) não é coberto pelo Pest; conferência manual no navegador pelo usuário.
+- O clique no botão (JavaScript) não é coberto pelo Pest; conferido pelo usuário no navegador em 02/10/2026.
 
 ## Pontos em aberto
 
