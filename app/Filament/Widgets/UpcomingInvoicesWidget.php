@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Domain\CreditCard\InvoiceTotals;
 use App\Domain\Transactions\BillsSummary;
 use App\Filament\Resources\Invoices\Actions\PayInvoiceAction;
+use App\Filament\Support\Sensitive;
 use App\Models\Invoice;
 use App\Support\MoneyFormatter;
 use Filament\Tables\Columns\TextColumn;
@@ -45,6 +46,7 @@ class UpcomingInvoicesWidget extends TableWidget
                     ->label('Fatura')
                     ->formatStateUsing(fn (Invoice $record): string => $record->label()),
                 TextColumn::make('amount_due')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Total')
                     ->alignEnd()
                     ->color('danger')

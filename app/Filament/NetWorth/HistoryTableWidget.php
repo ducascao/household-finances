@@ -2,6 +2,7 @@
 
 namespace App\Filament\NetWorth;
 
+use App\Filament\Support\Sensitive;
 use App\Support\MoneyFormatter;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -26,12 +27,12 @@ class HistoryTableWidget extends TableWidget
             ->emptyStateHeading('Sem histórico ainda')
             ->columns([
                 TextColumn::make('month')->label('Mês'),
-                TextColumn::make('accounts')->label('Contas')->alignEnd(),
-                TextColumn::make('investments')->label('Investimentos')->alignEnd(),
-                TextColumn::make('goods')->label('Bens')->alignEnd(),
-                TextColumn::make('debts')->label('Dívidas')->alignEnd()->color('danger'),
-                TextColumn::make('net_worth')->label('Patrimônio líquido')->alignEnd()->weight('bold'),
-                TextColumn::make('change')->label('Variação')->alignEnd()
+                TextColumn::make('accounts')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Contas')->alignEnd(),
+                TextColumn::make('investments')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Investimentos')->alignEnd(),
+                TextColumn::make('goods')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Bens')->alignEnd(),
+                TextColumn::make('debts')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Dívidas')->alignEnd()->color('danger'),
+                TextColumn::make('net_worth')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Patrimônio líquido')->alignEnd()->weight('bold'),
+                TextColumn::make('change')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Variação')->alignEnd()
                     ->color(fn (array $record): ?string => $record['change_raw'] === null ? null : ($record['change_raw'] < 0 ? 'danger' : 'success')),
             ]);
     }

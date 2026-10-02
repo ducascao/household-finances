@@ -9,6 +9,7 @@ use App\Domain\Investments\Quantity;
 use App\Filament\Portfolio\PortfolioDistributionWidget;
 use App\Filament\Portfolio\PortfolioTotalsWidget;
 use App\Filament\Resources\Assets\AssetResource;
+use App\Filament\Support\Sensitive;
 use App\Support\MoneyFormatter;
 use BackedEnum;
 use Brick\Money\Money;
@@ -74,16 +75,16 @@ class PortfolioPage extends Page implements HasActions, HasSchemas, HasTable
             ->recordUrl(fn (array $record): string => AssetResource::getUrl('view', ['record' => $record['asset_id']]))
             ->columns([
                 TextColumn::make('ticker')->label('Ativo')->weight('bold')->description(fn (array $record): string => $record['type']),
-                TextColumn::make('quantity')->label('Quantidade')->alignEnd(),
-                TextColumn::make('average')->label('Preço médio')->alignEnd(),
-                TextColumn::make('cost')->label('Custo (R$)')->alignEnd()->description(fn (array $record): ?string => $record['cost_original']),
-                TextColumn::make('price')->label('Cotação / saldo')->alignEnd()
+                TextColumn::make('quantity')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Quantidade')->alignEnd(),
+                TextColumn::make('average')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Preço médio')->alignEnd(),
+                TextColumn::make('cost')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Custo (R$)')->alignEnd()->description(fn (array $record): ?string => $record['cost_original']),
+                TextColumn::make('price')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Cotação / saldo')->alignEnd()
                     ->description(fn (array $record): ?string => $record['price_date'])
                     ->icon(fn (array $record): ?string => $record['stale'] ? 'heroicon-m-exclamation-triangle' : null)
                     ->iconColor('warning')
                     ->tooltip(fn (array $record): ?string => $record['stale'] ? 'Cotação com mais de 7 dias ou saldo com mais de 30 dias' : null),
-                TextColumn::make('market')->label('Valor (R$)')->alignEnd()->weight('bold')->description(fn (array $record): ?string => $record['market_original']),
-                TextColumn::make('result')->label('Resultado')->alignEnd()
+                TextColumn::make('market')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Valor (R$)')->alignEnd()->weight('bold')->description(fn (array $record): ?string => $record['market_original']),
+                TextColumn::make('result')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Resultado')->alignEnd()
                     ->description(fn (array $record): ?string => $record['result_percent'])
                     ->color(fn (array $record): string => $record['negative'] ? 'danger' : 'success'),
                 TextColumn::make('share')->label('% da carteira')->alignEnd(),

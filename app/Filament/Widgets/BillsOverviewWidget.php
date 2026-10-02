@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Domain\Transactions\BillsSummary;
+use App\Filament\Support\Sensitive;
 use App\Support\MoneyFormatter;
 use Brick\Money\Money;
 use Filament\Support\Icons\Heroicon;
@@ -23,16 +24,16 @@ class BillsOverviewWidget extends StatsOverviewWidget
         $forecast = $summary->forecastForMonth();
 
         return [
-            Stat::make('Atrasados', self::format($overdue['totals']))
+            Stat::make('Atrasados', Sensitive::html(self::format($overdue['totals'])))
                 ->description(self::count($overdue['count']))
                 ->descriptionIcon(Heroicon::OutlinedExclamationTriangle)
                 ->color($overdue['count'] > 0 ? 'danger' : 'gray'),
-            Stat::make('Vencendo em '.BillsSummary::DUE_SOON_DAYS.' dias', self::format($dueSoon['totals']))
+            Stat::make('Vencendo em '.BillsSummary::DUE_SOON_DAYS.' dias', Sensitive::html(self::format($dueSoon['totals'])))
                 ->description(self::count($dueSoon['count']))
                 ->descriptionIcon(Heroicon::OutlinedClock)
                 ->color($dueSoon['count'] > 0 ? 'warning' : 'gray'),
-            Stat::make('Previsto no mês', 'A pagar: '.self::format($forecast['payable']))
-                ->description('A receber: '.self::format($forecast['receivable']))
+            Stat::make('Previsto no mês', Sensitive::html('A pagar: '.self::format($forecast['payable'])))
+                ->description(Sensitive::html('A receber: '.self::format($forecast['receivable'])))
                 ->descriptionIcon(Heroicon::OutlinedCalendarDays)
                 ->color('info'),
         ];

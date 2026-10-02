@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Domain\Goods\GoodValue;
 use App\Filament\Resources\Goods\GoodResource;
 use App\Filament\Resources\Goods\RelationManagers\GoodValuationsRelationManager;
+use App\Filament\Support\Sensitive;
 use App\Models\Good;
 use App\Support\MoneyFormatter;
 use Filament\Tables\Columns\TextColumn;
@@ -44,7 +45,7 @@ class StaleGoodsWidget extends TableWidget
             ->columns([
                 TextColumn::make('name')->label('Bem')->weight('bold')->description(fn (array $record): string => $record['type']),
                 TextColumn::make('last')->label('Última avaliação')->badge()->color('warning'),
-                TextColumn::make('value')->label('Valor considerado')->alignEnd(),
+                TextColumn::make('value')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Valor considerado')->alignEnd(),
             ])
             ->recordActions([
                 GoodValuationsRelationManager::informAction(fn (mixed $record): Good => Good::findOrFail(is_array($record) ? $record['good_id'] : null))

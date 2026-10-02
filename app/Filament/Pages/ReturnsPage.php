@@ -6,6 +6,7 @@ use App\Domain\Investments\AssetReturn;
 use App\Domain\Investments\Cdi;
 use App\Domain\Investments\ReturnCalculator;
 use App\Filament\Resources\Assets\AssetResource;
+use App\Filament\Support\Sensitive;
 use App\Models\AssetOperation;
 use App\Support\MoneyFormatter;
 use BackedEnum;
@@ -134,12 +135,12 @@ class ReturnsPage extends Page implements HasActions, HasSchemas, HasTable
             ->recordUrl(fn (array $record): string => AssetResource::getUrl('view', ['record' => $record['asset_id']]))
             ->columns([
                 TextColumn::make('ticker')->label('Ativo')->weight('bold'),
-                TextColumn::make('start')->label('Valor inicial')->alignEnd(),
-                TextColumn::make('buys')->label('Compras')->alignEnd(),
-                TextColumn::make('sells')->label('Vendas')->alignEnd(),
-                TextColumn::make('incomes')->label('Proventos')->alignEnd(),
-                TextColumn::make('end')->label('Valor final')->alignEnd(),
-                TextColumn::make('result')->label('Resultado')->alignEnd()->weight('bold')
+                TextColumn::make('start')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Valor inicial')->alignEnd(),
+                TextColumn::make('buys')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Compras')->alignEnd(),
+                TextColumn::make('sells')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Vendas')->alignEnd(),
+                TextColumn::make('incomes')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Proventos')->alignEnd(),
+                TextColumn::make('end')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Valor final')->alignEnd(),
+                TextColumn::make('result')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Resultado')->alignEnd()->weight('bold')
                     ->color(fn (array $record): string => $record['negative'] ? 'danger' : 'success'),
                 TextColumn::make('percent')->label('Rentabilidade')->alignEnd()
                     ->color(fn (array $record): string => $record['negative'] ? 'danger' : 'success'),

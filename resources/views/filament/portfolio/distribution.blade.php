@@ -11,7 +11,7 @@
                         <div class="fc-track fc-track-lg" role="img" aria-label="{{ $item['label'] }}: {{ number_format($item['percent'], 1, ',', '.') }}%">
                             <div class="fc-bar" style="width: {{ $item['percent'] }}%; background: #2a78d6;"></div>
                         </div>
-                        <span class="fc-text fc-num fc-right">{{ $item['value'] }}</span>
+                        <span class="fc-text fc-num fc-right fc-sensitive">{{ $item['value'] }}</span>
                         <span class="fc-label fc-num fc-right">{{ number_format($item['percent'], 1, ',', '.') }}%</span>
                     </div>
                 @endforeach

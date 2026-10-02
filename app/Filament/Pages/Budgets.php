@@ -9,6 +9,7 @@ use App\Domain\Budgets\SaveBudget;
 use App\Enums\CategoryType;
 use App\Filament\Forms\MoneyInput;
 use App\Filament\Resources\Transactions\TransactionResource;
+use App\Filament\Support\Sensitive;
 use App\Models\Category;
 use App\Models\User;
 use App\Support\MoneyFormatter;
@@ -91,6 +92,7 @@ class Budgets extends Page implements HasActions, HasSchemas, HasTable
                         default => null,
                     }),
                 TextInputColumn::make('budget')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Orçado (R$)')
                     ->placeholder('—')
                     ->alignEnd()
@@ -101,15 +103,18 @@ class Budgets extends Page implements HasActions, HasSchemas, HasTable
                         return $state;
                     }),
                 TextColumn::make('paid')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Realizado')
                     ->alignEnd()
                     ->formatStateUsing(fn (int $state): string => MoneyFormatter::formatMinor($state)),
                 TextColumn::make('scheduled')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Previsto')
                     ->alignEnd()
                     ->color('gray')
                     ->formatStateUsing(fn (int $state): string => $state === 0 ? '—' : MoneyFormatter::formatMinor($state)),
                 TextColumn::make('available')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Disponível')
                     ->alignEnd()
                     ->placeholder('—')

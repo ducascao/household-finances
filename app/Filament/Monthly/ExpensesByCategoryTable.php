@@ -4,6 +4,7 @@ namespace App\Filament\Monthly;
 
 use App\Domain\Reports\MonthlySummary;
 use App\Filament\Resources\Transactions\TransactionResource;
+use App\Filament\Support\Sensitive;
 use App\Support\MoneyFormatter;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -37,6 +38,7 @@ class ExpensesByCategoryTable extends TableWidget
                     ->label('Categoria')
                     ->weight(fn (array $record): ?string => $record['is_root'] ? 'bold' : null),
                 TextColumn::make('total')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Valor')
                     ->alignEnd()
                     ->formatStateUsing(fn (int $state): string => MoneyFormatter::formatMinor($state)),

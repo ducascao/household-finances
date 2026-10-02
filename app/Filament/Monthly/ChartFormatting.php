@@ -5,7 +5,7 @@ namespace App\Filament\Monthly;
 use Filament\Support\RawJs;
 
 /**
- * Opções de Chart.js comuns: valores em R$ no eixo e no tooltip, grade discreta.
+ * Opções de Chart.js comuns: valores em R$ no eixo e no tooltip (trocados por "R$ •••" no modo privacidade), grade discreta.
  */
 class ChartFormatting
 {
@@ -33,7 +33,7 @@ class ChartFormatting
                     tooltip: {
                         callbacks: {
                             label: (context) => (context.dataset.label ? context.dataset.label + ': ' : '')
-                                + new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.{$valueAxis}),
+                                + (window.fcPrivacy?.isOn() ? 'R$ •••' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.{$valueAxis})),
                         },
                     },
                 },
@@ -42,7 +42,7 @@ class ChartFormatting
                         grid: { color: 'rgba(128, 128, 128, 0.15)' },
                         border: { display: false },
                         ticks: {
-                            callback: (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value),
+                            callback: (value) => window.fcPrivacy?.isOn() ? 'R$ •••' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value),
                         },
                     },
                     {$categoryAxis}: { grid: { display: false } },

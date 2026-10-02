@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Domain\Goals\GoalProgress;
 use App\Filament\Resources\Goals\GoalResource;
+use App\Filament\Support\Sensitive;
 use App\Models\Goal;
 use App\Support\MoneyFormatter;
 use Filament\Tables\Columns\TextColumn;
@@ -36,9 +37,9 @@ class GoalsWidget extends TableWidget
             ->columns([
                 TextColumn::make('name')->label('Meta')->weight('bold'),
                 ViewColumn::make('progress')->label('Progresso')->view('filament.goals.progress'),
-                TextColumn::make('current')->label('Já tem / alvo')->alignEnd()
+                TextColumn::make('current')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Já tem / alvo')->alignEnd()
                     ->state(fn (Goal $record): string => MoneyFormatter::formatMinor((new GoalProgress($record))->current).' / '.MoneyFormatter::formatMinor($record->target)),
-                TextColumn::make('pace')->label('Guardar por mês')->alignEnd()
+                TextColumn::make('pace')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Guardar por mês')->alignEnd()
                     ->state(fn (Goal $record): string => ($pace = (new GoalProgress($record))->monthlyPace()) > 0 ? MoneyFormatter::formatMinor($pace).' até '.$record->deadline->format('m/Y') : '—'),
             ]);
     }
