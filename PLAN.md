@@ -530,6 +530,23 @@ Notas da entrega:
 - Ao alternar, os gráficos são redesenhados pelo `updateChartTheme()` do componente de gráfico do Filament.
 - O clique no botão (JavaScript) não é coberto pelo Pest; conferido pelo usuário no navegador em 02/10/2026.
 
+### E21 — Fatura do cartão Itaú em PDF
+**Valor:** importar a fatura do cartão Itaú sem digitar os lançamentos.
+
+Escopo
+- [x] Leitor `ItauCardLayout`: duas colunas; à esquerda pagamentos e compras de cada titular, à direita produtos e serviços (mensalidade e estorno)
+- [x] Ignora "Compras parceladas - próximas faturas", limites, encargos e simulações de parcelamento
+- [x] Data sem ano pelo vencimento; parcela "NN/TT" levada para o ciclo da fatura (compra + NN−1 meses); compra vira saída, pagamento/estorno vira crédito
+
+Critérios de aceite
+- [x] Com a fatura real do usuário, a soma das compras bate com o "Total dos lançamentos atuais" e as parcelas futuras ficam de fora (conferido fora do repo)
+- [x] Fixture fictícia com dois titulares, produtos e serviços, próximas faturas e virada do ano; soma = total da fatura; recusa em conta que não é cartão (teste)
+
+Notas da entrega:
+- A fronteira das colunas é a posição do título "Lançamentos: produtos e serviços"; as seções continuam valendo entre páginas.
+- A linha de baixo (categoria e cidade) e o nome do titular não entram na descrição.
+- A fatura de exemplo não tinha compra internacional: o leitor pega o último valor da linha (em R$), mas o "Repasse de IOF" do Itaú ainda não foi visto num PDF real.
+
 ## Pontos em aberto
 
 - [x] **Reativar o 2FA na entrega final** (feito ao fechar a E15): em desenvolvimento está desligado (`AUTH_MFA_ENABLED=false` no `.env`), a pedido, para facilitar os testes. Na entrega final, voltar para `true` (padrão do `.env.example` e dos testes).

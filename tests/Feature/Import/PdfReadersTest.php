@@ -79,6 +79,26 @@ it('Bradesco fatura: só a coluna de lançamentos, crédito com "-", parcela no 
         ->and(array_sum(array_filter(array_column(readPdf('bradesco-fatura.txt', card: true), 2), fn (int $amount): bool => $amount < 0)))->toBe(-108317);
 });
 
+it('Itaú fatura: duas colunas, titulares, produtos e serviços, sem as próximas faturas, parcela no ciclo e virada do ano', function () {
+    // Vencimento 15/01/2027: dezembro fica em 2026; "10/12" comprada em 10/03 cai em 10/12; "03/06" de 05/11 cai em 05/01
+    $lines = readPdf('itau-fatura.txt', card: true, parser: $parser);
+
+    expect($lines)->toBe([
+        ['2026-12-17', 'PAGAMENTO DEB AUTOMATIC', 200000],
+        ['2026-12-08', 'Mensalidade - Plano do', -6200],
+        ['2026-12-08', 'Redução Mensalidade - P', 6200],
+        ['2026-12-20', 'PADARIA EXEMPLO', -4590],
+        ['2027-01-05', 'MERCADO FICTICIO', -31240],
+        ['2026-12-10', 'LOJA ELETRO 10/12', -15000],
+        ['2026-12-28', 'RESTAURANTE TESTE', -123456],
+        ['2027-01-02', 'FARMACIA MODELO', -8999],
+        ['2027-01-05', 'CURSO ONLINE 03/06', -20000],
+    ])->and($parser->layout?->name())->toBe('Itaú — fatura do cartão')
+        // Sem o pagamento, a soma bate com o "Total dos lançamentos atuais" (R$ 2.032,85)
+        ->and(array_sum(array_column(array_slice($lines, 1), 2)))->toBe(-203285)
+        ->and(fn () => readPdf('itau-fatura.txt'))->toThrow(StatementParseException::class, 'fatura de cartão');
+});
+
 it('Bradesco sem sinal impresso: usa a coluna do valor (crédito ou débito)', function () {
     $row = fn (string ...$cells): string => sprintf('%-12s%-20s%-10s%15s%15s%15s', ...$cells);
     $text = implode("\n", [

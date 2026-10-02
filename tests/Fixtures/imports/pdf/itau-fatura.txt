@@ -1,0 +1,78 @@
+                                                                                                                                                                                1
+
+
+                                                                                                                                                              Platinum
+
+                             MARIA EXEMPLO DA SILVA                                                               Resumo da fatura em R$
+                             RUA FICTICIA, 100
+                                                                                                          Total da fatura anterior                                  2.000,00
+                             APTO 1 BAIRRO EXEMPLO
+                             00000-000 CIDADE SP                                                          Pagamento efetuado em 17/12/2026                         -2.000,00
+                                                                                                       S Saldo financiado                                               0,00
+                                                                                                       L Lançamentos atuais                                         2.032,85
+                                                               Postagem: 08/01/2027
+                                                              Vencimento: 15/01/2027                   = Total desta fatura                                         2.032,85
+                                                                 Emissão: 08/01/2027
+                                               Previsão próx. Fechamento: 08/02/2027
+
+
+          Titular MARIA EXEMPLO DA SILVA
+          Cartão 0000.XXXX.XXXX.1234
+
+   O total da sua fatura é:                                    Com vencimento em:                                                Limite total de crédito:
+   R$ 2.032,85                                                        15/01/2027                                                        R$ 10.000,00
+
+  Pagamento mínimo:                                                                     Entrada + Parcelas fixas:
+  R$ 203,28                                                                             R$ 250,00 + 11x R$ 300,00
+  Juros: 16,10% am - 514,88% aa                    CET: 16,73% am - 556,46% aa
+
+                  Previsão para o próximo fechamento: 08/02/2027.
+
+                 Pagamentos efetuados                                                       Lançamentos: produtos e serviços
+                 DATA                                                VALOR EM R$            DATA     PRODUTOS/SERVIÇOS                           VALOR EM R$
+                 17/12    PAGAMENTO DEB AUTOMATIC                     -2.000,00             08/12    Mensalidade - Plano do                       62,00
+                P Total dos pagamentos                                -2.000,00                      Anuidade Diferenciada
+                                                                                            08/12    Redução Mensalidade - P                     -62,00
+                                                                                                     Anuidade Diferenciada
+                 Lançamentos: compras e saques                                              Lançamentos produtos e serviços                            0,00
+                 MARIA EXEMPLO DA SILVA
+                 DATA     ESTABELECIMENTO                            VALOR EM R$
+                                                                                           L Total dos lançamentos atuais                     2.032,85
+
+                 20/12    PADARIA EXEMPLO                                 45,90
+                          alimentacao CAMPINAS
+                 05/01    MERCADO FICTICIO                               312,40
+                          supermercado CAMPINAS                                             Compras parceladas - próximas faturas
+                 10/03    LOJA ELETRO 10/12                              150,00             DATA     ESTABELECIMENTO                             VALOR EM R$
+                          eletronicos SAO PAULO                                             10/03    LOJA ELETRO 11/12                           150,00
+                 28/12    RESTAURANTE TESTE                            1.234,56             05/11    CURSO ONLINE 04/06                          200,00
+                          restaurante VALINHOS                                              Próxima fatura                                       350,00
+                                                                                            Demais faturas                                       700,00
+                 Lançamentos no cartão                                  1.742,86            Total para próximas faturas                        1.050,00
+
+                 JOAO EXEMPLO DA SILVA
+                                                                                            Limites de crédito                                Valor em R$
+                 DATA     ESTABELECIMENTO                            VALOR EM R$
+                 02/01    FARMACIA MODELO                                 89,99
+                                                                                            Limite total de crédito                           10.000,00
+                          saude CAMPINAS                                                    Limite disponível                                  6.917,15
+                 05/11    CURSO ONLINE 03/06                             200,00
+                          educacao CAMPINAS                                                 Limite total utilizado                             3.082,85
+
+                 Lançamentos no cartão                                    289,99            Esses são os seus limites na data de fechamento dessa fatura.
+
+                                                                                                                                                      continua...
+
+
+Encargos cobrados nesta fatura
+Juros do rotativo                             16,10 %      0,00
+Juros de mora                              1,00 % am       0,00
+
+Fique atento aos encargos para o próximo
+período (15/01 a 14/02)
+
+Juros Máximos do contrato           16,10 % am 514,88 % aa
+Limite de crédito                                   10.000,00
+Juros da compra parcelada               5,99 % am 102,95 % aa
+        Entrada + Parcelas fixas:        R$ 509,69 + 4x R$ 1.598,73                      R$ 510,35 + 6x R$ 1.181,32
+Pague sua fatura com a opção de parcelamento que melhor cabe no seu bolso! Simule no app Itaú ou na Central de Atendimento.

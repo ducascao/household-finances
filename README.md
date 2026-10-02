@@ -133,7 +133,7 @@ da conta ou da fatura do cartão. O PDF é lido com `pdftotext` (pacote `poppler
 depois de atualizar o código rode `docker compose build app && docker compose up -d`). PDF protegido: informe
 a senha no mesmo formulário; ela só é usada para ler o arquivo e não é guardada.
 
-Os leitores são escolhidos pelo texto do PDF. Nubank (conta e fatura), Bradesco (conta e fatura), PicPay e Mercado Pago foram conferidos com PDFs reais. Há também um leitor genérico para os demais bancos. A tela de revisão mostra qual leitor foi usado; se algum
+Os leitores são escolhidos pelo texto do PDF. Nubank (conta e fatura), Bradesco (conta e fatura), Itaú (fatura), PicPay e Mercado Pago foram conferidos com PDFs reais. Há também um leitor genérico para os demais bancos. A tela de revisão mostra qual leitor foi usado; se algum
 lançamento vier errado, guarde o PDF (fora do git) para ajustarmos o leitor.
 
 ## Testes e qualidade
