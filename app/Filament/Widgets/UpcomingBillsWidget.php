@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Domain\Transactions\BillsSummary;
 use App\Filament\Resources\Transactions\Actions\MarkAsPaidActions;
+use App\Filament\Support\Sensitive;
 use App\Models\Transaction;
 use App\Support\MoneyFormatter;
 use Filament\Tables\Columns\TextColumn;
@@ -41,6 +42,7 @@ class UpcomingBillsWidget extends TableWidget
                 TextColumn::make('account.name')
                     ->label('Conta'),
                 TextColumn::make('amount')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Valor')
                     ->alignEnd()
                     ->color(fn (Transaction $record): string => $record->amount->isNegative() ? 'danger' : 'success')

@@ -31,6 +31,8 @@ class AppPanelProvider extends PanelProvider
             ->path('')
             ->brandName('Finanças de Casa')
             ->renderHook(PanelsRenderHook::STYLES_AFTER, fn (): View => view('filament.styles'))
+            ->renderHook(PanelsRenderHook::HEAD_START, fn (): View => view('filament.privacy-head'))
+            ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): View => view('filament.privacy-toggle'))
             ->maxContentWidth(Width::Full)
             ->login()
             ->profile(isSimple: false)

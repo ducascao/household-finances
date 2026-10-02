@@ -6,6 +6,7 @@ use App\Domain\Budgets\BudgetReport;
 use App\Domain\Budgets\BudgetRow;
 use App\Enums\BudgetStatus;
 use App\Filament\Pages\Budgets;
+use App\Filament\Support\Sensitive;
 use App\Models\User;
 use App\Support\MoneyFormatter;
 use Filament\Tables\Columns\TextColumn;
@@ -48,14 +49,17 @@ class BudgetAlertsWidget extends TableWidget
                 TextColumn::make('name')
                     ->label('Categoria'),
                 TextColumn::make('planned')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Orçado')
                     ->alignEnd()
                     ->formatStateUsing(fn (int $state): string => MoneyFormatter::formatMinor($state)),
                 TextColumn::make('committed')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Realizado + previsto')
                     ->alignEnd()
                     ->formatStateUsing(fn (int $state): string => MoneyFormatter::formatMinor($state)),
                 TextColumn::make('over')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Acima do orçado')
                     ->alignEnd()
                     ->color('danger')

@@ -16,7 +16,7 @@
         <x-filament::section>
             <p class="fc-label">Carteira</p>
             <p class="fc-value {{ ($percent ?? 0) < 0 ? 'fc-negative' : 'fc-positive' }}">{{ $fmt($percent) }}</p>
-            <p class="fc-hint">resultado {{ $this->money($total->result()) }}</p>
+            <p class="fc-hint">resultado <span class="fc-sensitive">{{ $this->money($total->result()) }}</span></p>
         </x-filament::section>
         <x-filament::section>
             <p class="fc-label">CDI no período</p>
@@ -39,9 +39,9 @@
         <x-filament::section>
             <p class="fc-label">Composição do resultado</p>
             <div class="fc-stack fc-num" style="gap: 0.25rem; margin-top: 0.5rem;">
-                <div class="fc-row fc-text"><span>Valorização</span><span class="fc-strong">{{ $this->money($total->appreciation()) }}</span></div>
-                <div class="fc-row fc-text"><span>Proventos</span><span class="fc-strong">{{ $this->money($total->incomes) }}</span></div>
-                <div class="fc-row fc-text"><span>Realizado em vendas</span><span class="fc-strong">{{ $this->money($total->realized) }}</span></div>
+                <div class="fc-row fc-text"><span>Valorização</span><span class="fc-strong fc-sensitive">{{ $this->money($total->appreciation()) }}</span></div>
+                <div class="fc-row fc-text"><span>Proventos</span><span class="fc-strong fc-sensitive">{{ $this->money($total->incomes) }}</span></div>
+                <div class="fc-row fc-text"><span>Realizado em vendas</span><span class="fc-strong fc-sensitive">{{ $this->money($total->realized) }}</span></div>
             </div>
         </x-filament::section>
     </div>

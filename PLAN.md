@@ -510,6 +510,26 @@ Notas da entrega:
 - Tabela informada não aceita TR (a correção já vem na tabela do banco).
 - Correção no DemoSeeder: no dia 1º, a cotação de fim do mês anterior coincidia com um dos últimos dias úteis (chave duplicada); o seeder passou a pular a data repetida.
 
+### E20 — Modo privacidade
+**Valor:** abrir os painéis perto de outras pessoas sem expor quanto o lar tem.
+
+Escopo
+- [x] Botão de olho na barra superior liga/desliga o modo na hora, sem recarregar; a escolha fica no navegador (por aparelho)
+- [x] Valores em R$ dos painéis ficam borrados: Painel, Resumo do mês, Patrimônio, Carteira, Rentabilidade e Orçamentos; nomes, datas, percentuais e contagens continuam visíveis
+- [x] Gráficos mantêm o desenho, mas o eixo de valores e o tooltip mostram "R$ •••"
+- [x] Telas de cadastro (contas, lançamentos, faturas, dívidas, bens, metas) ficam de fora, a pedido
+
+Critérios de aceite
+- [x] Botão presente e estado salvo aplicado antes de desenhar a página (teste)
+- [x] Saldos, indicadores, composição e totais da carteira marcados como sensíveis; nomes e percentuais não (teste)
+- [x] Opções dos gráficos trocam valores por "R$ •••" no modo ligado (teste)
+
+Notas da entrega:
+- Sem migration: o estado fica no `localStorage` (`fc-privacy`) e vira a classe `fc-private` no `<html>`; o CSS borra `.fc-sensitive`. Os valores continuam no HTML (proteção contra olhares, não contra quem inspeciona a página).
+- `App\Filament\Support\Sensitive`: `html()` para indicadores/descrições e `ATTRIBUTES` para colunas de tabela.
+- Ao alternar, os gráficos são redesenhados pelo `updateChartTheme()` do componente de gráfico do Filament.
+- O clique no botão (JavaScript) não é coberto pelo Pest; conferência manual no navegador pelo usuário.
+
 ## Pontos em aberto
 
 - [x] **Reativar o 2FA na entrega final** (feito ao fechar a E15): em desenvolvimento está desligado (`AUTH_MFA_ENABLED=false` no `.env`), a pedido, para facilitar os testes. Na entrega final, voltar para `true` (padrão do `.env.example` e dos testes).

@@ -6,6 +6,7 @@ use App\Domain\Investments\Portfolio;
 use App\Domain\Investments\PortfolioRow;
 use App\Filament\Resources\Assets\AssetResource;
 use App\Filament\Resources\Assets\RelationManagers\ValuationsRelationManager;
+use App\Filament\Support\Sensitive;
 use App\Models\Asset;
 use App\Support\MoneyFormatter;
 use Filament\Tables\Columns\TextColumn;
@@ -45,7 +46,7 @@ class StaleValuationsWidget extends TableWidget
             ->columns([
                 TextColumn::make('name')->label('Aplicação')->weight('bold')->description(fn (array $record): string => $record['type']),
                 TextColumn::make('last')->label('Último saldo')->badge()->color('warning'),
-                TextColumn::make('value')->label('Valor considerado')->alignEnd(),
+                TextColumn::make('value')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Valor considerado')->alignEnd(),
             ])
             ->recordActions([
                 ValuationsRelationManager::informAction(fn (mixed $record): Asset => Asset::findOrFail(is_array($record) ? $record['asset_id'] : null))

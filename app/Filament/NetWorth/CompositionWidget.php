@@ -2,6 +2,7 @@
 
 namespace App\Filament\NetWorth;
 
+use App\Filament\Support\Sensitive;
 use App\Support\MoneyFormatter;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -31,7 +32,7 @@ class CompositionWidget extends TableWidget
                         'Investimentos' => 'info', 'Bens' => 'warning', default => 'gray'
                     }),
                 TextColumn::make('name')->label('Item'),
-                TextColumn::make('value')->label('Valor')->alignEnd()->weight('bold')
+                TextColumn::make('value')->extraAttributes(Sensitive::ATTRIBUTES, merge: true)->label('Valor')->alignEnd()->weight('bold')
                     ->color(fn (array $record): ?string => $record['group'] === 'Dívidas' ? 'danger' : null),
                 TextColumn::make('share')->label('Peso')->alignEnd(),
             ]);

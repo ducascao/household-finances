@@ -31,4 +31,6 @@
     .dark .fc-positive { color: var(--success-400); }
     .dark .fc-negative { color: var(--danger-400); }
     .dark .fc-warning { color: var(--warning-400); }
+    /* Modo privacidade (E20): valores marcados com fc-sensitive ficam borrados enquanto <html> tem fc-private. */
+    .fc-private .fc-sensitive { filter: blur(0.45rem); user-select: none; transition: filter 0.15s; }
 </style>

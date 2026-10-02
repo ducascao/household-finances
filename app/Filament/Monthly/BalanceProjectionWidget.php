@@ -3,6 +3,7 @@
 namespace App\Filament\Monthly;
 
 use App\Domain\Reports\MonthlySummary;
+use App\Filament\Support\Sensitive;
 use App\Support\MoneyFormatter;
 use Brick\Money\Money;
 use Filament\Tables\Columns\TextColumn;
@@ -37,14 +38,17 @@ class BalanceProjectionWidget extends TableWidget
                     ->label('Conta')
                     ->weight(fn (array $record): ?string => $record['is_total'] ? 'bold' : null),
                 TextColumn::make('today')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Saldo hoje')
                     ->alignEnd()
                     ->formatStateUsing(fn (array $record): string => MoneyFormatter::format(Money::ofMinor($record['today'], $record['currency']))),
                 TextColumn::make('scheduled')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label($isPast ? 'Diferença até hoje' : 'Previstos até o fim do mês')
                     ->alignEnd()
                     ->formatStateUsing(fn (array $record): string => MoneyFormatter::format(Money::ofMinor($record['scheduled'], $record['currency']))),
                 TextColumn::make('projected')
+                    ->extraAttributes(Sensitive::ATTRIBUTES, merge: true)
                     ->label('Saldo no fim do mês')
                     ->alignEnd()
                     ->weight('bold')
