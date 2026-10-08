@@ -19,7 +19,8 @@ use Illuminate\Support\Carbon;
 
 /**
  * Para onde foi o dinheiro no mês escolhido: entradas × saídas por competência, gastos por categoria,
- * evolução de 12 meses e saldo projetado das contas no fim do mês.
+ * evolução de 12 meses e saldo projetado das contas no fim do mês. O seletor lista só os meses com lançamentos
+ * (pagos ou previstos) e o mês atual; anterior/próximo pulam os meses vazios.
  */
 class MonthlySummary extends Dashboard
 {
@@ -40,7 +41,7 @@ class MonthlySummary extends Dashboard
         return $schema->components([
             Select::make('month')
                 ->label('Mês')
-                ->options(fn (): array => Summary::monthOptions()
+                ->options(fn (): array => Summary::monthsWithEntries()
                     ->mapWithKeys(fn (Carbon $month): array => [$month->format('Y-m') => ucfirst($month->locale('pt_BR')->translatedFormat('F/Y'))])
                     ->all())
                 ->default(today()->format('Y-m'))
@@ -71,6 +72,7 @@ class MonthlySummary extends Dashboard
                 ->label('Mês anterior')
                 ->icon(Heroicon::OutlinedChevronLeft)
                 ->color('gray')
+                ->disabled(fn (): bool => $this->adjacentMonth(-1) === null)
                 ->action(fn () => $this->shiftMonth(-1)),
             Action::make('currentMonth')
                 ->label('Mês atual')
@@ -81,15 +83,29 @@ class MonthlySummary extends Dashboard
                 ->icon(Heroicon::OutlinedChevronRight)
                 ->iconPosition('after')
                 ->color('gray')
+                ->disabled(fn (): bool => $this->adjacentMonth(1) === null)
                 ->action(fn () => $this->shiftMonth(1)),
         ];
     }
 
-    private function shiftMonth(int $months): void
+    /**
+     * Mês anterior (-1) ou seguinte (1) com lançamentos, pulando os meses vazios; null se não houver.
+     */
+    private function adjacentMonth(int $direction): ?Carbon
     {
-        $current = Carbon::createFromFormat('!Y-m', (string) ($this->filters['month'] ?? today()->format('Y-m'))) ?? today();
+        $current = (string) ($this->filters['month'] ?? today()->format('Y-m'));
+        $months = Summary::monthsWithEntries()->filter(fn (Carbon $month): bool => $direction < 0
+            ? $month->format('Y-m') < $current
+            : $month->format('Y-m') > $current);
 
-        $this->setMonth($current->addMonthsNoOverflow($months));
+        return $direction < 0 ? $months->first() : $months->last();
+    }
+
+    private function shiftMonth(int $direction): void
+    {
+        if (($month = $this->adjacentMonth($direction)) !== null) {
+            $this->setMonth($month);
+        }
     }
 
     private function setMonth(Carbon $month): void

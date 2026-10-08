@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Household\CreateHousehold;
+use App\Domain\Reports\MonthlySummary as Summary;
 use App\Domain\Transactions\CreateTransaction;
 use App\Filament\Monthly\BalanceProjectionWidget;
 use App\Filament\Monthly\EvolutionChart;
@@ -18,7 +19,7 @@ use Livewire\Livewire;
 beforeEach(function () {
     Carbon::setTestNow('2026-09-20 10:00:00');
 
-    $household = app(CreateHousehold::class)->execute('Casa', 'Eduardo', 'eduardo@example.com', 'senha-forte');
+    $household = $this->household = app(CreateHousehold::class)->execute('Casa', 'Eduardo', 'eduardo@example.com', 'senha-forte');
     $this->user = User::where('email', 'eduardo@example.com')->sole();
     $this->user->forceFill(['app_authentication_secret' => 'JBSWY3DPEHPK3PXP'])->save();
     $this->account = Account::factory()->ownedBy($this->user)->create(['name' => 'Conjunta', 'initial_balance' => 100000]);
@@ -50,14 +51,33 @@ it('abre a página e mostra os números do mês escolhido', function () {
         ->assertSee('-R$ 300,00');
 });
 
-it('troca de mês pelos botões', function () {
+it('seletor e botões só mostram meses com lançamentos (pagos ou previstos) e o mês atual', function () {
+    $other = Account::factory()->ownedBy(User::factory()->inHousehold($this->household)->create())->private()->create();
+    $add = fn (Account $account, string $date) => app(CreateTransaction::class)->execute($account->owner, [
+        'account_id' => $account->id, 'category_id' => $this->mercado->id, 'amount' => -1000, 'date' => $date, 'description' => 'Mercado',
+    ]);
+    $add($this->account, '2026-12-05');   // previsto, futuro
+    $add($this->account, '2025-03-05');   // antigo, com meses vazios no meio
+    $add($other, '2024-01-05');           // conta pessoal de outra pessoa: não aparece
+
+    expect(Summary::monthsWithEntries()->map->format('Y-m')->all())
+        ->toBe(['2026-12', '2026-09', '2026-08', '2025-03']);
+
     Livewire::test(MonthlySummary::class)
         ->assertSet('filters.month', '2026-09')
+        ->assertSee('Dezembro/2026')
+        ->assertDontSee('Outubro/2026')
+        ->assertDontSee('Janeiro/2024')
         ->callAction('previousMonth')
         ->assertSet('filters.month', '2026-08')
+        ->callAction('previousMonth')
+        ->assertSet('filters.month', '2025-03')
+        ->assertActionDisabled('previousMonth')
         ->callAction('nextMonth')
         ->callAction('nextMonth')
-        ->assertSet('filters.month', '2026-10')
+        ->callAction('nextMonth')
+        ->assertSet('filters.month', '2026-12')
+        ->assertActionDisabled('nextMonth')
         ->callAction('currentMonth')
         ->assertSet('filters.month', '2026-09');
 });

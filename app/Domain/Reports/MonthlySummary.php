@@ -185,6 +185,29 @@ class MonthlySummary
     }
 
     /**
+     * Meses (competência) com receitas ou despesas visíveis ao usuário, pagas ou previstas, mais o mês corrente;
+     * do mais recente para o mais antigo.
+     *
+     * @return Collection<int, Carbon>
+     */
+    public static function monthsWithEntries(): Collection
+    {
+        $current = today()->startOfMonth();
+
+        return Transaction::query()
+            ->incomeAndExpense()
+            ->selectRaw("date_trunc('month', competence_date)::date as month")
+            ->distinct()
+            ->toBase()
+            ->pluck('month')
+            ->map(fn (mixed $month): Carbon => Carbon::parse((string) $month)->startOfMonth())
+            ->push($current)
+            ->unique(fn (Carbon $month): string => $month->format('Y-m'))
+            ->sortByDesc(fn (Carbon $month): string => $month->format('Y-m'))
+            ->values();
+    }
+
+    /**
      * @return Collection<int, Carbon>
      */
     public static function monthOptions(int $back = 36, int $ahead = 12): Collection
