@@ -22,6 +22,7 @@ use App\Models\Invoice;
 use App\Models\ManualValuation;
 use App\Models\NetWorthSnapshot;
 use App\Models\Recurrence;
+use App\Models\ReportEmail;
 use App\Models\Transaction;
 use App\Models\User;
 use Database\Seeders\DemoSeeder;
@@ -64,6 +65,7 @@ it('cria o lar de demonstração com 2 usuários, contas e lançamentos', functi
         ->and(Account::whereNotNull('balance_date')->count())->toBe(1)
         ->and(Good::count())->toBe(3)
         ->and(GoodValuation::count())->toBe(3)
+        ->and(ReportEmail::count())->toBe(1)
         ->and(NetWorthSnapshot::whereNull('user_id')->latest('month')->value('goods'))->toBe(41500000);
 
     $this->actingAs($maria);

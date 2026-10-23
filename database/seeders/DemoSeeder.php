@@ -33,6 +33,8 @@ use App\Enums\AccountVisibility;
 use App\Enums\ImportFormat;
 use App\Enums\PrepaymentMode;
 use App\Enums\PriceSource;
+use App\Enums\ReportSection;
+use App\Enums\ReportView;
 use App\Enums\TransactionStatus;
 use App\Models\Account;
 use App\Models\Asset;
@@ -45,6 +47,7 @@ use App\Models\ExchangeRate;
 use App\Models\Household;
 use App\Models\InterestRate;
 use App\Models\Invoice;
+use App\Models\ReportEmail;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -146,6 +149,16 @@ class DemoSeeder extends Seeder
             'due_date' => today()->addDays(4)->toDateString(),
             'description' => 'Reserva de emergência',
         ]);
+
+        // Um resumo já enviado por e-mail (E22), só o registro.
+        (new ReportEmail)->forceFill([
+            'household_id' => $household->id,
+            'sender_id' => $eduardo->id,
+            'recipients' => ['maria@demo.local'],
+            'sections' => [ReportSection::MonthlySummary->value, ReportSection::NetWorth->value],
+            'view' => ReportView::Shared,
+            'month' => today()->startOfMonth(),
+        ])->save();
     }
 
     private function scheduled(Household $household, User $payer, Account $account, string $category, Carbon $dueDate, int $amount, string $description): void

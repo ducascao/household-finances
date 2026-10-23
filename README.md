@@ -136,6 +136,30 @@ a senha no mesmo formulário; ela só é usada para ler o arquivo e não é guar
 Os leitores são escolhidos pelo texto do PDF. Nubank (conta e fatura), Bradesco (conta e fatura), Itaú (fatura), PicPay e Mercado Pago foram conferidos com PDFs reais. Há também um leitor genérico para os demais bancos. A tela de revisão mostra qual leitor foi usado; se algum
 lançamento vier errado, guarde o PDF (fora do git) para ajustarmos o leitor.
 
+## E-mail (enviar resumos)
+
+A tela **Enviar por e-mail** manda o resumo do mês, o patrimônio e/ou a carteira para pessoas do lar ou qualquer outro e-mail.
+Por padrão vai só o que é compartilhado do lar; a opção "Minha visão completa" inclui as suas contas pessoais.
+Os números são calculados na hora do envio, e o container `queue` entrega as mensagens.
+
+Enquanto `MAIL_MAILER=log`, nada sai: as mensagens ficam em `storage/logs/laravel.log`. Para enviar pelo Gmail:
+
+1. Ative a verificação em 2 etapas da conta Google que vai enviar.
+2. Em <https://myaccount.google.com/apppasswords>, crie uma senha de app (nome: "Finanças de Casa"). O Google mostra 16 letras.
+3. No `.env`:
+   ```
+   MAIL_MAILER=smtp
+   MAIL_HOST=smtp.gmail.com
+   MAIL_PORT=587
+   MAIL_USERNAME=sua.conta@gmail.com
+   MAIL_PASSWORD="abcd efgh ijkl mnop"
+   MAIL_FROM_ADDRESS=sua.conta@gmail.com
+   ```
+   O remetente precisa ser a própria conta (ou um alias dela).
+4. Aplique: `docker compose exec app php artisan config:clear` e `docker compose restart queue`.
+
+Se um envio falhar (senha errada, por exemplo), o job aparece em `docker compose exec app php artisan queue:failed`; corrija o `.env` e rode `queue:retry all`.
+
 ## Testes e qualidade
 
 ```bash
