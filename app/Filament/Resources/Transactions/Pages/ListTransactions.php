@@ -2,20 +2,12 @@
 
 namespace App\Filament\Resources\Transactions\Pages;
 
-use App\Domain\Transactions\CreateTransaction;
 use App\Filament\Resources\Transactions\Actions\InstallmentActions;
 use App\Filament\Resources\Transactions\Actions\TransferActions;
 use App\Filament\Resources\Transactions\Concerns\ManagesAttachments;
-use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Filament\Resources\Transactions\TransactionResource;
-use App\Models\User;
-use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
-use Illuminate\Validation\ValidationException;
 
 class ListTransactions extends ListRecords
 {
@@ -23,31 +15,37 @@ class ListTransactions extends ListRecords
 
     protected static string $resource = TransactionResource::class;
 
+    /**
+     * Ao abrir a lista (ordem crescente de data), vai direto à página com os lançamentos de hoje, respeitando os
+     * filtros já aplicados. Só na primeira renderização e quando a URL não pede uma página nem outra ordenação.
+     */
+    public bool $openOnToday = true;
+
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make('quickCreate')
-                ->label('Lançamento rápido')
-                ->icon(Heroicon::OutlinedBolt)
-                ->modalHeading('Lançamento rápido')
-                ->keyBindings(['mod+shift+l'])
-                ->schema(fn (Schema $schema): Schema => $schema->components(TransactionForm::quickFields())->columns(2))
-                ->using(function (array $data, Action $action) {
-                    /** @var User $user */
-                    $user = auth()->user();
-
-                    try {
-                        return app(CreateTransaction::class)->execute($user, $data);
-                    } catch (ValidationException $e) {
-                        Notification::make()->danger()->title($e->getMessage())->send();
-                        $action->halt();
-                    }
-                }),
             TransferActions::create(),
             InstallmentActions::create(),
             CreateAction::make()
-                ->label('Novo lançamento')
-                ->color('gray'),
+                ->label('Novo lançamento'),
         ];
+    }
+
+    public function rendering(): void
+    {
+        if (! $this->openOnToday) {
+            return;
+        }
+
+        $this->openOnToday = false;
+        $pageName = $this->getTablePaginationPageName();
+        $perPage = $this->getTableRecordsPerPage();
+
+        if (request()->has($pageName) || filled($this->tableSort) || ! is_numeric($perPage) || ($query = $this->getFilteredTableQuery()) === null) {
+            return;
+        }
+
+        $before = $query->whereDate('date', '<', today())->count();
+        $this->setPage(intdiv($before, (int) $perPage) + 1, $pageName);
     }
 }

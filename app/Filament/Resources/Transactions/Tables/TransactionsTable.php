@@ -36,7 +36,7 @@ class TransactionsTable
     {
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['account', 'category.parent', 'payer'])->withCount('attachments'))
-            ->defaultSort(fn (Builder $query) => $query->orderByDesc('date')->orderByDesc('id'))
+            ->defaultSort(fn (Builder $query) => $query->orderBy('date')->orderBy('id'))
             ->columns([
                 TextColumn::make('date')
                     ->label('Data')

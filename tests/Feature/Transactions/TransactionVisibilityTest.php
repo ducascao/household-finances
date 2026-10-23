@@ -98,20 +98,10 @@ it('filtra por período e pela categoria principal incluindo as filhas', functio
         ->assertCanNotSeeTableRecords([$inOther]);
 });
 
-it('cria pelo lançamento rápido', function () {
+it('não tem mais o lançamento rápido (é igual ao novo lançamento)', function () {
     $this->actingAs($this->userA);
 
     Livewire::test(ListTransactions::class)
-        ->callAction('quickCreate', [
-            'account_id' => $this->accountOfA->id,
-            'category_id' => $this->category->id,
-            'amount' => '1.234,56',
-            'date' => '2026-09-20',
-            'description' => 'Padaria',
-        ])
-        ->assertHasNoActionErrors();
-
-    expect(Transaction::where('description', 'Padaria')->sole())
-        ->paid_by->toBe($this->userA->id)
-        ->and(Transaction::where('description', 'Padaria')->sole()->amount->getMinorAmount()->toInt())->toBe(-123456);
+        ->assertActionDoesNotExist('quickCreate')
+        ->assertActionExists('create');
 });

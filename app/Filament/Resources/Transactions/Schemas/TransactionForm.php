@@ -27,7 +27,7 @@ class TransactionForm
     {
         return $schema
             ->components([
-                ...self::quickFields(),
+                ...self::mainFields(),
                 DatePicker::make('competence_date')
                     ->label('Competência')
                     ->displayFormat('m/Y')
@@ -50,11 +50,11 @@ class TransactionForm
     }
 
     /**
-     * Campos do lançamento rápido: o resto assume os padrões.
+     * Campos principais do lançamento (conta, categoria, valor, data e descrição).
      *
      * @return list<Field>
      */
-    public static function quickFields(): array
+    public static function mainFields(): array
     {
         return [
             Select::make('account_id')
