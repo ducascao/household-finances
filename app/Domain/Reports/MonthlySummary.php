@@ -69,35 +69,7 @@ class MonthlySummary
             ->groupBy('categories.id')
             ->pluck('total', 'category_id');
 
-        $categories = Category::withoutGlobalScopes()->whereKey($rows->keys())->with('parent')->get()->keyBy('id');
-        $grandTotal = (int) $rows->sum();
-        $roots = [];
-
-        foreach ($rows as $categoryId => $total) {
-            $category = $categories->get($categoryId);
-
-            if ($category === null) {
-                continue;
-            }
-
-            $root = $category->parent ?? $category;
-
-            $roots[$root->id] ??= ['category' => $root, 'total' => 0, 'percent' => 0.0, 'children' => []];
-            $roots[$root->id]['total'] += (int) $total;
-
-            if ($category->parent !== null) {
-                $roots[$root->id]['children'][] = ['category' => $category, 'total' => (int) $total];
-            }
-        }
-
-        foreach ($roots as &$root) {
-            $root['percent'] = $grandTotal > 0 ? round($root['total'] / $grandTotal * 100, 1) : 0.0;
-            usort($root['children'], fn (array $a, array $b): int => $b['total'] <=> $a['total']);
-        }
-
-        usort($roots, fn (array $a, array $b): int => $b['total'] <=> $a['total']);
-
-        return $roots;
+        return CategoryTotals::group($rows);
     }
 
     /**

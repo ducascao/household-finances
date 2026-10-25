@@ -3,6 +3,7 @@
 namespace App\Filament\Monthly;
 
 use App\Domain\Reports\MonthlySummary;
+use App\Models\Category;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
@@ -30,7 +31,17 @@ class ExpensesByCategoryChart extends ChartWidget
 
     protected function getData(): array
     {
-        $rows = app(MonthlySummary::class)->expensesByCategory($this->month());
+        return self::bars(app(MonthlySummary::class)->expensesByCategory($this->month()));
+    }
+
+    /**
+     * Dados do gráfico de barras a partir das categorias principais (já ordenadas do maior para o menor).
+     *
+     * @param  list<array{category: Category, total: int}>  $rows
+     * @return array<string, mixed>
+     */
+    public static function bars(array $rows): array
+    {
         $shown = array_slice($rows, 0, self::MAX_BARS - (count($rows) > self::MAX_BARS ? 1 : 0));
         $rest = array_slice($rows, count($shown));
 

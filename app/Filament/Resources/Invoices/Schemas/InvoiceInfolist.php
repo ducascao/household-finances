@@ -3,10 +3,14 @@
 namespace App\Filament\Resources\Invoices\Schemas;
 
 use App\Domain\CreditCard\InvoiceTotals;
+use App\Filament\Resources\Invoices\Widgets\InvoiceExpensesChart;
+use App\Filament\Resources\Invoices\Widgets\InvoiceExpensesTable;
 use App\Models\CreditCard;
 use App\Models\Invoice;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -56,6 +60,14 @@ class InvoiceInfolist
                             ->helperText('Limite menos compras e parcelas em faturas ainda não pagas.')
                             ->weight('bold')
                             ->state(fn (Invoice $record): string => MoneyFormatter::format(InvoiceTotals::availableLimit(self::card($record)))),
+                    ]),
+                Grid::make(['default' => 1, 'lg' => 2])
+                    ->columnSpanFull()
+                    ->schema([
+                        Livewire::make(InvoiceExpensesChart::class, fn (Invoice $record): array => ['record' => $record])
+                            ->key('invoice-expenses-chart'),
+                        Livewire::make(InvoiceExpensesTable::class, fn (Invoice $record): array => ['record' => $record])
+                            ->key('invoice-expenses-table'),
                     ]),
                 Section::make('Próximas faturas')
                     ->description('Compras e parcelas já comprometidas.')
