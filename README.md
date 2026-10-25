@@ -1,7 +1,6 @@
 # Finanças de Casa
 
 Intranet para controle financeiro doméstico e de investimentos de um lar.
-Plano e entregas: [`PLAN.md`](PLAN.md). Convenções: [`CLAUDE.md`](CLAUDE.md).
 
 Stack: PHP 8.5 · Laravel 13 · Filament 5 · PostgreSQL 18, tudo em Docker.
 

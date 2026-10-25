@@ -29,3 +29,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /backups
+
+# Documentos locais (não versionados)
+/CLAUDE.md
+/PLAN.md
