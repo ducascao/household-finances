@@ -4,6 +4,7 @@ use App\Domain\Household\CreateHousehold;
 use App\Domain\Reports\MonthlySummary as Summary;
 use App\Domain\Transactions\CreateTransaction;
 use App\Filament\Monthly\BalanceProjectionWidget;
+use App\Filament\Monthly\ChartFormatting;
 use App\Filament\Monthly\EvolutionChart;
 use App\Filament\Monthly\ExpensesByCategoryChart;
 use App\Filament\Monthly\ExpensesByCategoryTable;
@@ -104,4 +105,25 @@ it('o detalhe da categoria abre os lançamentos filtrados por categoria e compet
     ]])->test(ListTransactions::class)
         ->assertCanSeeTableRecords([$this->septemberMarket])
         ->assertCanNotSeeTableRecords([$this->augustMarket]);
+});
+
+it('o donut de gastos usa uma cor por categoria e junta o excedente em "Outras" (cinza)', function () {
+    $rows = array_map(
+        fn (int $i): array => ['category' => new Category(['name' => "Cat {$i}"]), 'total' => (10 - $i) * 1000],
+        range(1, 9),
+    );
+
+    $data = ExpensesByCategoryChart::donut($rows);
+    $dataset = $data['datasets'][0];
+
+    expect($data['labels'])->toHaveCount(8)
+        ->and($data['labels'][7])->toBe('Outras')
+        ->and($dataset['data'][7])->toEqual(30)
+        ->and($dataset['backgroundColor'][0])->toBe(ChartFormatting::CATEGORICAL[0])
+        ->and($dataset['backgroundColor'][6])->toBe(ChartFormatting::CATEGORICAL[6])
+        ->and($dataset['backgroundColor'][7])->toBe(ChartFormatting::OTHER);
+
+    $few = ExpensesByCategoryChart::donut(array_slice($rows, 0, 3));
+
+    expect($few['datasets'][0]['backgroundColor'])->toBe(array_slice(ChartFormatting::CATEGORICAL, 0, 3));
 });
