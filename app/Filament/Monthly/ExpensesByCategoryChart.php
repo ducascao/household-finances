@@ -22,7 +22,7 @@ class ExpensesByCategoryChart extends ChartWidget
 
     protected ?string $maxHeight = '320px';
 
-    public const MAX_BARS = 8;
+    public const MAX_SLICES = 8;
 
     protected function getType(): string
     {
@@ -64,37 +64,14 @@ class ExpensesByCategoryChart extends ChartWidget
     }
 
     /**
-     * Dados do gráfico de barras a partir das categorias principais (já ordenadas do maior para o menor).
-     *
-     * @param  list<array{category: Category, total: int}>  $rows
-     * @return array<string, mixed>
-     */
-    public static function bars(array $rows): array
-    {
-        ['labels' => $labels, 'values' => $values] = self::fold($rows);
-
-        return [
-            'labels' => $labels,
-            'datasets' => [[
-                'label' => 'Gasto',
-                'data' => $values,
-                'backgroundColor' => ChartFormatting::BLUE,
-                'borderRadius' => 4,
-                'borderSkipped' => 'start',
-                'barPercentage' => 0.7,
-            ]],
-        ];
-    }
-
-    /**
-     * Até 8 fatias/barras: acima disso, as menores viram "Outras".
+     * Até 8 fatias: acima disso, as menores viram "Outras".
      *
      * @param  list<array{category: Category, total: int}>  $rows
      * @return array{labels: list<string>, values: list<float>, folded: bool}
      */
     private static function fold(array $rows): array
     {
-        $shown = array_slice($rows, 0, self::MAX_BARS - (count($rows) > self::MAX_BARS ? 1 : 0));
+        $shown = array_slice($rows, 0, self::MAX_SLICES - (count($rows) > self::MAX_SLICES ? 1 : 0));
         $rest = array_slice($rows, count($shown));
 
         $labels = array_map(fn (array $row): string => $row['category']->name, $shown);

@@ -10,7 +10,7 @@ use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 
 /**
- * Gastos da fatura por categoria principal, no mesmo formato do resumo do mês.
+ * Gastos da fatura por categoria principal, em donut, no mesmo formato do resumo do mês.
  */
 class InvoiceExpensesChart extends ChartWidget
 {
@@ -22,18 +22,18 @@ class InvoiceExpensesChart extends ChartWidget
 
     protected function getType(): string
     {
-        return 'bar';
+        return 'doughnut';
     }
 
     protected function getData(): array
     {
         $rows = $this->record === null ? [] : InvoiceCategoryBreakdown::of($this->record)['categories'];
 
-        return ExpensesByCategoryChart::bars($rows);
+        return ExpensesByCategoryChart::donut($rows);
     }
 
     protected function getOptions(): RawJs
     {
-        return ChartFormatting::options(valueAxis: 'x', legend: false);
+        return ChartFormatting::donutOptions();
     }
 }
