@@ -72,14 +72,10 @@ class ItauCardLayout extends PdfLayout
         }
 
         $description = PdfText::clean($match[3]);
-        $date = PdfText::withoutYear((int) $match[1], (int) $match[2], $end);
+        $date = PdfText::cardDate((int) $match[1], (int) $match[2], $end, $description);
 
         if ($date === null || $description === '') {
             return null;
-        }
-
-        if (preg_match('/(\d{2})\/(\d{2})$/u', $description, $installment) && (int) $installment[1] >= 2 && (int) $installment[1] <= (int) $installment[2]) {
-            $date = $date->copy()->addMonthsNoOverflow((int) $installment[1] - 1);
         }
 
         // Compra positiva no PDF vira negativa no cartão; pagamento e estorno ("-") viram positivos.

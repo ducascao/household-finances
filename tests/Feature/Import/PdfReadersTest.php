@@ -3,6 +3,7 @@
 use App\Domain\Import\Parsers\ParsedLine;
 use App\Domain\Import\Parsers\StatementParseException;
 use App\Domain\Import\Pdf\PdfParser;
+use App\Domain\Import\Pdf\PdfText;
 
 /**
  * Leitores de PDF com fixtures fictícias (texto como sai do pdftotext -layout).
@@ -151,3 +152,15 @@ it('recusa fatura em conta corrente, extrato em cartão, PDF sem texto e PDF sem
         ->and(fn () => (new PdfParser(false))->parse("  \n\f "))->toThrow(StatementParseException::class, 'imagem escaneada')
         ->and(fn () => (new PdfParser(false))->parse("Um texto qualquer\nsem datas"))->toThrow(StatementParseException::class, 'Nenhum lançamento');
 });
+
+it('fatura de cartão: parcela com a data da compra original deduz o ano pela fatura em que a compra caiu', function (int $day, int $month, string $description, string $expected) {
+    $end = PdfText::date(2026, 10, 15);
+
+    expect(PdfText::cardDate($day, $month, $end, $description)?->toDateString())->toBe($expected);
+})->with([
+    'última parcela, compra no mesmo mês do vencimento um ano antes' => [13, 10, 'AMAZONMKTPLC*F 12/12', '2026-09-13'],
+    'parcela do meio' => [1, 4, 'MLP *KaBuM- 07/10', '2026-10-01'],
+    'compra no ano anterior' => [19, 12, 'CANGURU 10/12', '2026-09-19'],
+    'primeira parcela' => [8, 10, 'LOJA 01/03', '2026-10-08'],
+    'à vista depois do vencimento fica no ano anterior' => [20, 10, 'PADARIA', '2025-10-20'],
+]);

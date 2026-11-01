@@ -76,6 +76,21 @@ final class PdfText
     }
 
     /**
+     * Data de um lançamento de fatura de cartão (dia/mês sem ano). Parcela "11/12" impressa com a data da compra
+     * original: o ano é deduzido pela fatura de 10 meses antes e a data avança 10 meses, para cair no ciclo desta
+     * fatura (ex.: "13/10 ... 12/12" na fatura que vence em 15/10/2026 é a compra de 13/10/2025 → 13/09/2026).
+     */
+    public static function cardDate(int $day, int $month, Carbon $end, string $description): ?Carbon
+    {
+        $shift = preg_match('/(\d{2})\/(\d{2})$/u', $description, $installment)
+            && (int) $installment[1] >= 2 && (int) $installment[1] <= (int) $installment[2]
+            ? (int) $installment[1] - 1
+            : 0;
+
+        return self::withoutYear($day, $month, $end->copy()->subMonthsNoOverflow($shift))?->addMonthsNoOverflow($shift);
+    }
+
+    /**
      * Blocos de linhas separados por linha em branco (nos extratos, cada lançamento costuma ser um bloco:
      * descrição acima e/ou abaixo da linha com data e valor).
      *

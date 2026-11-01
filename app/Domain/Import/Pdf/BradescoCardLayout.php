@@ -70,14 +70,10 @@ class BradescoCardLayout extends PdfLayout
                 usort($amounts, fn (array $a, array $b): int => abs($a['end'] - $valueEnd) <=> abs($b['end'] - $valueEnd));
             }
 
-            $date = PdfText::withoutYear((int) $match[2], (int) $match[3], $end);
+            $date = PdfText::cardDate((int) $match[2], (int) $match[3], $end, $description);
 
             if ($date === null) {
                 continue;
-            }
-
-            if (preg_match('/(\d{2})\/(\d{2})$/u', $description, $installment) && (int) $installment[1] >= 2 && (int) $installment[1] <= (int) $installment[2]) {
-                $date = $date->copy()->addMonthsNoOverflow((int) $installment[1] - 1);
             }
 
             // Compra positiva no PDF vira negativa no cartão; crédito ("-") vira positivo.
