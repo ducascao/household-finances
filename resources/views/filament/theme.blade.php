@@ -30,7 +30,10 @@
     .fi-sidebar-item.fi-active > .fi-sidebar-item-btn { background-color: var(--primary-50); }
     .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label { font-weight: 600; }
     /* Menu recolhido: só os ícones, centralizados */
-    .fi-body .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav { padding-inline: 0.75rem; }
+    @media (min-width: 64rem) {
+        .fi-body .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav { padding-inline: 0; align-items: center; scrollbar-gutter: auto; overflow-x: hidden; }
+        .fi-body .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-item-btn { justify-content: center; }
+    }
 
     /* Cards: seções, tabelas, gráficos e resumos */
     .fi-body .fi-section:not(.fi-section-not-contained):not(.fi-aside),
