@@ -21,7 +21,7 @@ class DebtResource extends Resource
 {
     protected static ?string $model = Debt::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedReceiptPercent;
 
     protected static string|UnitEnum|null $navigationGroup = 'Patrimônio';
 
