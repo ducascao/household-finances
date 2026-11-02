@@ -4,6 +4,7 @@ namespace App\Filament\NetWorth;
 
 use App\Filament\Support\Sensitive;
 use App\Support\MoneyFormatter;
+use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -34,14 +35,21 @@ class NetWorthStatsWidget extends StatsOverviewWidget
 
         return [
             Stat::make('Patrimônio líquido', Sensitive::html(MoneyFormatter::formatMinor($now['net_worth'])))
-                ->description('contas + investimentos + bens − dívidas, hoje'),
+                ->description('contas + investimentos + bens − dívidas, hoje')
+                ->icon(Heroicon::OutlinedScale),
             Stat::make('No mês', $delta($previous))
                 ->description($previous !== null ? 'desde o fim de '.$previous['month']->locale('pt_BR')->translatedFormat('F') : 'grave o histórico para comparar')
-                ->color($previous !== null && $now['net_worth'] < $previous['net_worth'] ? 'danger' : 'success'),
+                ->color($previous !== null && $now['net_worth'] < $previous['net_worth'] ? 'danger' : 'success')
+                ->icon(Heroicon::OutlinedCalendar)
+                ->extraAttributes(['class' => $previous !== null && $now['net_worth'] < $previous['net_worth'] ? 'fc-tone-danger' : 'fc-tone-success']),
             Stat::make('Em 12 meses', $delta($yearAgo))
-                ->color($yearAgo !== null && $now['net_worth'] < $yearAgo['net_worth'] ? 'danger' : 'success'),
+                ->color($yearAgo !== null && $now['net_worth'] < $yearAgo['net_worth'] ? 'danger' : 'success')
+                ->icon(Heroicon::OutlinedArrowTrendingUp)
+                ->extraAttributes(['class' => $yearAgo !== null && $now['net_worth'] < $yearAgo['net_worth'] ? 'fc-tone-danger' : 'fc-tone-success']),
             Stat::make('Composição', Sensitive::html(MoneyFormatter::formatMinor($now['accounts'] + $now['investments'] + $now['goods'])))
-                ->description(Sensitive::html('ativos (bens: '.MoneyFormatter::formatMinor($now['goods']).'); dívidas: '.MoneyFormatter::formatMinor($now['debts']))),
+                ->description(Sensitive::html('ativos (bens: '.MoneyFormatter::formatMinor($now['goods']).'); dívidas: '.MoneyFormatter::formatMinor($now['debts'])))
+                ->icon(Heroicon::OutlinedChartPie)
+                ->extraAttributes(['class' => 'fc-tone-info']),
         ];
     }
 }
