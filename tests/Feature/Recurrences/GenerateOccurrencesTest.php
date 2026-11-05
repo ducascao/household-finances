@@ -185,3 +185,36 @@ it('o job está agendado diariamente', function () {
     expect($events)->toHaveCount(1)
         ->and($events->first()->expression)->toBe('0 1 * * *');
 });
+
+it('o comando com --until gera até a data informada', function () {
+    $recurrence = ($this->create)();
+
+    $this->artisan('app:generate-recurrences', ['--until' => '2027-03-31'])
+        ->expectsOutput('4 lançamento(s) previsto(s) gerado(s).')
+        ->assertSuccessful();
+
+    expect(($this->dates)($recurrence))->toBe(['2026-10-10', '2026-11-10', '2026-12-10', '2027-01-10', '2027-02-10', '2027-03-10'])
+        ->and($recurrence->fresh()->next_date->toDateString())->toBe('2027-04-10');
+
+    $this->artisan('app:generate-recurrences', ['--until' => '31/03/2027'])
+        ->expectsOutput('0 lançamento(s) previsto(s) gerado(s).')
+        ->assertSuccessful();
+});
+
+it('o comando com --until respeita a data de fim', function () {
+    $recurrence = ($this->create)(['end_date' => '2026-12-31']);
+
+    $this->artisan('app:generate-recurrences', ['--until' => '2027-12-31'])->assertSuccessful();
+
+    expect(($this->dates)($recurrence))->toBe(['2026-10-10', '2026-11-10', '2026-12-10']);
+});
+
+it('o comando recusa --until inválido sem gerar nada', function (string $value) {
+    $recurrence = ($this->create)();
+
+    $this->artisan('app:generate-recurrences', ['--until' => $value])
+        ->expectsOutputToContain('Data inválida em --until')
+        ->assertFailed();
+
+    expect(($this->dates)($recurrence))->toBe(['2026-10-10', '2026-11-10']);
+})->with(['2027-13-01', '31/02/2027', 'amanhã', '2027-1-5']);
