@@ -5,6 +5,7 @@ namespace App\Filament\Monthly;
 use App\Domain\Reports\MonthlySummary;
 use App\Filament\Support\Sensitive;
 use App\Support\MoneyFormatter;
+use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -37,13 +38,19 @@ class MonthTotalsWidget extends StatsOverviewWidget
 
         return [
             Stat::make('Entradas', Sensitive::html(MoneyFormatter::formatMinor($totals['income']['total'])))
-                ->description(Sensitive::html($split($totals['income']))),
+                ->description(Sensitive::html($split($totals['income'])))
+                ->icon(Heroicon::OutlinedArrowUpCircle)
+                ->extraAttributes(['class' => 'fc-tone-success fc-tone-value']),
             Stat::make('Saídas', Sensitive::html(MoneyFormatter::formatMinor($totals['expense']['total'])))
-                ->description(Sensitive::html($split($totals['expense']))),
+                ->description(Sensitive::html($split($totals['expense'])))
+                ->icon(Heroicon::OutlinedArrowDownCircle)
+                ->extraAttributes(['class' => 'fc-tone-danger fc-tone-value']),
             Stat::make('Resultado', Sensitive::html(MoneyFormatter::formatMinor($totals['result'])))
                 ->description($totals['result'] >= 0 ? 'sobra no mês' : 'falta no mês')
                 ->descriptionIcon($totals['result'] >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
-                ->color($totals['result'] >= 0 ? 'success' : 'danger'),
+                ->color($totals['result'] >= 0 ? 'success' : 'danger')
+                ->icon(Heroicon::OutlinedScale)
+                ->extraAttributes(['class' => 'fc-tone-primary']),
         ];
     }
 }

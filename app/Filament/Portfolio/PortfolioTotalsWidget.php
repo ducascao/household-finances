@@ -6,6 +6,7 @@ use App\Domain\Investments\Portfolio;
 use App\Domain\Investments\ReturnCalculator;
 use App\Filament\Support\Sensitive;
 use App\Support\MoneyFormatter;
+use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -25,15 +26,22 @@ class PortfolioTotalsWidget extends StatsOverviewWidget
                 ->description($totals['missing'] !== []
                     ? 'Fora dos totais por falta de câmbio: '.implode(', ', $totals['missing'])
                     : 'Quanto foi investido nas posições abertas (com taxas), em reais')
-                ->color($totals['missing'] !== [] ? 'warning' : null),
+                ->color($totals['missing'] !== [] ? 'warning' : null)
+                ->icon(Heroicon::OutlinedBanknotes)
+                ->extraAttributes(['class' => $totals['missing'] !== [] ? 'fc-tone-warning' : 'fc-tone-gray']),
             Stat::make('Valor de mercado', Sensitive::html(MoneyFormatter::format($totals['market'])))
-                ->description('Pela última cotação de cada ativo'),
+                ->description('Pela última cotação de cada ativo')
+                ->icon(Heroicon::OutlinedPresentationChartLine),
             Stat::make('Resultado não realizado', Sensitive::html(MoneyFormatter::format($totals['result'])))
                 ->description($totals['percent'] !== null ? number_format($totals['percent'], 2, ',', '.').'% sobre o custo' : '—')
                 ->descriptionIcon($positive ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
-                ->color($positive ? 'success' : 'danger'),
+                ->color($positive ? 'success' : 'danger')
+                ->icon($positive ? Heroicon::OutlinedArrowTrendingUp : Heroicon::OutlinedArrowTrendingDown)
+                ->extraAttributes(['class' => $positive ? 'fc-tone-success' : 'fc-tone-danger']),
             Stat::make('Proventos em 12 meses', Sensitive::html(MoneyFormatter::formatMinor($year['total']->incomes)))
-                ->description(Sensitive::html('Realizado em vendas: '.MoneyFormatter::formatMinor($year['total']->realized))),
+                ->description(Sensitive::html('Realizado em vendas: '.MoneyFormatter::formatMinor($year['total']->realized)))
+                ->icon(Heroicon::OutlinedGift)
+                ->extraAttributes(['class' => 'fc-tone-info']),
         ];
     }
 }
