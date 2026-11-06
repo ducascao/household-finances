@@ -2,6 +2,7 @@
 
 namespace App\Domain\Transactions;
 
+use App\Domain\CreditCard\DeleteEmptyInvoices;
 use App\Domain\CreditCard\DeleteInstallmentPurchase;
 use App\Domain\Investments\ManageIncomes;
 use App\Domain\Investments\ManageOperations;
@@ -69,6 +70,7 @@ class DeleteTransaction
         }
 
         $transaction->delete();
+        app(DeleteEmptyInvoices::class)->execute([$transaction->invoice_id]);
     }
 
     /**

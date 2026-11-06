@@ -3,6 +3,7 @@
 use App\Domain\Accounts\CreateAccount;
 use App\Domain\Recurrences\CreateRecurrence;
 use App\Domain\Transactions\CreateTransaction;
+use App\Domain\Transactions\DeleteTransaction;
 use App\Domain\Transactions\UpdateTransaction;
 use App\Filament\Resources\Accounts\Pages\CreateAccount as CreateAccountPage;
 use App\Models\Account;
@@ -99,6 +100,39 @@ it('mudar a competência move a compra para a fatura daquele mês', function () 
     expect($purchase->refresh()->competence_date->toDateString())->toBe('2026-12-01')
         ->and($purchase->invoice->reference_month->format('Y-m'))->toBe('2026-12')
         ->and($purchase->date->toDateString())->toBe('2026-09-25');
+});
+
+it('fatura que fica vazia ao mudar a competência é apagada', function () {
+    $purchase = ($this->purchase)('2026-09-25');
+    $oldInvoiceId = $purchase->invoice_id;
+
+    app(UpdateTransaction::class)->execute($this->user, $purchase, [
+        'account_id' => $this->cardAccount->id, 'category_id' => $this->category->id,
+        'amount' => 10000, 'date' => '2026-09-25', 'competence_date' => '2026-12-01', 'description' => 'Compra',
+    ]);
+
+    expect(Invoice::find($oldInvoiceId))->toBeNull()
+        ->and(Invoice::pluck('reference_month')->map->format('Y-m')->all())->toBe(['2026-12']);
+});
+
+it('fatura que ainda tem lançamentos fica ao mudar a competência de um deles', function () {
+    $purchase = ($this->purchase)('2026-09-25');
+    ($this->purchase)('2026-09-26');
+
+    app(UpdateTransaction::class)->execute($this->user, $purchase, [
+        'account_id' => $this->cardAccount->id, 'category_id' => $this->category->id,
+        'amount' => 10000, 'date' => '2026-09-25', 'competence_date' => '2026-12-01', 'description' => 'Compra',
+    ]);
+
+    expect(Invoice::count())->toBe(2);
+});
+
+it('excluir o último lançamento apaga a fatura vazia', function () {
+    $purchase = ($this->purchase)('2026-09-25');
+
+    app(DeleteTransaction::class)->execute($this->user, $purchase);
+
+    expect(Invoice::count())->toBe(0);
 });
 
 it('editar sem mudar a competência mantém a fatura pela data', function () {

@@ -31,10 +31,11 @@ class DeleteInstallmentPurchase
             ]);
         }
 
-        DB::transaction(function () use ($group): void {
+        DB::transaction(function () use ($group, $invoiceIds): void {
             // Um a um, para disparar a limpeza dos comprovantes.
             Transaction::withoutGlobalScopes()->where('installment_group_id', $group->id)->get()->each->delete();
             $group->delete();
+            app(DeleteEmptyInvoices::class)->execute($invoiceIds);
         });
     }
 }

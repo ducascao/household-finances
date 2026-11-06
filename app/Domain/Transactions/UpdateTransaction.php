@@ -3,6 +3,7 @@
 namespace App\Domain\Transactions;
 
 use App\Domain\CreditCard\AssignTransactionToInvoice;
+use App\Domain\CreditCard\DeleteEmptyInvoices;
 use App\Models\Account;
 use App\Models\Invoice;
 use App\Models\Transaction;
@@ -67,7 +68,12 @@ class UpdateTransaction
             app(AssignTransactionToInvoice::class)->execute($transaction);
         }
 
+        $previousInvoiceId = $transaction->getOriginal('invoice_id');
         $transaction->save();
+
+        if ($previousInvoiceId !== $transaction->invoice_id) {
+            app(DeleteEmptyInvoices::class)->execute([$previousInvoiceId]);
+        }
 
         return $transaction;
     }
