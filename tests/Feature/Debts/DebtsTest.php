@@ -59,6 +59,21 @@ it('cria a tabela e os lançamentos previstos só dos próximos 60 dias, sem dup
     expect(Transaction::where('debt_id', $debt->id)->count())->toBe(2);
 });
 
+it('o comando com --until gera também as parcelas das dívidas até a data, sem duplicar', function () {
+    $debt = ($this->create)();
+
+    $this->artisan('app:generate-recurrences', ['--until' => '2026-05-31'])
+        ->expectsOutput('3 lançamento(s) previsto(s) gerado(s).') // 15/03, 15/04 e 15/05
+        ->assertSuccessful();
+
+    expect(Transaction::where('debt_id', $debt->id)->orderBy('date')->pluck('date')->map->toDateString()->all())
+        ->toBe(['2026-01-15', '2026-02-15', '2026-03-15', '2026-04-15', '2026-05-15']);
+
+    $this->artisan('app:generate-recurrences', ['--until' => '31/05/2026'])
+        ->expectsOutput('0 lançamento(s) previsto(s) gerado(s).')
+        ->assertSuccessful();
+});
+
 it('pagar o lançamento baixa a parcela e reduz o saldo devedor', function () {
     $debt = ($this->create)();
     ($this->pay)($debt, 2);

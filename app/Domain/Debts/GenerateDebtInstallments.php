@@ -12,7 +12,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Cria os lançamentos previstos das parcelas que vencem até hoje + 60 dias (mesma janela das contas fixas).
+ * Cria os lançamentos previstos das parcelas que vencem até hoje + 60 dias (mesma janela das contas fixas)
+ * ou até a data informada.
  * Parcela que já tem lançamento não ganha outro; atualiza a situação "quitada".
  */
 class GenerateDebtInstallments
@@ -60,13 +61,13 @@ class GenerateDebtInstallments
         return $created;
     }
 
-    public function executeAll(): int
+    public function executeAll(?Carbon $until = null): int
     {
         $created = 0;
 
         Debt::withoutGlobalScopes()->where('status', DebtStatus::Active->value)->orderBy('id')
-            ->each(function (Debt $debt) use (&$created): void {
-                $created += $this->execute($debt);
+            ->each(function (Debt $debt) use ($until, &$created): void {
+                $created += $this->execute($debt, $until);
             });
 
         return $created;

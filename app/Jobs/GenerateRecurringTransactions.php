@@ -10,7 +10,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Gera diariamente os lançamentos previstos das recorrências e das parcelas de dívidas até hoje + 60 dias.
+ * Gera de hora em hora os lançamentos previstos das recorrências e das parcelas de dívidas até hoje + 60 dias.
  */
 class GenerateRecurringTransactions implements ShouldBeUnique, ShouldQueue
 {

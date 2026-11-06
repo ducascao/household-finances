@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Domain\Debts\GenerateDebtInstallments;
 use App\Domain\Recurrences\GenerateOccurrences;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Console\Command;
@@ -12,9 +13,9 @@ class GenerateRecurrencesCommand extends Command
     protected $signature = 'app:generate-recurrences
         {--until= : Gera até esta data (aaaa-mm-dd ou dd/mm/aaaa) em vez de hoje + 60 dias}';
 
-    protected $description = 'Gera agora os lançamentos previstos das recorrências (até hoje + 60 dias ou até --until)';
+    protected $description = 'Gera agora os lançamentos previstos das recorrências e das parcelas de dívidas (até hoje + 60 dias ou até --until)';
 
-    public function handle(GenerateOccurrences $generateOccurrences): int
+    public function handle(GenerateOccurrences $generateOccurrences, GenerateDebtInstallments $debts): int
     {
         $until = null;
         $option = $this->option('until');
@@ -33,7 +34,7 @@ class GenerateRecurrencesCommand extends Command
             }
         }
 
-        $created = $generateOccurrences->executeAll($until);
+        $created = $generateOccurrences->executeAll($until) + $debts->executeAll($until);
 
         $this->info("{$created} lançamento(s) previsto(s) gerado(s).");
 
