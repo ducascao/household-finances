@@ -178,12 +178,12 @@ it('excluir recorrência pode apagar os previstos futuros e mantém o resto', fu
     'mantendo tudo' => [false, [['2026-09-10', null], ['2026-10-10', null], ['2026-11-10', null]]],
 ]);
 
-it('o job está agendado diariamente', function () {
+it('o job está agendado de hora em hora', function () {
     $events = collect(app(Schedule::class)->events())
         ->filter(fn ($event) => str_contains((string) $event->description, GenerateRecurringTransactions::class));
 
     expect($events)->toHaveCount(1)
-        ->and($events->first()->expression)->toBe('0 1 * * *');
+        ->and($events->first()->expression)->toBe('0 * * * *');
 });
 
 it('o comando com --until gera até a data informada', function () {
