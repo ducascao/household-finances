@@ -46,19 +46,24 @@ class UpdateTransaction
         $transaction->household_id = $attributes['household_id'];
         unset($attributes['household_id']);
         $transaction->fill($attributes);
+        // Competência em branco segue a data; só a informada pelo usuário escolhe a fatura.
+        $competenceChanged = filled($data['competence_date'] ?? null) && $transaction->isDirty('competence_date');
 
         $invoice = $transaction->invoice_id !== null ? Invoice::withoutGlobalScopes()->find($transaction->invoice_id) : null;
 
         if ($invoice?->isPaid()) {
-            if ($transaction->isDirty(['account_id', 'amount', 'date'])) {
+            if ($transaction->isDirty(['account_id', 'amount', 'date']) || $competenceChanged) {
                 throw ValidationException::withMessages([
-                    'amount' => 'O lançamento está numa fatura paga: conta, valor e data não podem mudar.',
+                    'amount' => 'O lançamento está numa fatura paga: conta, valor, data e competência não podem mudar.',
                 ]);
             }
 
             // Continua na fatura paga, com a competência dela.
             $transaction->competence_date = $invoice->reference_month->copy();
-        } elseif ($transaction->installment_group_id === null) {
+        } elseif ($competenceChanged) {
+            // No cartão, mudar a competência move o lançamento para a fatura daquele mês.
+            app(AssignTransactionToInvoice::class)->executeForCompetence($transaction);
+        } else {
             app(AssignTransactionToInvoice::class)->execute($transaction);
         }
 

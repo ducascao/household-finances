@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\Transaction;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Coloca um lançamento de cartão na fatura certa e ajusta a competência para o mês da fatura.
@@ -26,6 +27,32 @@ class AssignTransactionToInvoice
         }
 
         $invoice = $this->invoiceForPurchase($card, $transaction->date, $monthsAhead);
+
+        $transaction->invoice_id = $invoice->id;
+        $transaction->competence_date = $invoice->reference_month->copy();
+    }
+
+    /**
+     * Coloca um lançamento de cartão na fatura do mês de competência escolhido pelo usuário.
+     * Não salva. Fatura já paga não recebe lançamentos novos.
+     */
+    public function executeForCompetence(Transaction $transaction): void
+    {
+        $card = $this->cardOf($transaction);
+
+        if ($card === null || $transaction->transfer_id !== null) {
+            $transaction->invoice_id = null;
+
+            return;
+        }
+
+        $invoice = $this->invoiceFor($card, $transaction->competence_date->copy()->startOfMonth());
+
+        if ($invoice->isPaid() && $invoice->id !== $transaction->getOriginal('invoice_id')) {
+            throw ValidationException::withMessages([
+                'competence_date' => 'A fatura de '.$invoice->reference_month->format('m/Y').' já está paga.',
+            ]);
+        }
 
         $transaction->invoice_id = $invoice->id;
         $transaction->competence_date = $invoice->reference_month->copy();

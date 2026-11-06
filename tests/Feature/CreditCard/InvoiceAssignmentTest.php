@@ -88,6 +88,85 @@ it('mudar a data move a compra de fatura', function () {
     expect($purchase->refresh()->invoice->reference_month->format('Y-m'))->toBe('2026-11');
 });
 
+it('mudar a competência move a compra para a fatura daquele mês', function () {
+    $purchase = ($this->purchase)('2026-09-25');
+
+    app(UpdateTransaction::class)->execute($this->user, $purchase, [
+        'account_id' => $this->cardAccount->id, 'category_id' => $this->category->id,
+        'amount' => 10000, 'date' => '2026-09-25', 'competence_date' => '2026-12-01', 'description' => 'Compra',
+    ]);
+
+    expect($purchase->refresh()->competence_date->toDateString())->toBe('2026-12-01')
+        ->and($purchase->invoice->reference_month->format('Y-m'))->toBe('2026-12')
+        ->and($purchase->date->toDateString())->toBe('2026-09-25');
+});
+
+it('editar sem mudar a competência mantém a fatura pela data', function () {
+    $purchase = ($this->purchase)('2026-09-25');
+
+    app(UpdateTransaction::class)->execute($this->user, $purchase, [
+        'account_id' => $this->cardAccount->id, 'category_id' => $this->category->id,
+        'amount' => 12000, 'date' => '2026-09-25', 'competence_date' => '2026-10-01', 'description' => 'Compra',
+    ]);
+
+    expect($purchase->refresh()->invoice->reference_month->format('Y-m'))->toBe('2026-10');
+});
+
+it('competência em branco segue a fatura da data', function () {
+    $purchase = ($this->purchase)('2026-09-25');
+
+    app(UpdateTransaction::class)->execute($this->user, $purchase, [
+        'account_id' => $this->cardAccount->id, 'category_id' => $this->category->id,
+        'amount' => 10000, 'date' => '2026-09-25', 'competence_date' => null, 'description' => 'Compra',
+    ]);
+
+    expect($purchase->refresh()->invoice->reference_month->format('Y-m'))->toBe('2026-10');
+});
+
+it('compra criada com competência informada vai para a fatura daquele mês', function () {
+    $purchase = ($this->purchase)('2026-09-25', ['competence_date' => '2026-11-15']);
+
+    expect($purchase->invoice->reference_month->format('Y-m'))->toBe('2026-11')
+        ->and($purchase->competence_date->toDateString())->toBe('2026-11-01');
+});
+
+it('não move a compra para uma fatura paga pela competência', function () {
+    $paid = ($this->purchase)('2026-10-05');
+    $paid->invoice->update(['paid_at' => now()]);
+    $purchase = ($this->purchase)('2026-09-25');
+
+    app(UpdateTransaction::class)->execute($this->user, $purchase, [
+        'account_id' => $this->cardAccount->id, 'category_id' => $this->category->id,
+        'amount' => 10000, 'date' => '2026-09-25', 'competence_date' => '2026-11-01', 'description' => 'Compra',
+    ]);
+})->throws(ValidationException::class, 'já está paga');
+
+it('não deixa mudar a competência de compra em fatura paga', function () {
+    $purchase = ($this->purchase)('2026-09-25');
+    $purchase->invoice->update(['paid_at' => now()]);
+
+    app(UpdateTransaction::class)->execute($this->user, $purchase->refresh(), [
+        'account_id' => $this->cardAccount->id, 'category_id' => $this->category->id,
+        'amount' => 10000, 'date' => '2026-09-25', 'competence_date' => '2026-11-01', 'description' => 'Compra',
+    ]);
+})->throws(ValidationException::class, 'fatura paga');
+
+it('mudar a competência de lançamento fora do cartão é salvo', function () {
+    $checking = Account::factory()->ownedBy($this->user)->create();
+    $transaction = app(CreateTransaction::class)->execute($this->user, [
+        'account_id' => $checking->id, 'category_id' => $this->category->id,
+        'amount' => 100, 'date' => '2026-09-10', 'description' => 'x',
+    ]);
+
+    app(UpdateTransaction::class)->execute($this->user, $transaction, [
+        'account_id' => $checking->id, 'category_id' => $this->category->id,
+        'amount' => 100, 'date' => '2026-09-10', 'competence_date' => '2026-08-01', 'description' => 'x',
+    ]);
+
+    expect($transaction->refresh()->competence_date->toDateString())->toBe('2026-08-01')
+        ->and($transaction->invoice_id)->toBeNull();
+});
+
 it('não deixa alterar valor de compra em fatura paga', function () {
     $purchase = ($this->purchase)('2026-09-25');
     $purchase->invoice->update(['paid_at' => now()]);
