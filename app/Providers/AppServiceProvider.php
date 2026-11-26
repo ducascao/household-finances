@@ -16,6 +16,7 @@ use App\Services\Quotes\BrapiQuoteProvider;
 use App\Services\Quotes\FinnhubQuoteProvider;
 use App\Services\Rates\BcbPtaxProvider;
 use App\Services\Rates\BcbSgsProvider;
+use Filament\Forms\Components\DateTimePicker;
 use Google\Service\Drive;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Filesystem\FilesystemAdapter;
@@ -47,6 +48,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Falha alto em lazy loading, atributos descartados e atributos inexistentes.
         Model::shouldBeStrict(! $this->app->isProduction());
+
+        // Calendários começam no domingo, como no calendário brasileiro (vale também para o DatePicker).
+        DateTimePicker::configureUsing(fn (DateTimePicker $picker) => $picker->weekStartsOnSunday());
 
         // Disco "google": Google Drive da conta conectada do lar (refresh_token e pasta raiz vêm da conexão).
         Storage::extend('google', function ($app, array $config): FilesystemAdapter {
