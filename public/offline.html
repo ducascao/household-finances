@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1f9d55">
+    <title>Sem conexão — Finanças de Casa</title>
+    <style>
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: system-ui, sans-serif; background: #f1f5f9; color: #0f172a; }
+        main { text-align: center; padding: 2rem; max-width: 26rem; }
+        img { width: 72px; height: 72px; }
+        h1 { font-size: 1.25rem; margin: 1rem 0 .5rem; }
+        p { color: #475569; line-height: 1.5; }
+        button { margin-top: 1rem; padding: .6rem 1.2rem; border: 0; border-radius: .5rem; background: #15803d; color: #fff; font-size: 1rem; cursor: pointer; }
+        @media (prefers-color-scheme: dark) { body { background: #0f172a; color: #f1f5f9; } p { color: #94a3b8; } }
+    </style>
+</head>
+<body>
+<main>
+    <img src="/icons/icon.svg" alt="">
+    <h1>Sem conexão com o servidor</h1>
+    <p>Não foi possível falar com o Finanças de Casa. Confira se o Docker está rodando e tente de novo.</p>
+    <button type="button" onclick="location.reload()">Tentar de novo</button>
+</main>
+</body>
+</html>
