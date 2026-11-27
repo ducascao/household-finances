@@ -34,6 +34,9 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(PanelsRenderHook::STYLES_AFTER, fn (): View => view('filament.theme'))
             ->renderHook(PanelsRenderHook::HEAD_START, fn (): View => view('filament.privacy-head'))
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): View => view('filament.privacy-toggle'))
+            // App instalável (PWA): manifest e service worker em todas as telas, inclusive o login.
+            ->renderHook(PanelsRenderHook::HEAD_END, fn (): View => view('filament.pwa-head'))
+            ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): View => view('filament.pwa-install'))
             ->maxContentWidth(Width::Full)
             // Menu lateral que recolhe para só os ícones (o navegador lembra a escolha).
             ->sidebarCollapsibleOnDesktop()

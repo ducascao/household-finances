@@ -45,6 +45,25 @@ Serviços do `compose.yaml`:
 | `scheduler` | `php artisan schedule:work`                              |
 | `backup`    | `pg_dump` diário (ver [Backup](#backup))                  |
 
+### Instalar como app (PWA)
+
+O sistema pode ser instalado como aplicativo no Chrome ou no Edge, no Windows e no Linux: abre em janela própria,
+com ícone no menu Iniciar/lançador e sem a barra do navegador.
+
+1. Abra `http://localhost:8000` ou `http://127.0.0.1:8000` **no próprio computador que roda o Docker**.
+2. Clique no ícone de instalar na barra de endereço (monitor com seta) ou no botão **Instalar app** (seta para baixo)
+   na barra superior do sistema, ao lado do olho do modo privacidade. Chrome: menu ⋮ → *Transmitir, salvar e
+   compartilhar* → *Instalar página como app*. Edge: menu … → *Aplicativos* → *Instalar este site como aplicativo*.
+3. Para desinstalar: na janela do app, menu ⋮ → *Desinstalar Finanças de Casa*.
+
+O navegador só oferece a instalação em endereço seguro: `localhost`, `127.0.0.1` ou `https://`. Pelo IP da rede
+(`http://192.168…`) o sistema funciona, mas não aparece a opção de instalar; isso exigiria HTTPS na rede (por
+exemplo, certificado local com `mkcert`), que ainda não foi feito.
+
+O service worker (`public/sw.js`) não guarda páginas nem dados financeiros: tudo vem sempre do servidor. Só a página
+"Sem conexão" (`public/offline.html`) fica no cache, para aparecer quando o Docker estiver parado. Os ícones ficam em
+`public/icons/` (os PNGs foram gerados a partir dos SVGs).
+
 ## Criar o lar e os usuários
 
 Não há registro público. Crie o lar (com o primeiro usuário, administrador) e depois os demais membros:
